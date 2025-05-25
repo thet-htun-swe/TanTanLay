@@ -112,6 +112,7 @@ export default function SaleDetailsScreen() {
               <h3>Bill To:</h3>
               <div>${sale.customer.name}</div>
               <div>${sale.customer.contact || 'No contact provided'}</div>
+              <div>${sale.customer.address || 'No address provided'}</div>
             </div>
             
             <div class="invoice-info">
@@ -151,10 +152,6 @@ export default function SaleDetailsScreen() {
             <div class="total-row">
               <div>Subtotal:</div>
               <div>$${sale.subtotal.toFixed(2)}</div>
-            </div>
-            <div class="total-row">
-              <div>Tax:</div>
-              <div>$${sale.tax.toFixed(2)}</div>
             </div>
             <div class="total-row grand-total">
               <div>Total:</div>
@@ -221,6 +218,12 @@ export default function SaleDetailsScreen() {
               <ThemedText>{sale.customer.contact}</ThemedText>
             </View>
           )}
+          {sale.customer.address && (
+            <View style={styles.detailsRow}>
+              <ThemedText style={styles.detailsLabel}>Address:</ThemedText>
+              <ThemedText>{sale.customer.address}</ThemedText>
+            </View>
+          )}
         </Card>
 
         <Card style={styles.itemsCard}>
@@ -252,10 +255,6 @@ export default function SaleDetailsScreen() {
           <View style={styles.summaryRow}>
             <ThemedText>Subtotal:</ThemedText>
             <ThemedText>${sale.subtotal.toFixed(2)}</ThemedText>
-          </View>
-          <View style={styles.summaryRow}>
-            <ThemedText>Tax:</ThemedText>
-            <ThemedText>${sale.tax.toFixed(2)}</ThemedText>
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
             <ThemedText style={styles.totalText}>Total:</ThemedText>

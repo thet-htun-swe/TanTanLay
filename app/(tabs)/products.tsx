@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, FlatList, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '@/utils/uuid';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -12,14 +12,12 @@ import { useAppStore } from '@/store';
 import { Product } from '@/types';
 
 export default function ProductsScreen() {
-  const { products, fetchProducts, addProduct, editProduct, removeProduct } = useAppStore();
+  const { products, fetchProducts, addProduct, removeProduct } = useAppStore();
   const [isAddingProduct, setIsAddingProduct] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
   // Form state
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [sku, setSku] = useState('');
   const [stockQty, setStockQty] = useState('');
 
   useEffect(() => {
@@ -29,23 +27,20 @@ export default function ProductsScreen() {
   const resetForm = () => {
     setName('');
     setPrice('');
-    setSku('');
     setStockQty('');
     setIsAddingProduct(false);
-    setEditingProduct(null);
   };
 
   const handleAddProduct = () => {
-    if (!name || !price || !sku || !stockQty) {
+    if (!name || !price || !stockQty) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     const newProduct: Product = {
-      id: uuidv4(),
+      id: generateUUID(),
       name,
       price: parseFloat(price),
-      sku,
       stockQty: parseInt(stockQty, 10),
     };
 
@@ -53,30 +48,8 @@ export default function ProductsScreen() {
     resetForm();
   };
 
-  const handleEditProduct = () => {
-    if (!editingProduct || !name || !price || !sku || !stockQty) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    const updatedProduct: Product = {
-      ...editingProduct,
-      name,
-      price: parseFloat(price),
-      sku,
-      stockQty: parseInt(stockQty, 10),
-    };
-
-    editProduct(updatedProduct);
-    resetForm();
-  };
-
-  const startEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setName(product.name);
-    setPrice(product.price.toString());
-    setSku(product.sku);
-    setStockQty(product.stockQty.toString());
+  const navigateToEditProduct = (product: Product) => {
+    router.push({ pathname: '/product/[id]', params: { id: product.id } });
   };
 
   const confirmDeleteProduct = (productId: string) => {
@@ -104,14 +77,13 @@ export default function ProductsScreen() {
         <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
       </View>
       <View style={styles.productDetails}>
-        <ThemedText>SKU: {item.sku}</ThemedText>
         <ThemedText>Stock: {item.stockQty}</ThemedText>
       </View>
       <View style={styles.productActions}>
         <Button
           title="Edit"
           variant="secondary"
-          onPress={() => startEditProduct(item)}
+          onPress={() => navigateToEditProduct(item)}
           style={styles.actionButton}
         />
         <Button
@@ -128,7 +100,7 @@ export default function ProductsScreen() {
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Products</ThemedText>
-        {!isAddingProduct && !editingProduct && (
+        {!isAddingProduct && (
           <Button
             title="Add Product"
             onPress={() => setIsAddingProduct(true)}
@@ -136,10 +108,10 @@ export default function ProductsScreen() {
         )}
       </View>
 
-      {(isAddingProduct || editingProduct) && (
+      {isAddingProduct && (
         <Card style={styles.formCard}>
           <ThemedText style={styles.formTitle}>
-            {editingProduct ? 'Edit Product' : 'Add New Product'}
+            Add New Product
           </ThemedText>
           <Input
             label="Product Name"
@@ -153,12 +125,6 @@ export default function ProductsScreen() {
             onChangeText={setPrice}
             placeholder="0.00"
             keyboardType="decimal-pad"
-          />
-          <Input
-            label="SKU"
-            value={sku}
-            onChangeText={setSku}
-            placeholder="Enter SKU"
           />
           <Input
             label="Stock Quantity"
@@ -175,8 +141,8 @@ export default function ProductsScreen() {
               style={styles.formButton}
             />
             <Button
-              title={editingProduct ? 'Update' : 'Add'}
-              onPress={editingProduct ? handleEditProduct : handleAddProduct}
+              title="Add"
+              onPress={handleAddProduct}
               style={styles.formButton}
             />
           </View>

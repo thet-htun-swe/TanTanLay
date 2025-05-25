@@ -83,9 +83,36 @@ export const useAppStore = create<AppState>((set, get) => ({
   addSale: async (sale: Sale) => {
     set({ loading: true, error: null });
     try {
+      // Save the sale
       await saveSale(sale);
+      
+      // Update product quantities
+      const currentProducts = [...get().products];
+      const updatedProducts: Product[] = [];
+      
+      // Process each sale item and update product quantities
+      for (const item of sale.items) {
+        const productIndex = currentProducts.findIndex(p => p.id === item.productId);
+        if (productIndex !== -1) {
+          const product = currentProducts[productIndex];
+          const updatedProduct = {
+            ...product,
+            stockQty: Math.max(0, product.stockQty - item.quantity) // Ensure quantity doesn't go below 0
+          };
+          
+          // Update the product in storage
+          await updateProduct(updatedProduct);
+          updatedProducts.push(updatedProduct);
+          
+          // Update the product in the current array
+          currentProducts[productIndex] = updatedProduct;
+        }
+      }
+      
+      // Refresh sales and products data
       const sales = await getSales();
-      set({ sales, loading: false });
+      const products = await getProducts();
+      set({ sales, products, loading: false });
     } catch (error) {
       set({ error: 'Failed to add sale', loading: false });
     }

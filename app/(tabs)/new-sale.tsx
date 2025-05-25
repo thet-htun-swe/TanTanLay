@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '@/utils/uuid';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -16,7 +16,7 @@ export default function NewSaleScreen() {
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerContact, setCustomerContact] = useState('');
-  const [taxRate, setTaxRate] = useState('10'); // Default tax rate 10%
+  const [customerAddress, setCustomerAddress] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -100,13 +100,8 @@ export default function NewSaleScreen() {
     return selectedProducts.reduce((sum, item) => sum + item.lineTotal, 0);
   };
 
-  const calculateTax = (): number => {
-    const subtotal = calculateSubtotal();
-    return subtotal * (parseFloat(taxRate) / 100);
-  };
-
   const calculateTotal = (): number => {
-    return calculateSubtotal() + calculateTax();
+    return calculateSubtotal();
   };
 
   const handleCreateSale = () => {
@@ -119,19 +114,46 @@ export default function NewSaleScreen() {
       Alert.alert('Error', 'Please enter customer name');
       return;
     }
+    
+    // Validate stock quantities
+    const insufficientStockItems = [];
+    
+    for (const item of selectedProducts) {
+      const product = products.find(p => p.id === item.productId);
+      if (product && product.stockQty < item.quantity) {
+        insufficientStockItems.push({
+          name: product.name,
+          requested: item.quantity,
+          available: product.stockQty
+        });
+      }
+    }
+    
+    if (insufficientStockItems.length > 0) {
+      const itemsList = insufficientStockItems.map(item => 
+        `${item.name} (Requested: ${item.requested}, Available: ${item.available})`
+      ).join('\n');
+      
+      Alert.alert(
+        'Insufficient Stock',
+        `The following items don't have enough stock:\n\n${itemsList}`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
 
     const customer: Customer = {
       name: customerName,
       contact: customerContact,
+      address: customerAddress,
     };
 
     const newSale: Sale = {
-      id: uuidv4(),
+      id: generateUUID(),
       date: new Date().toISOString(),
       customer,
       items: selectedProducts,
       subtotal: calculateSubtotal(),
-      tax: calculateTax(),
       total: calculateTotal(),
     };
 
@@ -141,6 +163,7 @@ export default function NewSaleScreen() {
     setSelectedProducts([]);
     setCustomerName('');
     setCustomerContact('');
+    setCustomerAddress('');
     
     // Navigate to sales history
     Alert.alert('Success', 'Sale created successfully', [
@@ -168,6 +191,12 @@ export default function NewSaleScreen() {
             value={customerContact}
             onChangeText={setCustomerContact}
             placeholder="Enter contact information"
+          />
+          <Input
+            label="Address"
+            value={customerAddress}
+            onChangeText={setCustomerAddress}
+            placeholder="Enter customer address"
           />
         </Card>
 
@@ -251,25 +280,9 @@ export default function NewSaleScreen() {
           <Card style={styles.summaryCard}>
             <ThemedText style={styles.sectionTitle}>Summary</ThemedText>
             
-            <View style={styles.taxRateContainer}>
-              <ThemedText>Tax Rate (%):</ThemedText>
-              <Input
-                value={taxRate}
-                onChangeText={setTaxRate}
-                keyboardType="decimal-pad"
-                style={styles.taxRateInput}
-                containerStyle={styles.taxRateInputContainer}
-              />
-            </View>
-            
             <View style={styles.summaryItem}>
               <ThemedText>Subtotal:</ThemedText>
               <ThemedText>${calculateSubtotal().toFixed(2)}</ThemedText>
-            </View>
-            
-            <View style={styles.summaryItem}>
-              <ThemedText>Tax ({taxRate}%):</ThemedText>
-              <ThemedText>${calculateTax().toFixed(2)}</ThemedText>
             </View>
             
             <View style={[styles.summaryItem, styles.totalItem]}>
