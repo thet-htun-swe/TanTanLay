@@ -67,7 +67,7 @@ export default function HomeScreen() {
         <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
         <View style={styles.actionButtons}>
           <Button
-            title="Add Product"
+            title="Products"
             onPress={() => navigateTo("/products")}
             style={styles.actionButton}
           />
