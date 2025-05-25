@@ -3,6 +3,8 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -213,7 +215,15 @@ export default function NewSaleScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollContainer}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingContainer}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 20}
+      >
+        <ScrollView 
+          style={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}>
         <View style={styles.header}>
           <ThemedText style={styles.title}>New Sale</ThemedText>
         </View>
@@ -590,7 +600,8 @@ export default function NewSaleScreen() {
             />
           </Card>
         )}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -664,6 +675,11 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 8,
     maxHeight: 200,
+    position: "relative",
+    zIndex: 1000,
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
   },
   resultsListContainer: {
     maxHeight: 200,
