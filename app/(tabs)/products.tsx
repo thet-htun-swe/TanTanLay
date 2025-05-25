@@ -74,7 +74,7 @@ export default function ProductsScreen() {
     <Card style={styles.productCard}>
       <View style={styles.productHeader}>
         <ThemedText style={styles.productName}>{item.name}</ThemedText>
-        <ThemedText style={styles.productPrice}>${item.price.toFixed(2)}</ThemedText>
+        <ThemedText style={styles.productPrice}>{item.price.toFixed(2)}</ThemedText>
       </View>
       <View style={styles.productDetails}>
         <ThemedText>Stock: {item.stockQty}</ThemedText>

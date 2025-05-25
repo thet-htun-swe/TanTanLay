@@ -56,7 +56,7 @@ export default function HomeScreen() {
             onPress={() => navigateTo("/sales")}
           >
             <ThemedText style={styles.statValue}>
-              ${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
+              {sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
             </ThemedText>
             <ThemedText style={styles.statLabel}>Revenue</ThemedText>
           </TouchableOpacity>
@@ -102,7 +102,7 @@ export default function HomeScreen() {
                 </ThemedText>
               </View>
               <ThemedText style={styles.recentAmount}>
-                ${sale.total.toFixed(2)}
+                {sale.total.toFixed(2)}
               </ThemedText>
             </TouchableOpacity>
           ))}

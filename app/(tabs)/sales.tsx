@@ -189,7 +189,7 @@ export default function SalesScreen() {
             {formatDate(item.date)}
           </ThemedText>
           <ThemedText style={styles.saleTotal}>
-            ${item.total.toFixed(2)}
+            {item.total.toFixed(2)}
           </ThemedText>
         </View>
         <View style={styles.saleDetails}>

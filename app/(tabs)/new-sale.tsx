@@ -346,7 +346,7 @@ export default function NewSaleScreen() {
                               </ThemedText>
                               <View style={styles.resultItemDetails}>
                                 <ThemedText style={styles.resultItemPrice}>
-                                  ${item.price.toFixed(2)}
+                                  {item.price.toFixed(2)}
                                 </ThemedText>
                                 <ThemedText
                                   style={
@@ -387,7 +387,7 @@ export default function NewSaleScreen() {
                       {selectedProduct.name}
                     </ThemedText>
                     <ThemedText style={styles.selectedProductPrice}>
-                      ${selectedProduct.price.toFixed(2)}
+                      {selectedProduct.price.toFixed(2)}
                     </ThemedText>
                   </View>
 
@@ -490,7 +490,7 @@ export default function NewSaleScreen() {
                   <View style={styles.cartItemDetails}>
                     <View style={styles.cartItemDetail}>
                       <ThemedText>Unit Price:</ThemedText>
-                      <ThemedText>${item.unitPrice.toFixed(2)}</ThemedText>
+                      <ThemedText>{item.unitPrice.toFixed(2)}</ThemedText>
                     </View>
 
                     <View style={styles.cartItemDetail}>
@@ -557,7 +557,7 @@ export default function NewSaleScreen() {
                     <View style={styles.cartItemDetail}>
                       <ThemedText>Line Total:</ThemedText>
                       <ThemedText style={styles.lineTotal}>
-                        ${item.lineTotal.toFixed(2)}
+                        {item.lineTotal.toFixed(2)}
                       </ThemedText>
                     </View>
                   </View>
@@ -573,13 +573,13 @@ export default function NewSaleScreen() {
 
             <View style={styles.summaryItem}>
               <ThemedText>Subtotal:</ThemedText>
-              <ThemedText>${calculateSubtotal().toFixed(2)}</ThemedText>
+              <ThemedText>{calculateSubtotal().toFixed(2)}</ThemedText>
             </View>
 
             <View style={[styles.summaryItem, styles.totalItem]}>
               <ThemedText style={styles.totalText}>Total:</ThemedText>
               <ThemedText style={styles.totalText}>
-                ${calculateTotal().toFixed(2)}
+                {calculateTotal().toFixed(2)}
               </ThemedText>
             </View>
 

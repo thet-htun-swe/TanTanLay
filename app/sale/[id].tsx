@@ -142,9 +142,9 @@ export default function SaleDetailsScreen() {
                   <tr>
                     <td>${item.productName}</td>
                     <td>${item.quantity}</td>
-                    <td>$${item.unitPrice.toFixed(2)}</td>
+                    <td>${item.unitPrice.toFixed(2)}</td>
                     <td>${item.discount}%</td>
-                    <td>$${item.lineTotal.toFixed(2)}</td>
+                    <td>${item.lineTotal.toFixed(2)}</td>
                   </tr>
                 `;
               }).join('')}
@@ -154,11 +154,11 @@ export default function SaleDetailsScreen() {
           <div class="totals">
             <div class="total-row">
               <div>Subtotal:</div>
-              <div>$${sale.subtotal.toFixed(2)}</div>
+              <div>${sale.subtotal.toFixed(2)}</div>
             </div>
             <div class="total-row grand-total">
               <div>Total:</div>
-              <div>$${sale.total.toFixed(2)}</div>
+              <div>${sale.total.toFixed(2)}</div>
             </div>
           </div>
           
@@ -319,9 +319,9 @@ export default function SaleDetailsScreen() {
               <View key={item.productId} style={styles.tableRow}>
                 <ThemedText style={styles.productCol}>{item.productName}</ThemedText>
                 <ThemedText style={styles.qtyCol}>{item.quantity}</ThemedText>
-                <ThemedText style={styles.priceCol}>${item.unitPrice.toFixed(2)}</ThemedText>
+                <ThemedText style={styles.priceCol}>{item.unitPrice.toFixed(2)}</ThemedText>
                 <ThemedText style={styles.discountCol}>{item.discount}%</ThemedText>
-                <ThemedText style={styles.totalCol}>${item.lineTotal.toFixed(2)}</ThemedText>
+                <ThemedText style={styles.totalCol}>{item.lineTotal.toFixed(2)}</ThemedText>
               </View>
             );
           })}
@@ -330,11 +330,11 @@ export default function SaleDetailsScreen() {
         <Card style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <ThemedText>Subtotal:</ThemedText>
-            <ThemedText>${sale.subtotal.toFixed(2)}</ThemedText>
+            <ThemedText>{sale.subtotal.toFixed(2)}</ThemedText>
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
             <ThemedText style={styles.totalText}>Total:</ThemedText>
-            <ThemedText style={styles.totalText}>${sale.total.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.totalText}>{sale.total.toFixed(2)}</ThemedText>
           </View>
         </Card>
 
