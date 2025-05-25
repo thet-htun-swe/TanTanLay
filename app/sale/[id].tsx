@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, Share } from 'react-native';
+import { StyleSheet, View, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +17,7 @@ export default function SaleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const { products } = useAppStore();
 
   useEffect(() => {
@@ -166,6 +170,80 @@ export default function SaleDetailsScreen() {
     `;
   };
 
+  const generatePdf = async () => {
+    if (!sale) return;
+    
+    try {
+      setIsGeneratingPdf(true);
+      const htmlContent = generateInvoiceHTML();
+      
+      // Generate PDF file
+      const { uri } = await Print.printToFileAsync({ 
+        html: htmlContent,
+        base64: false
+      });
+      
+      // Get file info
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      
+      // Create a more descriptive filename
+      const pdfName = `invoice-${sale.id.substring(0, 8)}.pdf`;
+      const newUri = FileSystem.documentDirectory + pdfName;
+      
+      // Copy the file to a location with a better name
+      await FileSystem.copyAsync({
+        from: uri,
+        to: newUri
+      });
+      
+      // Delete the original temporary file
+      await FileSystem.deleteAsync(uri);
+      
+      return newUri;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      Alert.alert('Error', 'Failed to generate PDF invoice');
+      return null;
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const sharePdfInvoice = async () => {
+    try {
+      const pdfUri = await generatePdf();
+      if (!pdfUri) return;
+      
+      // Check if sharing is available on this device
+      const isSharingAvailable = await Sharing.isAvailableAsync();
+      
+      if (isSharingAvailable) {
+        await Sharing.shareAsync(pdfUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: `Invoice for ${sale?.customer.name}`,
+          UTI: 'com.adobe.pdf' // for iOS
+        });
+      } else {
+        Alert.alert('Error', 'Sharing is not available on this device');
+      }
+    } catch (error) {
+      console.error('Error sharing PDF invoice:', error);
+      Alert.alert('Error', 'Failed to share PDF invoice');
+    }
+  };
+  
+  const printPdfInvoice = async () => {
+    try {
+      const htmlContent = generateInvoiceHTML();
+      await Print.printAsync({
+        html: htmlContent
+      });
+    } catch (error) {
+      console.error('Error printing invoice:', error);
+      Alert.alert('Error', 'Failed to print invoice');
+    }
+  };
+
   const shareInvoice = async () => {
     try {
       await Share.share({
@@ -262,10 +340,24 @@ export default function SaleDetailsScreen() {
 
         <View style={styles.actions}>
           <Button
-            title="Share Invoice"
-            onPress={shareInvoice}
+            title="Share PDF Invoice"
+            onPress={sharePdfInvoice}
             style={styles.shareButton}
+            disabled={isGeneratingPdf}
           />
+          <Button
+            title="Print Invoice"
+            onPress={printPdfInvoice}
+            style={styles.printButton}
+            variant="secondary"
+            disabled={isGeneratingPdf}
+          />
+          {isGeneratingPdf && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#0066cc" />
+              <ThemedText style={styles.loadingText}>Generating PDF...</ThemedText>
+            </View>
+          )}
         </View>
       </ScrollView>
     </ThemedView>
@@ -361,10 +453,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   actions: {
-    marginBottom: 100,
+    marginTop: 24,
+    alignItems: 'center',
+    gap: 12,
   },
   shareButton: {
-    marginBottom: 16,
+    minWidth: 200,
+  },
+  printButton: {
+    minWidth: 200,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
   },
   backButton: {
     marginTop: 16,
