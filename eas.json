@@ -1,0 +1,27 @@
+{
+    "build": {
+      "preview": {
+        "android": {
+          "buildType": "apk",
+          "buildOutputFilename": "tantanlay-preview.apk"
+        }
+      },
+      "preview2": {
+        "android": {
+          "gradleCommand": ":app:assembleRelease",
+          "buildOutputFilename": "tantanlay-preview2.apk"
+        }
+      },
+      "preview3": {
+        "developmentClient": true
+      },
+      "preview4": {
+        "distribution": "internal"
+      },
+      "production": {
+        "android": {
+          "buildOutputFilename": "TTL-v1.0.0.apk"
+        }
+      }
+    }
+  }
