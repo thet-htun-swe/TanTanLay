@@ -16,6 +16,7 @@ export interface Customer {
 // Line item in a sale
 export interface SaleItem {
   productId: string;
+  productName: string; // Added product name to store directly with the sale item
   quantity: number;
   unitPrice: number;
   discount: number;

@@ -134,10 +134,9 @@ export default function SaleDetailsScreen() {
             </thead>
             <tbody>
               ${sale.items.map(item => {
-                const product = getProductById(item.productId);
                 return `
                   <tr>
-                    <td>${product?.name || 'Unknown Product'}</td>
+                    <td>${item.productName}</td>
                     <td>${item.quantity}</td>
                     <td>$${item.unitPrice.toFixed(2)}</td>
                     <td>${item.discount}%</td>
@@ -238,10 +237,9 @@ export default function SaleDetailsScreen() {
           </View>
           
           {sale.items.map(item => {
-            const product = getProductById(item.productId);
             return (
               <View key={item.productId} style={styles.tableRow}>
-                <ThemedText style={styles.productCol}>{product?.name || 'Unknown'}</ThemedText>
+                <ThemedText style={styles.productCol}>{item.productName}</ThemedText>
                 <ThemedText style={styles.qtyCol}>{item.quantity}</ThemedText>
                 <ThemedText style={styles.priceCol}>${item.unitPrice.toFixed(2)}</ThemedText>
                 <ThemedText style={styles.discountCol}>{item.discount}%</ThemedText>

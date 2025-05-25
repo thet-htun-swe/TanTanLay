@@ -17,6 +17,10 @@ export default function NewSaleScreen() {
   const [customerName, setCustomerName] = useState('');
   const [customerContact, setCustomerContact] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [customProductName, setCustomProductName] = useState('');
+  const [customProductPrice, setCustomProductPrice] = useState('');
+  const [showCustomProductForm, setShowCustomProductForm] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -42,6 +46,7 @@ export default function NewSaleScreen() {
       // Add new item to sale
       const newItem: SaleItem = {
         productId: product.id,
+        productName: product.name,
         quantity: 1,
         unitPrice: product.price,
         discount: 0,
@@ -115,11 +120,13 @@ export default function NewSaleScreen() {
       return;
     }
     
-    // Validate stock quantities
+    // Validate stock quantities for existing products
     const insufficientStockItems = [];
     
     for (const item of selectedProducts) {
       const product = products.find(p => p.id === item.productId);
+      // Only validate stock for products that exist in the inventory
+      // Custom products (those not in the inventory) will not be validated
       if (product && product.stockQty < item.quantity) {
         insufficientStockItems.push({
           name: product.name,
@@ -202,18 +209,90 @@ export default function NewSaleScreen() {
 
         <Card style={styles.productsCard}>
           <ThemedText style={styles.sectionTitle}>Add Products</ThemedText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.productScroll}>
-            {products.map(product => (
-              <TouchableOpacity 
-                key={product.id} 
-                style={styles.productItem}
-                onPress={() => addProductToSale(product)}
-              >
-                <ThemedText style={styles.productName}>{product.name}</ThemedText>
-                <ThemedText>${product.price.toFixed(2)}</ThemedText>
-                <ThemedText>Stock: {product.stockQty}</ThemedText>
-              </TouchableOpacity>
-            ))}
+          
+          <View style={styles.searchContainer}>
+            <Input
+              placeholder="Search products..."
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              containerStyle={styles.searchInputContainer}
+            />
+            <TouchableOpacity 
+              style={styles.addCustomButton}
+              onPress={() => setShowCustomProductForm(!showCustomProductForm)}
+            >
+              <ThemedText style={styles.addCustomButtonText}>
+                {showCustomProductForm ? 'Cancel' : 'Add Custom Product'}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+          
+          {showCustomProductForm && (
+            <View style={styles.customProductForm}>
+              <Input
+                placeholder="Product name"
+                value={customProductName}
+                onChangeText={setCustomProductName}
+                containerStyle={styles.customProductInput}
+              />
+              <Input
+                placeholder="Price"
+                value={customProductPrice}
+                onChangeText={setCustomProductPrice}
+                keyboardType="decimal-pad"
+                containerStyle={styles.customProductInput}
+              />
+              <Button
+                title="Add to Sale"
+                onPress={() => {
+                  if (!customProductName || !customProductPrice) {
+                    Alert.alert('Error', 'Please enter product name and price');
+                    return;
+                  }
+                  
+                  // Create a custom product
+                  const customProduct: Product = {
+                    id: `custom-${generateUUID()}`,
+                    name: customProductName,
+                    price: parseFloat(customProductPrice) || 0,
+                    stockQty: 0, // Custom products have no stock
+                  };
+                  
+                  // Add to sale
+                  addProductToSale(customProduct);
+                  
+                  // Reset form
+                  setCustomProductName('');
+                  setCustomProductPrice('');
+                  setShowCustomProductForm(false);
+                }}
+                style={styles.addCustomProductButton}
+              />
+            </View>
+          )}
+          
+          <ScrollView style={styles.productList}>
+            {products
+              .filter(product => 
+                product.name.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map(product => (
+                <TouchableOpacity 
+                  key={product.id} 
+                  style={[styles.productItem, product.stockQty <= 0 && styles.lowStockItem]}
+                  onPress={() => addProductToSale(product)}
+                >
+                  <View style={styles.productDetails}>
+                    <ThemedText style={styles.productName}>{product.name}</ThemedText>
+                    <ThemedText>${product.price.toFixed(2)}</ThemedText>
+                  </View>
+                  <View style={styles.stockInfo}>
+                    <ThemedText style={product.stockQty <= 0 ? styles.outOfStockText : null}>
+                      Stock: {product.stockQty}
+                    </ThemedText>
+                  </View>
+                </TouchableOpacity>
+              ))}
           </ScrollView>
         </Card>
 
@@ -329,13 +408,58 @@ const styles = StyleSheet.create({
   productScroll: {
     flexDirection: 'row',
   },
+  searchContainer: {
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInputContainer: {
+    marginBottom: 0,
+    flex: 1,
+  },
+  productList: {
+    maxHeight: 200,
+  },
   productItem: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#f0f0f0',
     borderRadius: 8,
-    marginRight: 12,
-    minWidth: 150,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  productDetails: {
+    flex: 1,
+  },
+  stockInfo: {
+    marginLeft: 8,
+  },
+  lowStockItem: {
+    backgroundColor: '#fff0f0',
+  },
+  outOfStockText: {
+    color: 'red',
+  },
+  addCustomButton: {
+    marginLeft: 8,
+    padding: 8,
+  },
+  addCustomButtonText: {
+    color: '#0066cc',
+    fontWeight: '600',
+  },
+  customProductForm: {
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  customProductInput: {
+    marginBottom: 8,
+  },
+  addCustomProductButton: {
+    marginTop: 8,
   },
   productName: {
     fontWeight: '600',
