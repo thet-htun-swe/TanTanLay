@@ -224,12 +224,14 @@ export default function SalesScreen() {
           )}
           <ThemedText>Items: {item.items.length}</ThemedText>
         </View>
-        <Button
-          title="View Details"
-          variant="secondary"
+        <TouchableOpacity
           onPress={() => viewSaleDetails(item.id)}
-          style={styles.viewButton}
-        />
+          style={styles.viewDetailsLink}
+        >
+          <ThemedText style={styles.viewDetailsText}>
+            View Details <Ionicons name="chevron-forward" size={14} />
+          </ThemedText>
+        </TouchableOpacity>
       </Card>
     </TouchableOpacity>
   );
@@ -344,10 +346,11 @@ export default function SalesScreen() {
 
       <View style={styles.exportButtonContainer}>
         <Button
-          title="Export to Excel"
+          title="Export"
           variant="secondary"
           onPress={generateExcel}
           style={styles.exportButton}
+          textStyle={styles.exportButtonText}
         />
       </View>
 
@@ -382,12 +385,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   searchContainer: {
-    marginBottom: 16,
+    marginBottom: 4,
   },
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
   },
   searchInput: {
     flex: 1,
@@ -478,6 +480,11 @@ const styles = StyleSheet.create({
   },
   exportButton: {
     alignSelf: "flex-end",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  exportButtonText: {
+    fontSize: 14,
   },
   salesList: {
     paddingBottom: 100,
@@ -501,8 +508,17 @@ const styles = StyleSheet.create({
   saleDetails: {
     marginBottom: 12,
   },
-  viewButton: {
+  viewDetailsLink: {
     alignSelf: "flex-end",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  viewDetailsText: {
+    color: "#007bff",
+    fontSize: 14,
+    fontWeight: "500",
+    flexDirection: "row",
+    alignItems: "center",
   },
   emptyText: {
     textAlign: "center",
