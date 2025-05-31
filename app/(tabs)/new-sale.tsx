@@ -114,8 +114,26 @@ export default function NewSaleScreen() {
   };
 
   const removeItem = (productId: string) => {
-    setSelectedProducts(
-      selectedProducts.filter((item) => item.productId !== productId)
+    const product = selectedProducts.find(item => item.productId === productId);
+    
+    Alert.alert(
+      "Remove Item",
+      `Are you sure you want to remove ${product?.productName} from this sale?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Remove",
+          onPress: () => {
+            setSelectedProducts(
+              selectedProducts.filter((item) => item.productId !== productId)
+            );
+          },
+          style: "destructive"
+        }
+      ]
     );
   };
 
