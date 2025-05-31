@@ -15,6 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { CreatableSelect } from "@/components/ui/CreatableSelect";
 import { Input } from "@/components/ui/Input";
 import { useAppStore } from "@/store";
 import { Customer, Product, Sale, SaleItem } from "@/types";
@@ -26,6 +27,7 @@ export default function NewSaleScreen() {
   const [customerContact, setCustomerContact] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOption, setSelectedOption] = useState<{ id: string; label: string; value: Product } | null>(null);
   const [customProductName, setCustomProductName] = useState("");
   const [customProductPrice, setCustomProductPrice] = useState("");
   const [showCustomProductForm, setShowCustomProductForm] = useState(false);
@@ -201,17 +203,12 @@ export default function NewSaleScreen() {
     ]);
   };
 
-  // Filter products when search term changes
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredProducts([]);
-    } else {
-      const filtered = products.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-    }
-  }, [searchTerm, products]);
+  // Map products to options format for CreatableSelect
+  const productOptions = products.map(product => ({
+    id: product.id,
+    label: product.name,
+    value: product
+  }));
 
   return (
     <ThemedView style={styles.container}>
@@ -252,31 +249,52 @@ export default function NewSaleScreen() {
           />
         </Card>
 
-        <Card style={styles.productsCard}>
+        <Card style={{...styles.productsCard, zIndex: 5}}>
           <ThemedText style={styles.sectionTitle}>Add Products</ThemedText>
 
           <View style={styles.searchContainer}>
-            <Input
-              placeholder="Search products..."
-              value={searchTerm}
-              onChangeText={(text) => {
-                setSearchTerm(text);
-                setSelectedProduct(null);
-                setTempQuantity(1);
-              }}
+            <CreatableSelect
+              options={productOptions}
+              value={selectedOption}
+              placeholder="Search or create a product..."
               containerStyle={styles.searchInputContainer}
-            />
-            <TouchableOpacity
-              style={styles.addCustomButton}
-              onPress={() => {
-                setShowCustomProductForm(!showCustomProductForm);
-                setSearchTerm("");
+              onSelect={(option) => {
+                if (option) {
+                  setSelectedProduct(option.value);
+                  setTempQuantity(1);
+                } else {
+                  setSelectedProduct(null);
+                }
+                setSelectedOption(option);
               }}
-            >
-              <ThemedText style={styles.addCustomButtonText}>
-                {showCustomProductForm ? "Cancel" : "Custom"}
-              </ThemedText>
-            </TouchableOpacity>
+              onCreate={(label) => {
+                // Create a custom product
+                const customProduct: Product = {
+                  id: `custom-${generateUUID()}`,
+                  name: label,
+                  price: 0,
+                  stockQty: 0, // Custom products have no stock
+                };
+                
+                // Create the option
+                const newOption = {
+                  id: customProduct.id,
+                  label: customProduct.name,
+                  value: customProduct
+                };
+                
+                // Select the new option
+                setSelectedOption(newOption);
+                setSelectedProduct(customProduct);
+                setTempQuantity(1);
+                
+                // Show price input form for the custom product
+                setCustomProductName(label);
+                setShowCustomProductForm(true);
+              }}
+              noOptionsMessage="No products found"
+              createOptionMessage="Create new product"
+            />
           </View>
 
           {showCustomProductForm ? (
@@ -297,97 +315,51 @@ export default function NewSaleScreen() {
                 keyboardType="decimal-pad"
                 containerStyle={styles.customProductInput}
               />
-              <Button
-                title="Add to Sale"
-                onPress={() => {
-                  if (!customProductName || !customProductPrice) {
-                    Alert.alert("Error", "Please enter product name and price");
-                    return;
-                  }
+              <View style={styles.customProductButtons}>
+                <Button
+                  title="Cancel"
+                  variant="secondary"
+                  onPress={() => {
+                    setCustomProductName("");
+                    setCustomProductPrice("");
+                    setShowCustomProductForm(false);
+                    setSelectedOption(null);
+                    setSelectedProduct(null);
+                  }}
+                  style={styles.cancelCustomProductButton}
+                />
+                <Button
+                  title="Add to Sale"
+                  onPress={() => {
+                    if (!customProductName || !customProductPrice) {
+                      Alert.alert("Error", "Please enter product name and price");
+                      return;
+                    }
 
-                  // Create a custom product
-                  const customProduct: Product = {
-                    id: `custom-${generateUUID()}`,
-                    name: customProductName,
-                    price: parseFloat(customProductPrice) || 0,
-                    stockQty: 0, // Custom products have no stock
-                  };
+                    // Create a custom product
+                    const customProduct: Product = {
+                      id: `custom-${generateUUID()}`,
+                      name: customProductName,
+                      price: parseFloat(customProductPrice) || 0,
+                      stockQty: 0, // Custom products have no stock
+                    };
 
-                  // Add to sale
-                  addProductToSale(customProduct);
+                    // Add to sale
+                    addProductToSale(customProduct);
 
-                  // Reset form
-                  setCustomProductName("");
-                  setCustomProductPrice("");
-                  setShowCustomProductForm(false);
-                }}
-                style={styles.addCustomProductButton}
-              />
+                    // Reset form
+                    setCustomProductName("");
+                    setCustomProductPrice("");
+                    setShowCustomProductForm(false);
+                    setSelectedOption(null);
+                  }}
+                  style={styles.addCustomProductButton}
+                />
+              </View>
             </View>
           ) : (
             <>
-              {/* Show search results if there's a search term */}
-              {searchTerm.length > 0 && (
-                <View style={styles.resultsContainer}>
-                  {filteredProducts.length > 0 ? (
-                    <View style={styles.resultsListContainer}>
-                      {filteredProducts.map((item) => {
-                        const isInCart = selectedProducts.some(
-                          (p) => p.productId === item.id
-                        );
-                        const isSelected = selectedProduct?.id === item.id;
-
-                        return (
-                          <TouchableOpacity
-                            key={item.id}
-                            style={[
-                              styles.resultItem,
-                              isSelected && styles.selectedResultItem,
-                              item.stockQty <= 0 && styles.lowStockItem,
-                            ]}
-                            onPress={() => {
-                              setSelectedProduct(item);
-                              setTempQuantity(1);
-                            }}
-                          >
-                            <View style={styles.resultItemContent}>
-                              <ThemedText style={styles.resultItemName}>
-                                {item.name}
-                              </ThemedText>
-                              <View style={styles.resultItemDetails}>
-                                <ThemedText style={styles.resultItemPrice}>
-                                  {item.price.toFixed(2)}
-                                </ThemedText>
-                                <ThemedText
-                                  style={
-                                    item.stockQty <= 0
-                                      ? styles.outOfStockText
-                                      : styles.stockText
-                                  }
-                                >
-                                  Stock: {item.stockQty}
-                                </ThemedText>
-                              </View>
-                              {isInCart && (
-                                <ThemedText style={styles.inCartText}>
-                                  In cart:{" "}
-                                  {selectedProducts.find(
-                                    (p) => p.productId === item.id
-                                  )?.quantity || 0}
-                                </ThemedText>
-                              )}
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  ) : (
-                    <ThemedText style={styles.noResultsText}>
-                      No products found
-                    </ThemedText>
-                  )}
-                </View>
-              )}
+              {/* Product selection is now handled by CreatableSelect */}
 
               {/* Show selected product with quantity controls */}
               {selectedProduct && (
@@ -480,7 +452,7 @@ export default function NewSaleScreen() {
         </Card>
 
         {selectedProducts.length > 0 && (
-          <Card style={styles.cartCard}>
+          <Card style={{...styles.cartCard, zIndex: 1}}>
             <ThemedText style={styles.sectionTitle}>Sale Items</ThemedText>
             {selectedProducts.map((item) => {
               const product = getProductById(item.productId);
@@ -666,8 +638,18 @@ const styles = StyleSheet.create({
   customProductInput: {
     marginBottom: 8,
   },
+  customProductButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  cancelCustomProductButton: {
+    flex: 1,
+    marginRight: 8,
+  },
   addCustomProductButton: {
-    marginTop: 8,
+    flex: 1,
+    marginLeft: 8,
   },
   resultsContainer: {
     marginTop: 8,
