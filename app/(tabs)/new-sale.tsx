@@ -26,14 +26,14 @@ export default function NewSaleScreen() {
   const [customerName, setCustomerName] = useState("");
   const [customerContact, setCustomerContact] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOption, setSelectedOption] = useState<{ id: string; label: string; value: Product } | null>(null);
+  const [selectedOption, setSelectedOption] = useState<{
+    id: string;
+    label: string;
+    value: Product;
+  } | null>(null);
   const [customProductName, setCustomProductName] = useState("");
   const [customProductPrice, setCustomProductPrice] = useState("");
   const [showCustomProductForm, setShowCustomProductForm] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [tempQuantity, setTempQuantity] = useState(1);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     fetchProducts();
@@ -52,10 +52,7 @@ export default function NewSaleScreen() {
           ? {
               ...item,
               quantity: item.quantity + 1,
-              lineTotal:
-                (item.quantity + 1) *
-                item.unitPrice *
-                (1 - item.discount / 100),
+              lineTotal: (item.quantity + 1) * item.unitPrice,
             }
           : item
       );
@@ -67,7 +64,6 @@ export default function NewSaleScreen() {
         productName: product.name,
         quantity: 1,
         unitPrice: product.price,
-        discount: 0,
         lineTotal: product.price,
       };
       setSelectedProducts([...selectedProducts, newItem]);
@@ -88,52 +84,18 @@ export default function NewSaleScreen() {
         ? {
             ...item,
             quantity,
-            lineTotal: quantity * item.unitPrice * (1 - item.discount / 100),
+            lineTotal: quantity * item.unitPrice,
           }
         : item
     );
     setSelectedProducts(updatedItems);
   };
 
-  const updateItemDiscount = (productId: string, discount: number) => {
-    if (discount < 0 || discount > 100) {
-      Alert.alert("Invalid Discount", "Discount must be between 0 and 100");
-      return;
-    }
 
-    const updatedItems = selectedProducts.map((item) =>
-      item.productId === productId
-        ? {
-            ...item,
-            discount,
-            lineTotal: item.quantity * item.unitPrice * (1 - discount / 100),
-          }
-        : item
-    );
-    setSelectedProducts(updatedItems);
-  };
 
   const removeItem = (productId: string) => {
-    const product = selectedProducts.find(item => item.productId === productId);
-    
-    Alert.alert(
-      "Remove Item",
-      `Are you sure you want to remove ${product?.productName} from this sale?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Remove",
-          onPress: () => {
-            setSelectedProducts(
-              selectedProducts.filter((item) => item.productId !== productId)
-            );
-          },
-          style: "destructive"
-        }
-      ]
+    setSelectedProducts(
+      selectedProducts.filter((item) => item.productId !== productId)
     );
   };
 
@@ -222,374 +184,267 @@ export default function NewSaleScreen() {
   };
 
   // Map products to options format for CreatableSelect
-  const productOptions = products.map(product => ({
+  const productOptions = products.map((product) => ({
     id: product.id,
     label: product.name,
-    value: product
+    value: product,
   }));
 
   return (
     <ThemedView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingContainer}
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 20}
       >
-        <ScrollView 
+        <ScrollView
           style={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={true}>
-        <View style={styles.header}>
-          <ThemedText style={styles.title}>New Sale</ThemedText>
-        </View>
-
-        <Card style={styles.customerCard}>
-          <ThemedText style={styles.sectionTitle}>
-            Customer Information
-          </ThemedText>
-          <Input
-            label="Customer Name"
-            value={customerName}
-            onChangeText={setCustomerName}
-            placeholder="Enter customer name"
-          />
-          <Input
-            label="Contact (Phone/Email)"
-            value={customerContact}
-            onChangeText={setCustomerContact}
-            placeholder="Enter contact information"
-          />
-          <Input
-            label="Address"
-            value={customerAddress}
-            onChangeText={setCustomerAddress}
-            placeholder="Enter customer address"
-          />
-        </Card>
-
-        <Card style={{...styles.productsCard, zIndex: 5}}>
-          <ThemedText style={styles.sectionTitle}>Add Products</ThemedText>
-
-          <View style={styles.searchContainer}>
-            <CreatableSelect
-              options={productOptions}
-              value={selectedOption}
-              placeholder="Search or create a product..."
-              containerStyle={styles.searchInputContainer}
-              onSelect={(option) => {
-                if (option) {
-                  setSelectedProduct(option.value);
-                  setTempQuantity(1);
-                } else {
-                  setSelectedProduct(null);
-                }
-                setSelectedOption(option);
-              }}
-              onCreate={(label) => {
-                // Create a custom product
-                const customProduct: Product = {
-                  id: `custom-${generateUUID()}`,
-                  name: label,
-                  price: 0,
-                  stockQty: 0, // Custom products have no stock
-                };
-                
-                // Create the option
-                const newOption = {
-                  id: customProduct.id,
-                  label: customProduct.name,
-                  value: customProduct
-                };
-                
-                // Select the new option
-                setSelectedOption(newOption);
-                setSelectedProduct(customProduct);
-                setTempQuantity(1);
-                
-                // Show price input form for the custom product
-                setCustomProductName(label);
-                setShowCustomProductForm(true);
-              }}
-              noOptionsMessage="No products found"
-              createOptionMessage="Create new product"
-            />
+          showsVerticalScrollIndicator={true}
+        >
+          <View style={styles.header}>
+            <ThemedText style={styles.title}>New Sale</ThemedText>
           </View>
 
-          {showCustomProductForm ? (
-            <View style={styles.customProductForm}>
-              <ThemedText style={styles.formTitle}>
-                Add Custom Product
-              </ThemedText>
-              <Input
-                placeholder="Product name"
-                value={customProductName}
-                onChangeText={setCustomProductName}
-                containerStyle={styles.customProductInput}
-              />
-              <Input
-                placeholder="Price"
-                value={customProductPrice}
-                onChangeText={setCustomProductPrice}
-                keyboardType="decimal-pad"
-                containerStyle={styles.customProductInput}
-              />
-              <View style={styles.customProductButtons}>
-                <Button
-                  title="Cancel"
-                  variant="secondary"
-                  onPress={() => {
-                    setCustomProductName("");
-                    setCustomProductPrice("");
-                    setShowCustomProductForm(false);
+          <Card style={styles.customerCard}>
+            <ThemedText style={styles.sectionTitle}>
+              Customer Information
+            </ThemedText>
+            <Input
+              label="Customer Name"
+              value={customerName}
+              onChangeText={setCustomerName}
+              placeholder="Enter customer name"
+            />
+            <Input
+              label="Contact (Phone/Email)"
+              value={customerContact}
+              onChangeText={setCustomerContact}
+              placeholder="Enter contact information"
+            />
+            <Input
+              label="Address"
+              value={customerAddress}
+              onChangeText={setCustomerAddress}
+              placeholder="Enter customer address"
+            />
+          </Card>
+
+          <Card style={{ ...styles.productsCard, zIndex: 5 }}>
+            <ThemedText style={styles.sectionTitle}>Add Products</ThemedText>
+
+            <View style={styles.searchContainer}>
+              <CreatableSelect
+                options={productOptions}
+                value={selectedOption}
+                placeholder="Search or create a product..."
+                containerStyle={styles.searchInputContainer}
+                onSelect={(option) => {
+                  if (option) {
+                    // Directly add the selected product to the sale
+                    addProductToSale(option.value);
+                    // Reset selection
                     setSelectedOption(null);
-                    setSelectedProduct(null);
-                  }}
-                  style={styles.cancelCustomProductButton}
-                />
-                <Button
-                  title="Add to Sale"
-                  onPress={() => {
-                    if (!customProductName || !customProductPrice) {
-                      Alert.alert("Error", "Please enter product name and price");
-                      return;
-                    }
+                  } else {
+                    setSelectedOption(option);
+                  }
+                }}
+                onCreate={(label) => {
+                  // Create a custom product
+                  const customProduct: Product = {
+                    id: `custom-${generateUUID()}`,
+                    name: label,
+                    price: 0,
+                    stockQty: 0, // Custom products have no stock
+                  };
 
-                    // Create a custom product
-                    const customProduct: Product = {
-                      id: `custom-${generateUUID()}`,
-                      name: customProductName,
-                      price: parseFloat(customProductPrice) || 0,
-                      stockQty: 0, // Custom products have no stock
-                    };
+                  // Create the option
+                  const newOption = {
+                    id: customProduct.id,
+                    label: customProduct.name,
+                    value: customProduct,
+                  };
 
-                    // Add to sale
-                    addProductToSale(customProduct);
+                  // Select the new option
+                  setSelectedOption(newOption);
 
-                    // Reset form
-                    setCustomProductName("");
-                    setCustomProductPrice("");
-                    setShowCustomProductForm(false);
-                    setSelectedOption(null);
-                  }}
-                  style={styles.addCustomProductButton}
-                />
-              </View>
+                  // Show price input form for the custom product
+                  setCustomProductName(label);
+                  setShowCustomProductForm(true);
+                }}
+                noOptionsMessage="No products found"
+                createOptionMessage="Create new product"
+              />
             </View>
-          ) : (
-            <>
-              {/* Product selection is now handled by CreatableSelect */}
 
-              {/* Show selected product with quantity controls */}
-              {selectedProduct && (
-                <View style={styles.selectedProductContainer}>
-                  <View style={styles.selectedProductInfo}>
-                    <ThemedText style={styles.selectedProductName}>
-                      {selectedProduct.name}
-                    </ThemedText>
-                    <ThemedText style={styles.selectedProductPrice}>
-                      {selectedProduct.price.toFixed(2)}
-                    </ThemedText>
-                  </View>
-
-                  <View style={styles.quantityContainer}>
-                    <ThemedText style={styles.quantityLabel}>
-                      Quantity:
-                    </ThemedText>
-                    <View style={styles.quantityControls}>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() =>
-                          setTempQuantity(Math.max(1, tempQuantity - 1))
-                        }
-                      >
-                        <ThemedText style={styles.quantityButtonText}>
-                          -
-                        </ThemedText>
-                      </TouchableOpacity>
-                      <ThemedText style={styles.quantityValue}>
-                        {tempQuantity}
-                      </ThemedText>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => setTempQuantity(tempQuantity + 1)}
-                      >
-                        <ThemedText style={styles.quantityButtonText}>
-                          +
-                        </ThemedText>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
+            {showCustomProductForm ? (
+              <View style={styles.customProductForm}>
+                <ThemedText style={styles.formTitle}>
+                  Add Custom Product
+                </ThemedText>
+                <Input
+                  placeholder="Product name"
+                  value={customProductName}
+                  onChangeText={setCustomProductName}
+                  containerStyle={styles.customProductInput}
+                />
+                <Input
+                  placeholder="Price"
+                  value={customProductPrice}
+                  onChangeText={setCustomProductPrice}
+                  keyboardType="decimal-pad"
+                  containerStyle={styles.customProductInput}
+                />
+                <View style={styles.customProductButtons}>
+                  <Button
+                    title="Cancel"
+                    variant="secondary"
+                    onPress={() => {
+                      setCustomProductName("");
+                      setCustomProductPrice("");
+                      setShowCustomProductForm(false);
+                      setSelectedOption(null);
+                    }}
+                    style={styles.cancelCustomProductButton}
+                  />
                   <Button
                     title="Add to Sale"
                     onPress={() => {
-                      // Check if product is already in the sale
-                      const existingItem = selectedProducts.find(
-                        (item) => item.productId === selectedProduct.id
-                      );
-
-                      if (existingItem) {
-                        // Update quantity if already in sale
-                        const updatedItems = selectedProducts.map((item) =>
-                          item.productId === selectedProduct.id
-                            ? {
-                                ...item,
-                                quantity: item.quantity + tempQuantity,
-                                lineTotal:
-                                  (item.quantity + tempQuantity) *
-                                  item.unitPrice *
-                                  (1 - item.discount / 100),
-                              }
-                            : item
+                      if (!customProductName || !customProductPrice) {
+                        Alert.alert(
+                          "Error",
+                          "Please enter product name and price"
                         );
-                        setSelectedProducts(updatedItems);
-                      } else {
-                        // Add new item to sale
-                        const newItem: SaleItem = {
-                          productId: selectedProduct.id,
-                          productName: selectedProduct.name,
-                          quantity: tempQuantity,
-                          unitPrice: selectedProduct.price,
-                          discount: 0,
-                          lineTotal: selectedProduct.price * tempQuantity,
-                        };
-                        setSelectedProducts([...selectedProducts, newItem]);
+                        return;
                       }
 
-                      // Reset selection
-                      setSelectedProduct(null);
-                      setTempQuantity(1);
-                      setSearchTerm("");
+                      // Create a custom product
+                      const customProduct: Product = {
+                        id: `custom-${generateUUID()}`,
+                        name: customProductName,
+                        price: parseFloat(customProductPrice) || 0,
+                        stockQty: 0, // Custom products have no stock
+                      };
+
+                      // Add to sale
+                      addProductToSale(customProduct);
+
+                      // Reset form
+                      setCustomProductName("");
+                      setCustomProductPrice("");
+                      setShowCustomProductForm(false);
+                      setSelectedOption(null);
                     }}
-                    style={styles.addToSaleButton}
+                    style={styles.addCustomProductButton}
                   />
                 </View>
-              )}
-            </>
-          )}
-        </Card>
+              </View>
+            ) : (
+              <>
+                {/* Product selection is now handled by CreatableSelect */}
+                {/* Products are now directly added to the sale when selected */}
+              </>
+            )}
+          </Card>
 
-        {selectedProducts.length > 0 && (
-          <Card style={{...styles.cartCard, zIndex: 1}}>
-            <ThemedText style={styles.sectionTitle}>Sale Items</ThemedText>
-            {selectedProducts.map((item) => {
-              const product = getProductById(item.productId);
-              return (
-                <View key={item.productId} style={styles.cartItem}>
-                  <View style={styles.cartItemHeader}>
-                    <ThemedText style={styles.cartItemName}>
-                      {product?.name}
-                    </ThemedText>
-                    <TouchableOpacity
-                      onPress={() => removeItem(item.productId)}
-                    >
-                      <ThemedText style={styles.removeText}>Remove</ThemedText>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.cartItemDetails}>
-                    <View style={styles.cartItemDetail}>
-                      <ThemedText>Unit Price:</ThemedText>
-                      <ThemedText>{item.unitPrice.toFixed(2)}</ThemedText>
+          {selectedProducts.length > 0 && (
+            <Card style={{ ...styles.cartCard, zIndex: 1 }}>
+              <ThemedText style={styles.sectionTitle}>Sale Items</ThemedText>
+              {selectedProducts.map((item) => {
+                return (
+                  <View key={item.productId} style={styles.cartItem}>
+                    <View style={styles.cartItemHeader}>
+                      <ThemedText style={styles.cartItemName}>
+                        {item.productName}
+                      </ThemedText>
+                      <TouchableOpacity
+                        onPress={() => removeItem(item.productId)}
+                      >
+                        <ThemedText style={styles.removeText}>
+                          Remove
+                        </ThemedText>
+                      </TouchableOpacity>
                     </View>
 
-                    <View style={styles.cartItemDetail}>
-                      <ThemedText>Quantity:</ThemedText>
-                      <View style={styles.quantityControl}>
-                        {/* <Button
-                          title="-"
-                          onPress={() =>
-                            updateItemQuantity(
-                              item.productId,
-                              item.quantity - 1
-                            )
-                          }
-                          style={styles.quantityButton}
-                        /> */}
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() =>
-                            updateItemQuantity(
-                              item.productId,
-                              item.quantity - 1
-                            )
-                          }
-                        >
-                          <ThemedText style={styles.quantityButtonText}>
-                            -
+                    <View style={styles.cartItemDetails}>
+                      <View style={styles.cartItemDetail}>
+                        <ThemedText>Unit Price:</ThemedText>
+                        <ThemedText>{item.unitPrice.toFixed(2)}</ThemedText>
+                      </View>
+
+                      <View style={styles.cartItemDetail}>
+                        <ThemedText>Quantity:</ThemedText>
+                        <View style={styles.quantityControl}>
+                          <TouchableOpacity
+                            style={styles.quantityButton}
+                            onPress={() =>
+                              updateItemQuantity(
+                                item.productId,
+                                item.quantity - 1
+                              )
+                            }
+                          >
+                            <ThemedText style={styles.quantityButtonText}>
+                              -
+                            </ThemedText>
+                          </TouchableOpacity>
+                          <ThemedText style={styles.quantityText}>
+                            {item.quantity}
                           </ThemedText>
-                        </TouchableOpacity>
-                        <ThemedText style={styles.quantityText}>
-                          {item.quantity}
+                          <TouchableOpacity
+                            style={styles.quantityButton}
+                            onPress={() =>
+                              updateItemQuantity(
+                                item.productId,
+                                item.quantity + 1
+                              )
+                            }
+                          >
+                            <ThemedText style={styles.quantityButtonText}>
+                              +
+                            </ThemedText>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+
+
+                      <View style={styles.cartItemDetail}>
+                        <ThemedText>Line Total:</ThemedText>
+                        <ThemedText style={styles.lineTotal}>
+                          {item.lineTotal.toFixed(2)}
                         </ThemedText>
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() =>
-                            updateItemQuantity(
-                              item.productId,
-                              item.quantity + 1
-                            )
-                          }
-                        >
-                          <ThemedText style={styles.quantityButtonText}>
-                            +
-                          </ThemedText>
-                        </TouchableOpacity>
                       </View>
                     </View>
-
-                    <View style={styles.cartItemDetail}>
-                      <ThemedText>Discount (%):</ThemedText>
-                      <Input
-                        value={item.discount.toString()}
-                        onChangeText={(value) =>
-                          updateItemDiscount(
-                            item.productId,
-                            parseFloat(value) || 0
-                          )
-                        }
-                        keyboardType="decimal-pad"
-                        style={styles.discountInput}
-                        containerStyle={styles.discountContainer}
-                      />
-                    </View>
-
-                    <View style={styles.cartItemDetail}>
-                      <ThemedText>Line Total:</ThemedText>
-                      <ThemedText style={styles.lineTotal}>
-                        {item.lineTotal.toFixed(2)}
-                      </ThemedText>
-                    </View>
                   </View>
-                </View>
-              );
-            })}
-          </Card>
-        )}
+                );
+              })}
+            </Card>
+          )}
 
-        {selectedProducts.length > 0 && (
-          <Card style={styles.summaryCard}>
-            <ThemedText style={styles.sectionTitle}>Summary</ThemedText>
+          {selectedProducts.length > 0 && (
+            <Card style={styles.summaryCard}>
+              <ThemedText style={styles.sectionTitle}>Summary</ThemedText>
 
-            <View style={styles.summaryItem}>
-              <ThemedText>Subtotal:</ThemedText>
-              <ThemedText>{calculateSubtotal().toFixed(2)}</ThemedText>
-            </View>
+              <View style={styles.summaryItem}>
+                <ThemedText>Subtotal:</ThemedText>
+                <ThemedText>{calculateSubtotal().toFixed(2)}</ThemedText>
+              </View>
 
-            <View style={[styles.summaryItem, styles.totalItem]}>
-              <ThemedText style={styles.totalText}>Total:</ThemedText>
-              <ThemedText style={styles.totalText}>
-                {calculateTotal().toFixed(2)}
-              </ThemedText>
-            </View>
+              <View style={[styles.summaryItem, styles.totalItem]}>
+                <ThemedText style={styles.totalText}>Total:</ThemedText>
+                <ThemedText style={styles.totalText}>
+                  {calculateTotal().toFixed(2)}
+                </ThemedText>
+              </View>
 
-            <Button
-              title="Create Sale"
-              onPress={handleCreateSale}
-              style={styles.createButton}
-            />
-          </Card>
-        )}
+              <Button
+                title="Create Sale"
+                onPress={handleCreateSale}
+                style={styles.createButton}
+              />
+            </Card>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>

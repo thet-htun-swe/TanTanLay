@@ -19,7 +19,6 @@ export interface SaleItem {
   productName: string; // Added product name to store directly with the sale item
   quantity: number;
   unitPrice: number;
-  discount: number;
   lineTotal: number;
 }
 
