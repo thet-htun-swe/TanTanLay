@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as FileSystem from "expo-file-system";
+import * as Print from "expo-print";
 import { router } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useEffect, useState } from "react";
@@ -178,8 +179,8 @@ export default function SalesScreen() {
 
       // Define file path
       const fileName = `TanTanLay_Sales_${
-        startDate.toISOString().split("T")[0]
-      }_to_${endDate.toISOString().split("T")[0]}.xlsx`;
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       const fileUri = FileSystem.documentDirectory + fileName;
 
       // Write file
@@ -191,14 +192,168 @@ export default function SalesScreen() {
       await Sharing.shareAsync(fileUri, {
         mimeType:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        dialogTitle: "Share Sales Data",
-        UTI: "com.microsoft.excel.xlsx",
+        dialogTitle: "Sales Data",
       });
-
-      Alert.alert("Success", "Sales data exported and shared successfully");
     } catch (error) {
       console.error("Error generating Excel:", error);
       Alert.alert("Error", "Failed to generate Excel file");
+    }
+  };
+
+  const generateShippingLabels = async () => {
+    try {
+      if (filteredSales.length === 0) {
+        Alert.alert(
+          "No Sales",
+          "There are no sales to generate shipping labels for."
+        );
+        return;
+      }
+
+      // Create HTML content for shipping labels
+      let htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+          <style>
+            body {
+              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+              margin: 0;
+              padding: 15px;
+              width: 100%;
+              box-sizing: border-box;
+            }
+            .page {
+              page-break-after: always;
+              width: 100%;
+            }
+            .page:last-child {
+              page-break-after: auto;
+            }
+            .labels-container {
+              display: flex;
+              flex-wrap: wrap;
+              justify-content: space-between;
+              width: 100%;
+            }
+            .shipping-label {
+              border: 1px solid #000;
+              padding: 15px;
+              width: calc(50% - 10px);
+              height: 180px;
+              position: relative;
+              margin-bottom: 20px;
+              box-sizing: border-box;
+              break-inside: avoid;
+            }
+            .label-header {
+              text-align: center;
+              font-weight: bold;
+              font-size: 16px;
+              margin-bottom: 10px;
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 5px;
+            }
+            .customer-info {
+              margin-bottom: 10px;
+              font-size: 14px;
+            }
+            .customer-name {
+              font-weight: bold;
+              font-size: 16px;
+            }
+            .customer-detail {
+              margin: 5px 0;
+              font-size: 12px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .total {
+              position: absolute;
+              bottom: 15px;
+              right: 15px;
+              font-weight: bold;
+              font-size: 16px;
+              border-top: 1px solid #ccc;
+              padding-top: 5px;
+            }
+            .date {
+              position: absolute;
+              bottom: 15px;
+              left: 15px;
+              font-size: 12px;
+            }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .page { height: 100%; }
+              .shipping-label { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+      `;
+
+      // Calculate how many labels can fit on a page (2 columns, 3 rows = 6 per page)
+      const LABELS_PER_PAGE = 6;
+      
+      // Group labels into pages
+      const totalSales = filteredSales.length;
+      const totalPages = Math.ceil(totalSales / LABELS_PER_PAGE);
+      
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        // Start a new page
+        htmlContent += '<div class="page"><div class="labels-container">';
+        
+        // Calculate start and end indices for this page
+        const startIdx = pageIndex * LABELS_PER_PAGE;
+        const endIdx = Math.min(startIdx + LABELS_PER_PAGE, totalSales);
+        
+        // Generate labels for this page
+        for (let i = startIdx; i < endIdx; i++) {
+          const sale = filteredSales[i];
+          const saleDate = formatDate(sale.date);
+          
+          htmlContent += `
+            <div class="shipping-label">
+              <div class="label-header">Tan Tan Lay</div>
+              <div class="customer-info">
+                <div class="customer-name">${sale.customer.name}</div>
+                <div class="customer-detail">${
+                  sale.customer.address || "No address provided"
+                }</div>
+                <div class="customer-detail">Contact: ${
+                  sale.customer.contact || "No contact provided"
+                }</div>
+              </div>
+              <div class="total">Total: $${sale.total.toFixed(2)}</div>
+              <div class="date">Order Date: ${saleDate}</div>
+            </div>
+          `;
+        }
+        
+        // Close the page container
+        htmlContent += '</div></div>';
+      }
+
+      htmlContent += `
+        </body>
+        </html>
+      `;
+
+      // Generate PDF
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
+      // Share the PDF
+      await Sharing.shareAsync(uri, {
+        mimeType: "application/pdf",
+        dialogTitle: "Shipping Labels",
+        UTI: "com.adobe.pdf",
+      });
+    } catch (error) {
+      console.error("Error generating shipping labels:", error);
+      Alert.alert("Error", "Failed to generate shipping labels");
     }
   };
 
@@ -352,6 +507,13 @@ export default function SalesScreen() {
           style={styles.exportButton}
           textStyle={styles.exportButtonText}
         />
+        <Button
+          title="Print Labels"
+          variant="secondary"
+          onPress={generateShippingLabels}
+          style={styles.exportButton}
+          textStyle={styles.exportButtonText}
+        />
       </View>
 
       {/* No export modal needed anymore */}
@@ -476,10 +638,12 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   exportButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginBottom: 16,
+    gap: 8,
   },
   exportButton: {
-    alignSelf: "flex-end",
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
