@@ -1,18 +1,20 @@
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as FileSystem from "expo-file-system";
-import * as Print from "expo-print";
 import { router } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Dimensions,
   FlatList,
-  Modal,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
 import { utils as XLSXUtils, write as XLSXWrite } from "xlsx";
+
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -36,10 +38,15 @@ export default function SalesScreen() {
   const [dateRangeFiltered, setDateRangeFiltered] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchSales();
   }, [fetchSales]);
+
+  // Store filter dates separately from the actual applied filter dates
+  const [appliedStartDate, setAppliedStartDate] = useState<Date>(startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState<Date>(endDate);
 
   useEffect(() => {
     let filtered = [...sales];
@@ -48,7 +55,7 @@ export default function SalesScreen() {
     if (dateRangeFiltered) {
       filtered = filtered.filter((sale) => {
         const saleDate = new Date(sale.date);
-        return saleDate >= startDate && saleDate <= endDate;
+        return saleDate >= appliedStartDate && saleDate <= appliedEndDate;
       });
     }
 
@@ -63,7 +70,7 @@ export default function SalesScreen() {
     }
 
     setFilteredSales(filtered);
-  }, [sales, searchQuery, dateRangeFiltered, startDate, endDate]);
+  }, [sales, searchQuery, dateRangeFiltered, appliedStartDate, appliedEndDate]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -98,38 +105,53 @@ export default function SalesScreen() {
       return;
     }
 
+    // Update the applied dates when user presses Apply
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
     setDateRangeFiltered(true);
   };
 
   const clearDateFilter = () => {
     setDateRangeFiltered(false);
+    // Reset the applied dates to match the current selection
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
   };
 
   const generateExcel = async () => {
     try {
       // Create worksheet data
       const wsData = [
-        ['Sale ID', 'Date', 'Customer', 'Contact', 'Items', 'Total']
+        ["Sale ID", "Date", "Customer", "Contact", "Items", "Total"],
       ];
-      
-      filteredSales.forEach(sale => {
+
+      filteredSales.forEach((sale) => {
         wsData.push([
           sale.id,
           formatDate(sale.date),
           sale.customer.name,
           sale.customer.contact,
           sale.items.length.toString(),
-          sale.total.toFixed(2)
+          sale.total.toFixed(2),
         ]);
       });
-      
+
       // Create detailed items worksheet
       const itemsData = [
-        ['Sale ID', 'Date', 'Customer', 'Product', 'Quantity', 'Unit Price', 'Discount', 'Line Total']
+        [
+          "Sale ID",
+          "Date",
+          "Customer",
+          "Product",
+          "Quantity",
+          "Unit Price",
+          "Discount",
+          "Line Total",
+        ],
       ];
-      
-      filteredSales.forEach(sale => {
-        sale.items.forEach(item => {
+
+      filteredSales.forEach((sale) => {
+        sale.items.forEach((item) => {
           itemsData.push([
             sale.id,
             formatDate(sale.date),
@@ -137,43 +159,46 @@ export default function SalesScreen() {
             item.productName,
             item.quantity.toString(),
             item.unitPrice.toFixed(2),
-            item.discount.toString() + '%',
-            item.lineTotal.toFixed(2)
+            item.discount.toString() + "%",
+            item.lineTotal.toFixed(2),
           ]);
         });
       });
-      
+
       // Create workbook with multiple sheets
       const wb = XLSXUtils.book_new();
       const ws = XLSXUtils.aoa_to_sheet(wsData);
       const itemsWs = XLSXUtils.aoa_to_sheet(itemsData);
-      
-      XLSXUtils.book_append_sheet(wb, ws, 'Sales Summary');
-      XLSXUtils.book_append_sheet(wb, itemsWs, 'Sales Items');
-      
+
+      XLSXUtils.book_append_sheet(wb, ws, "Sales Summary");
+      XLSXUtils.book_append_sheet(wb, itemsWs, "Sales Items");
+
       // Generate Excel file
-      const wbout = XLSXWrite(wb, { type: 'base64', bookType: 'xlsx' });
-      
+      const wbout = XLSXWrite(wb, { type: "base64", bookType: "xlsx" });
+
       // Define file path
-      const fileName = `TanTanLay_Sales_${startDate.toISOString().split('T')[0]}_to_${endDate.toISOString().split('T')[0]}.xlsx`;
+      const fileName = `TanTanLay_Sales_${
+        startDate.toISOString().split("T")[0]
+      }_to_${endDate.toISOString().split("T")[0]}.xlsx`;
       const fileUri = FileSystem.documentDirectory + fileName;
-      
+
       // Write file
       await FileSystem.writeAsStringAsync(fileUri, wbout, {
-        encoding: FileSystem.EncodingType.Base64
+        encoding: FileSystem.EncodingType.Base64,
       });
-      
+
       // Share the file
       await Sharing.shareAsync(fileUri, {
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        dialogTitle: 'Share Sales Data',
-        UTI: 'com.microsoft.excel.xlsx'
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        dialogTitle: "Share Sales Data",
+        UTI: "com.microsoft.excel.xlsx",
       });
-      
-      Alert.alert('Success', 'Sales data exported and shared successfully');
+
+      Alert.alert("Success", "Sales data exported and shared successfully");
     } catch (error) {
-      console.error('Error generating Excel:', error);
-      Alert.alert('Error', 'Failed to generate Excel file');
+      console.error("Error generating Excel:", error);
+      Alert.alert("Error", "Failed to generate Excel file");
     }
   };
 
@@ -216,78 +241,114 @@ export default function SalesScreen() {
       </View>
 
       <View style={styles.searchContainer}>
-        <Input
-          placeholder="Search by customer name or contact"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          containerStyle={styles.searchInput}
-        />
+        <View style={styles.searchRow}>
+          <Input
+            placeholder="Search by customer name or contact"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            containerStyle={styles.searchInput}
+          />
 
-        <View style={styles.filterContainer}>
-          <View style={styles.dateFilterControls}>
-            <View style={styles.datePickerRow}>
-              <ThemedText style={styles.datePickerLabel}>Start:</ThemedText>
-              <TouchableOpacity 
-                style={styles.datePickerButton}
-                onPress={() => setShowStartDatePicker(true)}
-              >
-                <ThemedText>{formatDateForDisplay(startDate)}</ThemedText>
-              </TouchableOpacity>
-              {showStartDatePicker && (
-                <DateTimePicker
-                  value={startDate}
-                  mode="date"
-                  display="default"
-                  onChange={onStartDateChange}
-                />
-              )}
+          <TouchableOpacity
+            style={styles.filterIconButton}
+            onPress={() => setIsFilterSheetOpen(true)}
+          >
+            <Ionicons
+              name={dateRangeFiltered ? "filter" : "filter-outline"}
+              size={24}
+              color={dateRangeFiltered ? "#007bff" : "#666"}
+            />
+            {dateRangeFiltered && <View style={styles.filterActiveDot} />}
+          </TouchableOpacity>
+        </View>
+
+        <BottomSheet
+          isVisible={isFilterSheetOpen}
+          onClose={() => setIsFilterSheetOpen(false)}
+          height={Dimensions.get("window").height * 0.4}
+        >
+          <View style={styles.bottomSheetContent}>
+            <ThemedText style={styles.bottomSheetTitle}>
+              Filter Sales
+            </ThemedText>
+
+            <View style={styles.dateFilterControls}>
+              <View style={styles.datePickerRow}>
+                <ThemedText style={styles.datePickerLabel}>
+                  Start Date:
+                </ThemedText>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setShowStartDatePicker(true)}
+                >
+                  <ThemedText>{formatDateForDisplay(startDate)}</ThemedText>
+                </TouchableOpacity>
+                {showStartDatePicker && (
+                  <DateTimePicker
+                    value={startDate}
+                    mode="date"
+                    display="default"
+                    onChange={onStartDateChange}
+                  />
+                )}
+              </View>
+
+              <View style={styles.datePickerRow}>
+                <ThemedText style={styles.datePickerLabel}>
+                  End Date:
+                </ThemedText>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setShowEndDatePicker(true)}
+                >
+                  <ThemedText>{formatDateForDisplay(endDate)}</ThemedText>
+                </TouchableOpacity>
+                {showEndDatePicker && (
+                  <DateTimePicker
+                    value={endDate}
+                    mode="date"
+                    display="default"
+                    onChange={onEndDateChange}
+                  />
+                )}
+              </View>
             </View>
-            
-            <View style={styles.datePickerRow}>
-              <ThemedText style={styles.datePickerLabel}>End:</ThemedText>
-              <TouchableOpacity 
-                style={styles.datePickerButton}
-                onPress={() => setShowEndDatePicker(true)}
-              >
-                <ThemedText>{formatDateForDisplay(endDate)}</ThemedText>
-              </TouchableOpacity>
-              {showEndDatePicker && (
-                <DateTimePicker
-                  value={endDate}
-                  mode="date"
-                  display="default"
-                  onChange={onEndDateChange}
-                />
-              )}
-            </View>
-            
-            <View style={styles.filterButtonsRow}>
-              <Button
-                title="Apply Filter"
-                variant="secondary"
-                onPress={applyDateFilter}
-                style={styles.filterButton}
-              />
-              {dateRangeFiltered && (
+
+            <View style={styles.filterActions}>
+              <View style={styles.filterButtonsRow}>
+                {dateRangeFiltered && (
+                  <Button
+                    title="Clear Filter"
+                    variant="secondary"
+                    onPress={() => {
+                      clearDateFilter();
+                      setIsFilterSheetOpen(false);
+                    }}
+                    style={styles.filterButton}
+                  />
+                )}
                 <Button
-                  title="Clear"
-                  variant="secondary"
-                  onPress={clearDateFilter}
+                  title="Apply Filter"
+                  variant="primary"
+                  onPress={() => {
+                    applyDateFilter();
+                    setIsFilterSheetOpen(false);
+                  }}
                   style={styles.filterButton}
                 />
-              )}
+              </View>
             </View>
           </View>
-          
-          <View style={styles.actionButtons}>
-            <Button
-              title="Export Excel"
-              variant="secondary"
-              onPress={generateExcel}
-              style={styles.exportButton}
-            />
-          </View>
-        </View>
+        </BottomSheet>
+      </View>
+
+      <View style={styles.exportButtonContainer}>
+        <Button
+          title="Export to Excel"
+          variant="secondary"
+          onPress={generateExcel}
+          style={styles.exportButton}
+        />
       </View>
 
       {/* No export modal needed anymore */}
@@ -323,40 +384,75 @@ const styles = StyleSheet.create({
   searchContainer: {
     marginBottom: 16,
   },
-  searchInput: {
-    marginBottom: 8,
-  },
-  filterContainer: {
-    marginBottom: 8,
-  },
-  dateFilterControls: {
-    marginBottom: 12,
-    backgroundColor: "#f8f8f8",
-    padding: 10,
-    borderRadius: 8,
-  },
-  datePickerRow: {
+  searchRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
   },
+  searchInput: {
+    flex: 1,
+    marginRight: 8,
+  },
+  filterIconButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+
+  filterActiveDot: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#007bff",
+  },
+  bottomSheetContent: {
+    paddingVertical: 12,
+  },
+  bottomSheetTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  dateFilterControls: {
+    marginBottom: 16,
+  },
+  datePickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  datePickerLabel: {
+    width: 80,
+    fontSize: 16,
+  },
   datePickerButton: {
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 4,
-    padding: 8,
+    borderRadius: 8,
+    padding: 12,
     marginLeft: 8,
     flex: 1,
+  },
+  filterActions: {
+    marginTop: 8,
   },
   filterButtonsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
+    marginBottom: 0,
   },
   filterButton: {
     flex: 1,
     marginHorizontal: 4,
   },
+
   activeDateFilter: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -377,8 +473,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
   },
+  exportButtonContainer: {
+    marginBottom: 16,
+  },
   exportButton: {
-    minWidth: 100,
+    alignSelf: "flex-end",
   },
   salesList: {
     paddingBottom: 100,
@@ -432,10 +531,9 @@ const styles = StyleSheet.create({
   datePickerContainer: {
     marginBottom: 16,
   },
-  datePickerLabel: {
+  modalDatePickerLabel: {
     marginBottom: 8,
   },
-  /* datePickerButton is already defined above */
   dateInputContainer: {
     flexDirection: "row",
     alignItems: "center",
