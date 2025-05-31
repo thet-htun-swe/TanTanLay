@@ -177,9 +177,9 @@ export default function NewSaleScreen() {
     setCustomerContact("");
     setCustomerAddress("");
 
-    // Navigate to sales history
+    // Navigate to invoice screen (sale details)
     Alert.alert("Success", "Sale created successfully", [
-      { text: "OK", onPress: () => router.push("/sales") },
+      { text: "OK", onPress: () => router.push(`/sale/${newSale.id}`) },
     ]);
   };
 
