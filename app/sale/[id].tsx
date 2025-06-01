@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, Share, Alert, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from "expo-file-system";
+import * as Print from "expo-print";
+import { router, useLocalSearchParams } from "expo-router";
+import * as Sharing from "expo-sharing";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Share,
+  StyleSheet,
+  View,
+} from "react-native";
 
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { getSaleById } from '@/services/storage';
-import { Sale, Product } from '@/types';
-import { useAppStore } from '@/store';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { getSaleById } from "@/services/storage";
+import { useAppStore } from "@/store";
+import { Product, Sale } from "@/types";
 
 export default function SaleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,16 +41,20 @@ export default function SaleDetailsScreen() {
   }, [id]);
 
   const getProductById = (productId: string): Product | undefined => {
-    return products.find(product => product.id === productId);
+    return products.find((product) => product.id === productId);
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return (
+      date.toLocaleDateString() +
+      " " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
   };
 
   const generateInvoiceHTML = () => {
-    if (!sale) return '';
+    if (!sale) return "";
 
     return `
       <!DOCTYPE html>
@@ -115,8 +126,8 @@ export default function SaleDetailsScreen() {
             <div class="customer-info">
               <h3>Bill To:</h3>
               <div>${sale.customer.name}</div>
-              <div>${sale.customer.contact || 'No contact provided'}</div>
-              <div>${sale.customer.address || 'No address provided'}</div>
+              <div>${sale.customer.contact || "No contact provided"}</div>
+              <div>${sale.customer.address || "No address provided"}</div>
             </div>
             
             <div class="invoice-info">
@@ -132,22 +143,22 @@ export default function SaleDetailsScreen() {
                 <th>Item</th>
                 <th>Quantity</th>
                 <th>Unit Price</th>
-                <th>Discount</th>
                 <th>Amount</th>
               </tr>
             </thead>
             <tbody>
-              ${sale.items.map(item => {
-                return `
+              ${sale.items
+                .map((item) => {
+                  return `
                   <tr>
                     <td>${item.productName}</td>
                     <td>${item.quantity}</td>
                     <td>${item.unitPrice.toFixed(2)}</td>
-                    <td>${item.discount}%</td>
                     <td>${item.lineTotal.toFixed(2)}</td>
                   </tr>
                 `;
-              }).join('')}
+                })
+                .join("")}
             </tbody>
           </table>
           
@@ -172,37 +183,37 @@ export default function SaleDetailsScreen() {
 
   const generatePdf = async () => {
     if (!sale) return;
-    
+
     try {
       setIsGeneratingPdf(true);
       const htmlContent = generateInvoiceHTML();
-      
+
       // Generate PDF file
-      const { uri } = await Print.printToFileAsync({ 
+      const { uri } = await Print.printToFileAsync({
         html: htmlContent,
-        base64: false
+        base64: false,
       });
-      
+
       // Get file info
       const fileInfo = await FileSystem.getInfoAsync(uri);
-      
+
       // Create a more descriptive filename
       const pdfName = `invoice-${sale.id.substring(0, 8)}.pdf`;
       const newUri = FileSystem.documentDirectory + pdfName;
-      
+
       // Copy the file to a location with a better name
       await FileSystem.copyAsync({
         from: uri,
-        to: newUri
+        to: newUri,
       });
-      
+
       // Delete the original temporary file
       await FileSystem.deleteAsync(uri);
-      
+
       return newUri;
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      Alert.alert('Error', 'Failed to generate PDF invoice');
+      console.error("Error generating PDF:", error);
+      Alert.alert("Error", "Failed to generate PDF invoice");
       return null;
     } finally {
       setIsGeneratingPdf(false);
@@ -213,45 +224,45 @@ export default function SaleDetailsScreen() {
     try {
       const pdfUri = await generatePdf();
       if (!pdfUri) return;
-      
+
       // Check if sharing is available on this device
       const isSharingAvailable = await Sharing.isAvailableAsync();
-      
+
       if (isSharingAvailable) {
         await Sharing.shareAsync(pdfUri, {
-          mimeType: 'application/pdf',
+          mimeType: "application/pdf",
           dialogTitle: `Invoice for ${sale?.customer.name}`,
-          UTI: 'com.adobe.pdf' // for iOS
+          UTI: "com.adobe.pdf", // for iOS
         });
       } else {
-        Alert.alert('Error', 'Sharing is not available on this device');
+        Alert.alert("Error", "Sharing is not available on this device");
       }
     } catch (error) {
-      console.error('Error sharing PDF invoice:', error);
-      Alert.alert('Error', 'Failed to share PDF invoice');
+      console.error("Error sharing PDF invoice:", error);
+      Alert.alert("Error", "Failed to share PDF invoice");
     }
   };
-  
+
   const printPdfInvoice = async () => {
     try {
       const htmlContent = generateInvoiceHTML();
       await Print.printAsync({
-        html: htmlContent
+        html: htmlContent,
       });
     } catch (error) {
-      console.error('Error printing invoice:', error);
-      Alert.alert('Error', 'Failed to print invoice');
+      console.error("Error printing invoice:", error);
+      Alert.alert("Error", "Failed to print invoice");
     }
   };
 
   const shareInvoice = async () => {
     try {
       await Share.share({
-        message: 'Here is your invoice',
+        message: "Here is your invoice",
         title: `Invoice #${sale?.id.substring(0, 8)}`,
       });
     } catch (error) {
-      console.error('Error sharing invoice:', error);
+      console.error("Error sharing invoice:", error);
     }
   };
 
@@ -267,7 +278,11 @@ export default function SaleDetailsScreen() {
     return (
       <ThemedView style={styles.container}>
         <ThemedText>Sale not found</ThemedText>
-        <Button title="Go Back" onPress={() => router.back()} style={styles.backButton} />
+        <Button
+          title="Go Back"
+          onPress={() => router.back()}
+          style={styles.backButton}
+        />
       </ThemedView>
     );
   }
@@ -276,8 +291,14 @@ export default function SaleDetailsScreen() {
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Invoice #{sale.id.substring(0, 8)}</ThemedText>
-          <Button title="Back" variant="secondary" onPress={() => router.back()} />
+          <ThemedText style={styles.title}>
+            Invoice #{sale.id.substring(0, 8)}
+          </ThemedText>
+          <Button
+            title="Back"
+            variant="secondary"
+            onPress={() => router.back()}
+          />
         </View>
 
         <Card style={styles.detailsCard}>
@@ -305,23 +326,35 @@ export default function SaleDetailsScreen() {
 
         <Card style={styles.itemsCard}>
           <ThemedText style={styles.sectionTitle}>Items</ThemedText>
-          
+
           <View style={styles.tableHeader}>
-            <ThemedText style={[styles.tableHeaderText, styles.productCol]}>Product</ThemedText>
-            <ThemedText style={[styles.tableHeaderText, styles.qtyCol]}>Qty</ThemedText>
-            <ThemedText style={[styles.tableHeaderText, styles.priceCol]}>Price</ThemedText>
-            <ThemedText style={[styles.tableHeaderText, styles.discountCol]}>Disc%</ThemedText>
-            <ThemedText style={[styles.tableHeaderText, styles.totalCol]}>Total</ThemedText>
+            <ThemedText style={[styles.tableHeaderText, styles.productCol]}>
+              Product
+            </ThemedText>
+            <ThemedText style={[styles.tableHeaderText, styles.qtyCol]}>
+              Qty
+            </ThemedText>
+            <ThemedText style={[styles.tableHeaderText, styles.priceCol]}>
+              Price
+            </ThemedText>
+            <ThemedText style={[styles.tableHeaderText, styles.totalCol]}>
+              Total
+            </ThemedText>
           </View>
-          
-          {sale.items.map(item => {
+
+          {sale.items.map((item) => {
             return (
               <View key={item.productId} style={styles.tableRow}>
-                <ThemedText style={styles.productCol}>{item.productName}</ThemedText>
+                <ThemedText style={styles.productCol}>
+                  {item.productName}
+                </ThemedText>
                 <ThemedText style={styles.qtyCol}>{item.quantity}</ThemedText>
-                <ThemedText style={styles.priceCol}>{item.unitPrice.toFixed(2)}</ThemedText>
-                <ThemedText style={styles.discountCol}>{item.discount}%</ThemedText>
-                <ThemedText style={styles.totalCol}>{item.lineTotal.toFixed(2)}</ThemedText>
+                <ThemedText style={styles.priceCol}>
+                  {item.unitPrice.toFixed(2)}
+                </ThemedText>
+                <ThemedText style={styles.totalCol}>
+                  {item.lineTotal.toFixed(2)}
+                </ThemedText>
               </View>
             );
           })}
@@ -334,7 +367,9 @@ export default function SaleDetailsScreen() {
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
             <ThemedText style={styles.totalText}>Total:</ThemedText>
-            <ThemedText style={styles.totalText}>{sale.total.toFixed(2)}</ThemedText>
+            <ThemedText style={styles.totalText}>
+              {sale.total.toFixed(2)}
+            </ThemedText>
           </View>
         </Card>
 
@@ -355,7 +390,9 @@ export default function SaleDetailsScreen() {
           {isGeneratingPdf && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#0066cc" />
-              <ThemedText style={styles.loadingText}>Generating PDF...</ThemedText>
+              <ThemedText style={styles.loadingText}>
+                Generating PDF...
+              </ThemedText>
             </View>
           )}
         </View>
@@ -370,91 +407,87 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 60,
     marginBottom: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   detailsCard: {
     marginBottom: 16,
   },
   detailsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
   detailsLabel: {
-    fontWeight: '600',
+    fontWeight: "600",
     width: 100,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
   },
   itemsCard: {
     marginBottom: 16,
   },
   tableHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
     paddingBottom: 8,
     marginBottom: 8,
   },
   tableHeaderText: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   productCol: {
     flex: 3,
   },
   qtyCol: {
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   priceCol: {
     flex: 1.5,
-    textAlign: 'right',
-  },
-  discountCol: {
-    flex: 1,
-    textAlign: 'center',
+    textAlign: "right",
   },
   totalCol: {
     flex: 1.5,
-    textAlign: 'right',
+    textAlign: "right",
   },
   summaryCard: {
     marginBottom: 16,
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    borderTopColor: "#ddd",
     paddingTop: 8,
     marginTop: 8,
   },
   totalText: {
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 18,
   },
   actions: {
     marginTop: 24,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
   },
   shareButton: {
@@ -464,14 +497,14 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
   loadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1000,
   },
   loadingText: {

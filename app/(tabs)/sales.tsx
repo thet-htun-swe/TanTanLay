@@ -146,7 +146,6 @@ export default function SalesScreen() {
           "Product",
           "Quantity",
           "Unit Price",
-          "Discount",
           "Line Total",
         ],
       ];
@@ -160,7 +159,6 @@ export default function SalesScreen() {
             item.productName,
             item.quantity.toString(),
             item.unitPrice.toFixed(2),
-            item.discount.toString() + "%",
             item.lineTotal.toFixed(2),
           ]);
         });
@@ -297,24 +295,24 @@ export default function SalesScreen() {
 
       // Calculate how many labels can fit on a page (2 columns, 3 rows = 6 per page)
       const LABELS_PER_PAGE = 6;
-      
+
       // Group labels into pages
       const totalSales = filteredSales.length;
       const totalPages = Math.ceil(totalSales / LABELS_PER_PAGE);
-      
+
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
         // Start a new page
         htmlContent += '<div class="page"><div class="labels-container">';
-        
+
         // Calculate start and end indices for this page
         const startIdx = pageIndex * LABELS_PER_PAGE;
         const endIdx = Math.min(startIdx + LABELS_PER_PAGE, totalSales);
-        
+
         // Generate labels for this page
         for (let i = startIdx; i < endIdx; i++) {
           const sale = filteredSales[i];
           const saleDate = formatDate(sale.date);
-          
+
           htmlContent += `
             <div class="shipping-label">
               <div class="label-header">Tan Tan Lay</div>
@@ -332,9 +330,9 @@ export default function SalesScreen() {
             </div>
           `;
         }
-        
+
         // Close the page container
-        htmlContent += '</div></div>';
+        htmlContent += "</div></div>";
       }
 
       htmlContent += `
