@@ -1,6 +1,7 @@
 import { generateUUID } from "@/utils/uuid";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useNavigation } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -38,6 +39,31 @@ export default function NewSaleScreen() {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Reset form data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset form when screen comes into focus
+      const resetForm = () => {
+        setSelectedProducts([]);
+        setCustomerName("");
+        setCustomerContact("");
+        setCustomerAddress("");
+        setSelectedOption(null);
+        setCustomProductName("");
+        setCustomProductPrice("");
+        setShowCustomProductForm(false);
+      };
+      
+      // Reset form when the screen comes into focus
+      resetForm();
+      
+      return () => {
+        // This runs when the screen is unfocused
+        // No need to do anything here as we reset on focus
+      };
+    }, [])
+  );
 
   const addProductToSale = (product: Product) => {
     // Check if product is already in the sale
