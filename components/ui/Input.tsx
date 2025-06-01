@@ -27,6 +27,7 @@ export function Input({ label, error, containerStyle, ...props }: InputProps) {
       <TextInput
         style={[
           styles.input,
+          props.multiline && styles.multilineInput,
           {
             color: theme.text,
             borderColor: error ? "#ff6b6b" : theme.border,
@@ -54,6 +55,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  multilineInput: {
+    height: 100,
+    paddingTop: 12,
+    textAlignVertical: "top",
   },
   error: {
     color: "#ff6b6b",

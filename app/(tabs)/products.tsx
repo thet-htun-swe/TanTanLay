@@ -1,39 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { generateUUID } from '@/utils/uuid';
+import { generateUUID } from "@/utils/uuid";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, FlatList, StyleSheet, View } from "react-native";
 
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useAppStore } from '@/store';
-import { Product } from '@/types';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { useAppStore } from "@/store";
+import { Product } from "@/types";
 
 export default function ProductsScreen() {
   const { products, fetchProducts, addProduct, removeProduct } = useAppStore();
   const [isAddingProduct, setIsAddingProduct] = useState(false);
-  
+
   // Form state
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [stockQty, setStockQty] = useState('');
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [stockQty, setStockQty] = useState("");
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
   const resetForm = () => {
-    setName('');
-    setPrice('');
-    setStockQty('');
+    setName("");
+    setPrice("");
+    setStockQty("");
     setIsAddingProduct(false);
   };
 
   const handleAddProduct = () => {
     if (!name || !price || !stockQty) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
@@ -49,22 +49,22 @@ export default function ProductsScreen() {
   };
 
   const navigateToEditProduct = (product: Product) => {
-    router.push({ pathname: '/product/[id]', params: { id: product.id } });
+    router.push({ pathname: "/product/[id]", params: { id: product.id } });
   };
 
   const confirmDeleteProduct = (productId: string) => {
     Alert.alert(
-      'Delete Product',
-      'Are you sure you want to delete this product?',
+      "Delete Product",
+      "Are you sure you want to delete this product?",
       [
         {
-          text: 'Cancel',
-          style: 'cancel',
+          text: "Cancel",
+          style: "cancel",
         },
         {
-          text: 'Delete',
+          text: "Delete",
           onPress: () => removeProduct(productId),
-          style: 'destructive',
+          style: "destructive",
         },
       ]
     );
@@ -74,7 +74,9 @@ export default function ProductsScreen() {
     <Card style={styles.productCard}>
       <View style={styles.productHeader}>
         <ThemedText style={styles.productName}>{item.name}</ThemedText>
-        <ThemedText style={styles.productPrice}>{item.price.toFixed(2)}</ThemedText>
+        <ThemedText style={styles.productPrice}>
+          {item.price.toFixed(2)}
+        </ThemedText>
       </View>
       <View style={styles.productDetails}>
         <ThemedText>Stock: {item.stockQty}</ThemedText>
@@ -110,9 +112,7 @@ export default function ProductsScreen() {
 
       {isAddingProduct && (
         <Card style={styles.formCard}>
-          <ThemedText style={styles.formTitle}>
-            Add New Product
-          </ThemedText>
+          <ThemedText style={styles.formTitle}>Add New Product</ThemedText>
           <Input
             label="Product Name"
             value={name}
@@ -170,15 +170,15 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
-    marginTop: 60,
+    marginTop: 32,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   productList: {
     paddingBottom: 100,
@@ -187,25 +187,25 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   productHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   productName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   productPrice: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   productDetails: {
     marginBottom: 12,
   },
   productActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   actionButton: {
     marginLeft: 8,
@@ -217,19 +217,19 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
   },
   formActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: 8,
   },
   formButton: {
     marginLeft: 8,
   },
   emptyText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 40,
     fontSize: 16,
   },

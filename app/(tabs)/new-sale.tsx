@@ -91,8 +91,6 @@ export default function NewSaleScreen() {
     setSelectedProducts(updatedItems);
   };
 
-
-
   const removeItem = (productId: string) => {
     setSelectedProducts(
       selectedProducts.filter((item) => item.productId !== productId)
@@ -217,16 +215,23 @@ export default function NewSaleScreen() {
               placeholder="Enter customer name"
             />
             <Input
-              label="Contact (Phone/Email)"
+              label="Contact (Phone)"
               value={customerContact}
-              onChangeText={setCustomerContact}
-              placeholder="Enter contact information"
+              onChangeText={(text) => {
+                // Only allow numeric input
+                const numericValue = text.replace(/[^0-9]/g, "");
+                setCustomerContact(numericValue);
+              }}
+              placeholder="Enter phone number"
+              keyboardType="phone-pad"
             />
             <Input
               label="Address"
               value={customerAddress}
               onChangeText={setCustomerAddress}
               placeholder="Enter customer address"
+              multiline={true}
+              numberOfLines={3}
             />
           </Card>
 
@@ -407,8 +412,6 @@ export default function NewSaleScreen() {
                         </View>
                       </View>
 
-
-
                       <View style={styles.cartItemDetail}>
                         <ThemedText>Line Total:</ThemedText>
                         <ThemedText style={styles.lineTotal}>
@@ -460,7 +463,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    marginTop: 60,
+    marginTop: 32,
     marginBottom: 16,
   },
   title: {
@@ -470,10 +473,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 16,
   },
   customerCard: {
     marginBottom: 16,
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
   },
   productsCard: {
     marginBottom: 16,

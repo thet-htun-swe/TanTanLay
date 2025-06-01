@@ -120,7 +120,12 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
 
   useEffect(() => {
     if (inputValue.trim() === "") {
-      setFilteredOptions([]);
+      // Show all options when input is empty but focused
+      if (isFocused) {
+        setFilteredOptions([...options]);
+      } else {
+        setFilteredOptions([]);
+      }
       return;
     }
 
@@ -128,7 +133,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
       option.label.toLowerCase().includes(inputValue.toLowerCase())
     );
     setFilteredOptions(filtered);
-  }, [inputValue, options]);
+  }, [inputValue, options, isFocused]);
 
   const handleInputChange = (text: string) => {
     setInputValue(text);
