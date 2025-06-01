@@ -70,6 +70,9 @@ export default function SalesScreen() {
       );
     }
 
+    // Sort by date with latest at the top
+    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     setFilteredSales(filtered);
   }, [sales, searchQuery, dateRangeFiltered, appliedStartDate, appliedEndDate]);
 
