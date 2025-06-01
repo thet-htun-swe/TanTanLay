@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as Print from "expo-print";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,6 +10,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -243,18 +245,6 @@ export default function SaleDetailsScreen() {
     }
   };
 
-  const printPdfInvoice = async () => {
-    try {
-      const htmlContent = generateInvoiceHTML();
-      await Print.printAsync({
-        html: htmlContent,
-      });
-    } catch (error) {
-      console.error("Error printing invoice:", error);
-      Alert.alert("Error", "Failed to print invoice");
-    }
-  };
-
   const shareInvoice = async () => {
     try {
       await Share.share({
@@ -294,11 +284,6 @@ export default function SaleDetailsScreen() {
           <ThemedText style={styles.title}>
             Invoice #{sale.id.substring(0, 8)}
           </ThemedText>
-          <Button
-            title="Back"
-            variant="secondary"
-            onPress={() => router.back()}
-          />
         </View>
 
         <Card style={styles.detailsCard}>
@@ -374,19 +359,16 @@ export default function SaleDetailsScreen() {
         </Card>
 
         <View style={styles.actions}>
-          <Button
-            title="Share PDF Invoice"
+          <TouchableOpacity
             onPress={sharePdfInvoice}
-            style={styles.shareButton}
             disabled={isGeneratingPdf}
-          />
-          <Button
-            title="Print Invoice"
-            onPress={printPdfInvoice}
-            style={styles.printButton}
-            variant="secondary"
-            disabled={isGeneratingPdf}
-          />
+            style={[
+              styles.shareIconButton,
+              isGeneratingPdf && { opacity: 0.5 },
+            ]}
+          >
+            <Ionicons name="share-outline" size={24} color="#0066cc" />
+          </TouchableOpacity>
           {isGeneratingPdf && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color="#0066cc" />
@@ -410,7 +392,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 60,
     marginBottom: 16,
   },
   title: {
@@ -491,7 +472,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   shareButton: {
-    minWidth: 200,
+    minWidth: 150,
+  },
+  shareIconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   printButton: {
     minWidth: 200,
