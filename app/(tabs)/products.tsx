@@ -1,10 +1,17 @@
 import { generateUUID } from "@/utils/uuid";
-import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -13,7 +20,8 @@ import { Product } from "@/types";
 
 export default function ProductsScreen() {
   const { products, fetchProducts, addProduct, removeProduct } = useAppStore();
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -28,28 +36,49 @@ export default function ProductsScreen() {
     setName("");
     setPrice("");
     setStockQty("");
-    setIsAddingProduct(false);
+    setEditingProduct(null);
+    setIsBottomSheetVisible(false);
   };
 
-  const handleAddProduct = () => {
+  const handleSaveProduct = () => {
     if (!name || !price || !stockQty) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    const newProduct: Product = {
-      id: generateUUID(),
-      name,
-      price: parseFloat(price),
-      stockQty: parseInt(stockQty, 10),
-    };
+    if (editingProduct) {
+      // Update existing product
+      const updatedProduct: Product = {
+        ...editingProduct,
+        name,
+        price: parseFloat(price),
+        stockQty: parseInt(stockQty, 10),
+      };
 
-    addProduct(newProduct);
+      // Use the existing editProduct function from the store
+      const { editProduct } = useAppStore.getState();
+      editProduct(updatedProduct);
+    } else {
+      // Add new product
+      const newProduct: Product = {
+        id: generateUUID(),
+        name,
+        price: parseFloat(price),
+        stockQty: parseInt(stockQty, 10),
+      };
+
+      addProduct(newProduct);
+    }
+
     resetForm();
   };
 
-  const navigateToEditProduct = (product: Product) => {
-    router.push({ pathname: "/product/[id]", params: { id: product.id } });
+  const openEditProductSheet = (product: Product) => {
+    setEditingProduct(product);
+    setName(product.name);
+    setPrice(product.price.toString());
+    setStockQty(product.stockQty.toString());
+    setIsBottomSheetVisible(true);
   };
 
   const confirmDeleteProduct = (productId: string) => {
@@ -85,7 +114,7 @@ export default function ProductsScreen() {
         <Button
           title="Edit"
           variant="secondary"
-          onPress={() => navigateToEditProduct(item)}
+          onPress={() => openEditProductSheet(item)}
           style={styles.actionButton}
         />
         <Button
@@ -102,17 +131,18 @@ export default function ProductsScreen() {
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Products</ThemedText>
-        {!isAddingProduct && (
-          <Button
-            title="Add Product"
-            onPress={() => setIsAddingProduct(true)}
-          />
-        )}
       </View>
 
-      {isAddingProduct && (
-        <Card style={styles.formCard}>
-          <ThemedText style={styles.formTitle}>Add New Product</ThemedText>
+      {/* Bottom Sheet for Add/Edit Product Form */}
+      <BottomSheet
+        isVisible={isBottomSheetVisible}
+        onClose={resetForm}
+        height={450}
+      >
+        <View style={styles.bottomSheetContent}>
+          <ThemedText style={styles.formTitle}>
+            {editingProduct ? "Edit Product" : "Add New Product"}
+          </ThemedText>
           <Input
             label="Product Name"
             value={name}
@@ -141,13 +171,13 @@ export default function ProductsScreen() {
               style={styles.formButton}
             />
             <Button
-              title="Add"
-              onPress={handleAddProduct}
+              title={editingProduct ? "Save Changes" : "Add"}
+              onPress={handleSaveProduct}
               style={styles.formButton}
             />
           </View>
-        </Card>
-      )}
+        </View>
+      </BottomSheet>
 
       <FlatList
         data={products}
@@ -160,6 +190,14 @@ export default function ProductsScreen() {
           </ThemedText>
         }
       />
+
+      {/* Floating Action Button (FAB) */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setIsBottomSheetVisible(true)}
+      >
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
     </ThemedView>
   );
 }
@@ -232,5 +270,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 40,
     fontSize: 16,
+  },
+  // New styles for bottom sheet and FAB
+  bottomSheetContent: {
+    padding: 20,
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  fab: {
+    position: "absolute",
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    right: 20,
+    bottom: 20,
+    backgroundColor: "#0066cc",
+    borderRadius: 28,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
