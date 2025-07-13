@@ -3,7 +3,7 @@
     "name": "tantanlay",
     "slug": "tantanlay",
     "version": "1.0.1",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "tantanlay",
     "userInterfaceStyle": "automatic",
