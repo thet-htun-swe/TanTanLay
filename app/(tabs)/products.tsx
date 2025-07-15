@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -139,7 +140,7 @@ export default function ProductsScreen() {
         onClose={resetForm}
         height={450}
       >
-        <View style={styles.bottomSheetContent}>
+        <ScrollView contentContainerStyle={styles.bottomSheetContent}>
           <ThemedText style={styles.formTitle}>
             {editingProduct ? "Edit Product" : "Add New Product"}
           </ThemedText>
@@ -176,7 +177,7 @@ export default function ProductsScreen() {
               style={styles.formButton}
             />
           </View>
-        </View>
+        </ScrollView>
       </BottomSheet>
 
       <FlatList
