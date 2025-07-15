@@ -4,7 +4,7 @@
     "slug": "tantanlay",
     "version": "1.0.1",
     "orientation": "default",
-    "icon": "./assets/images/tantanlay-app-icon.png",
+    "icon": "./assets/images/tantanlay-app-icon-2.png",
     "scheme": "tantanlay",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +14,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/tantanlay-app-icon.png",
+        "foregroundImage": "./assets/images/tantanlay-app-icon-2.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
