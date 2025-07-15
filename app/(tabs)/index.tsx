@@ -170,7 +170,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButton: {
-    marginBottom: 8,
+    marginVertical: 8,
+    height: 60,
+    fontSize: 18,
   },
   recentCard: {
     marginBottom: 100,
