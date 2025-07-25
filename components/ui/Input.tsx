@@ -55,6 +55,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
+    lineHeight: 24,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   multilineInput: {
     height: 100,
