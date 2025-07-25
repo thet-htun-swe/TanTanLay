@@ -1,8 +1,12 @@
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
-import { Dimensions, Keyboard, KeyboardEvent, Platform } from "react-native";
 import {
+  Dimensions,
+  Keyboard,
+  KeyboardEvent,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,7 +15,6 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 interface Option {
   id: string;
@@ -50,31 +53,40 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
   const theme = Colors[colorScheme ?? "light"];
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>('bottom');
+  const [dropdownPosition, setDropdownPosition] = useState<"top" | "bottom">(
+    "bottom"
+  );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const containerRef = useRef<View>(null);
   const [filteredOptions, setFilteredOptions] = useState<Option[]>([]);
   const inputRef = useRef<TextInput>(null);
-  
+
   // Check if there's enough space below the input for the dropdown
   const checkDropdownPosition = () => {
     if (!containerRef.current) return;
-    
+
     containerRef.current.measure((x, y, width, height, pageX, pageY) => {
-      const screenHeight = Dimensions.get('window').height;
-      const effectiveScreenHeight = keyboardVisible ? screenHeight - keyboardHeight : screenHeight;
-      const spaceBelow = effectiveScreenHeight - pageY - height - SCREEN_PADDING;
+      const screenHeight = Dimensions.get("window").height;
+      const effectiveScreenHeight = keyboardVisible
+        ? screenHeight - keyboardHeight
+        : screenHeight;
+      const spaceBelow =
+        effectiveScreenHeight - pageY - height - SCREEN_PADDING;
       const spaceNeeded = Math.min(
-        DROPDOWN_MAX_HEIGHT, 
-        filteredOptions.length * DROPDOWN_ITEM_HEIGHT + (showCreateOption ? DROPDOWN_ITEM_HEIGHT : 0)
+        DROPDOWN_MAX_HEIGHT,
+        filteredOptions.length * DROPDOWN_ITEM_HEIGHT +
+          (showCreateOption ? DROPDOWN_ITEM_HEIGHT : 0)
       );
-      
+
       // If keyboard is visible or there's not enough space below, show dropdown on top
-      if ((keyboardVisible && spaceBelow < spaceNeeded) || (spaceBelow < spaceNeeded && pageY > spaceNeeded)) {
-        setDropdownPosition('top');
+      if (
+        (keyboardVisible && spaceBelow < spaceNeeded) ||
+        (spaceBelow < spaceNeeded && pageY > spaceNeeded)
+      ) {
+        setDropdownPosition("top");
       } else {
-        setDropdownPosition('bottom');
+        setDropdownPosition("bottom");
       }
     });
   };
@@ -86,11 +98,11 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
       setInputValue("");
     }
   }, [value]);
-  
+
   // Set up keyboard listeners
   useEffect(() => {
     const keyboardWillShowListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       (event: KeyboardEvent) => {
         setKeyboardVisible(true);
         setKeyboardHeight(event.endCoordinates.height);
@@ -98,7 +110,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
     );
 
     const keyboardWillHideListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
         setKeyboardVisible(false);
         setKeyboardHeight(0);
@@ -154,13 +166,11 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
     setIsFocused(false);
     Keyboard.dismiss();
   };
-  
 
-
-  const showCreateOption = 
-    inputValue.trim() !== "" && 
+  const showCreateOption =
+    inputValue.trim() !== "" &&
     !filteredOptions.some(
-      option => option.label.toLowerCase() === inputValue.toLowerCase()
+      (option) => option.label.toLowerCase() === inputValue.toLowerCase()
     );
 
   return (
@@ -213,16 +223,19 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
           style={[
             styles.dropdown,
             { backgroundColor: theme.background, borderColor: theme.border },
-            dropdownPosition === 'top' ? styles.dropdownTop : styles.dropdownBottom,
+            dropdownPosition === "top"
+              ? styles.dropdownTop
+              : styles.dropdownBottom,
+            // styles.dropdownTop,
           ]}
         >
           {filteredOptions.length > 0 ? (
-            <ScrollView 
+            <ScrollView
               style={styles.optionsList}
               nestedScrollEnabled
               keyboardShouldPersistTaps="handled"
             >
-              {filteredOptions.map(item => (
+              {filteredOptions.map((item) => (
                 <TouchableOpacity
                   key={item.id}
                   style={styles.option}
@@ -249,7 +262,11 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
               style={styles.createOption}
               onPress={handleCreateOption}
             >
-              <Ionicons name="add-circle-outline" size={16} color={theme.tint} />
+              <Ionicons
+                name="add-circle-outline"
+                size={16}
+                color={theme.tint}
+              />
               <Text style={[styles.createOptionText, { color: theme.tint }]}>
                 {createOptionMessage} "{inputValue}"
               </Text>
@@ -278,6 +295,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     height: "100%",
+    lineHeight: 24,
+    textAlignVertical: "center",
+    includeFontPadding: false,
   },
   iconContainer: {
     padding: 4,
@@ -315,6 +335,9 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 16,
+    lineHeight: 24,
+    textAlignVertical: "center",
+    includeFontPadding: false,
   },
   noOptions: {
     padding: 16,
