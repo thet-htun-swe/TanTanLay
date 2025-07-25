@@ -1,10 +1,11 @@
 import { generateUUID } from "@/utils/uuid";
-import { router, useNavigation } from "expo-router";
-import React, { useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
+  Dimensions,
   Platform,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,20 @@ export default function NewSaleScreen() {
   const [customerName, setCustomerName] = useState("");
   const [customerContact, setCustomerContact] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [orientation, setOrientation] = useState(
+    Dimensions.get("window").width > Dimensions.get("window").height ? "landscape" : "portrait"
+  );
+
+  // Handle orientation changes
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener("change", ({
+      window: { width, height },
+    }) => {
+      setOrientation(width > height ? "landscape" : "portrait");
+    });
+
+    return () => subscription?.remove();
+  }, []);
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
     label: string;
@@ -54,10 +69,10 @@ export default function NewSaleScreen() {
         setCustomProductPrice("");
         setShowCustomProductForm(false);
       };
-      
+
       // Reset form when the screen comes into focus
       resetForm();
-      
+
       return () => {
         // This runs when the screen is unfocused
         // No need to do anything here as we reset on focus
@@ -217,9 +232,10 @@ export default function NewSaleScreen() {
   return (
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView
+        key={`keyboard-avoiding-${orientation}`}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingContainer}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 20}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <ScrollView
           style={styles.scrollContainer}
