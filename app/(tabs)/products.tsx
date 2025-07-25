@@ -1,10 +1,8 @@
-import { generateUUID } from "@/utils/uuid";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Alert,
   FlatList,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -12,75 +10,18 @@ import {
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
 import { useAppStore } from "@/store";
 import { Product } from "@/types";
+import { router } from "expo-router";
 
 export default function ProductsScreen() {
-  const { products, fetchProducts, addProduct, removeProduct } = useAppStore();
-  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  // Form state
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [stockQty, setStockQty] = useState("");
+  const { products, fetchProducts, removeProduct } = useAppStore();
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  const resetForm = () => {
-    setName("");
-    setPrice("");
-    setStockQty("");
-    setEditingProduct(null);
-    setIsBottomSheetVisible(false);
-  };
-
-  const handleSaveProduct = () => {
-    if (!name || !price || !stockQty) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-
-    if (editingProduct) {
-      // Update existing product
-      const updatedProduct: Product = {
-        ...editingProduct,
-        name,
-        price: parseFloat(price),
-        stockQty: parseInt(stockQty, 10),
-      };
-
-      // Use the existing editProduct function from the store
-      const { editProduct } = useAppStore.getState();
-      editProduct(updatedProduct);
-    } else {
-      // Add new product
-      const newProduct: Product = {
-        id: generateUUID(),
-        name,
-        price: parseFloat(price),
-        stockQty: parseInt(stockQty, 10),
-      };
-
-      addProduct(newProduct);
-    }
-
-    resetForm();
-  };
-
-  const openEditProductSheet = (product: Product) => {
-    setEditingProduct(product);
-    setName(product.name);
-    setPrice(product.price.toString());
-    setStockQty(product.stockQty.toString());
-    setIsBottomSheetVisible(true);
-  };
 
   const confirmDeleteProduct = (productId: string) => {
     Alert.alert(
@@ -115,7 +56,7 @@ export default function ProductsScreen() {
         <Button
           title="Edit"
           variant="secondary"
-          onPress={() => openEditProductSheet(item)}
+          onPress={() => router.push(`/product/${item.id}`)}
           style={styles.actionButton}
         />
         <Button
@@ -134,52 +75,6 @@ export default function ProductsScreen() {
         <ThemedText style={styles.title}>Products</ThemedText>
       </View>
 
-      {/* Bottom Sheet for Add/Edit Product Form */}
-      <BottomSheet
-        isVisible={isBottomSheetVisible}
-        onClose={resetForm}
-        height={450}
-      >
-        <ScrollView contentContainerStyle={styles.bottomSheetContent}>
-          <ThemedText style={styles.formTitle}>
-            {editingProduct ? "Edit Product" : "Add New Product"}
-          </ThemedText>
-          <Input
-            label="Product Name"
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter product name"
-          />
-          <Input
-            label="Price"
-            value={price}
-            onChangeText={setPrice}
-            placeholder="0.00"
-            keyboardType="decimal-pad"
-          />
-          <Input
-            label="Stock Quantity"
-            value={stockQty}
-            onChangeText={setStockQty}
-            placeholder="0"
-            keyboardType="number-pad"
-          />
-          <View style={styles.formActions}>
-            <Button
-              title="Cancel"
-              variant="secondary"
-              onPress={resetForm}
-              style={styles.formButton}
-            />
-            <Button
-              title={editingProduct ? "Save Changes" : "Add"}
-              onPress={handleSaveProduct}
-              style={styles.formButton}
-            />
-          </View>
-        </ScrollView>
-      </BottomSheet>
-
       <FlatList
         data={products}
         renderItem={renderProductItem}
@@ -195,7 +90,8 @@ export default function ProductsScreen() {
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setIsBottomSheetVisible(true)}
+        onPress={() => router.push("/product/create")}
+        // onPress={() => setIsBottomSheetVisible(true)}
       >
         <Ionicons name="add" size={24} color="white" />
       </TouchableOpacity>
