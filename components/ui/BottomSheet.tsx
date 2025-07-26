@@ -87,13 +87,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       <View style={styles.container}>
         <TouchableWithoutFeedback onPress={onClose}>
           <Animated.View
-            style={[
-              styles.backdrop,
-              { opacity: backdropOpacity },
-            ]}
+            style={[styles.backdrop, { opacity: backdropOpacity }]}
           />
         </TouchableWithoutFeedback>
-        
+
         <Animated.View
           style={[
             styles.sheet,
@@ -102,10 +99,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               transform: [{ translateY }],
             },
           ]}
-          {...panResponder.panHandlers}
         >
-          <View style={styles.handle} />
-          <ThemedView style={styles.content}>
+          <View 
+            style={styles.handle} 
+            {...panResponder.panHandlers}
+          />
+          <ThemedView style={styles.content} pointerEvents="box-none">
             {children}
           </ThemedView>
         </Animated.View>
