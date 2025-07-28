@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useAppStore } from "@/store";
 
 import * as Updates from "expo-updates";
 import { useEffect } from "react";
@@ -27,13 +28,26 @@ useEffect(() => {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const { initializeApp, isInitialized, error } = useAppStore();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
+  useEffect(() => {
+    if (loaded) {
+      initializeApp();
+    }
+  }, [loaded, initializeApp]);
+
+  if (!loaded || !isInitialized) {
+    // Show loading while fonts and database are initializing
     return null;
+  }
+
+  if (error) {
+    // Handle database initialization error
+    console.error('Database initialization error:', error);
+    // You could show an error screen here
   }
 
   return (

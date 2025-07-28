@@ -1,12 +1,25 @@
 import { create } from 'zustand';
 import { Product, Sale, SaleItem } from '@/types';
-import { getProducts, getSales, saveProduct, updateProduct, deleteProduct, saveSale } from '@/services/storage';
+import { 
+  initializeDatabase,
+  getProducts, 
+  getSales, 
+  saveProduct, 
+  updateProduct, 
+  deleteProduct, 
+  saveSale 
+} from '@/services/database';
+import { migrationService } from '@/services/migration';
 
 interface AppState {
   products: Product[];
   sales: Sale[];
   loading: boolean;
   error: string | null;
+  isInitialized: boolean;
+  
+  // Initialization
+  initializeApp: () => Promise<void>;
   
   // Product actions
   fetchProducts: () => Promise<void>;
@@ -24,6 +37,52 @@ export const useAppStore = create<AppState>((set, get) => ({
   sales: [],
   loading: false,
   error: null,
+  isInitialized: false,
+  
+  // Initialize database and load initial data
+  initializeApp: async () => {
+    if (get().isInitialized) return;
+    
+    set({ loading: true, error: null });
+    try {
+      await initializeDatabase();
+      
+      // Check if migration is needed and perform it
+      const migrationCompleted = await migrationService.isMigrationCompleted();
+      if (!migrationCompleted) {
+        console.log('Starting data migration from AsyncStorage to SQLite...');
+        const migrationResult = await migrationService.migrateFromAsyncStorage();
+        if (migrationResult.success) {
+          console.log('Migration completed:', migrationResult.message);
+          if (migrationResult.stats) {
+            console.log('Migration stats:', migrationResult.stats);
+          }
+        } else {
+          console.error('Migration failed:', migrationResult.message);
+        }
+      }
+      
+      // Load initial data
+      const [products, sales] = await Promise.all([
+        getProducts(),
+        getSales()
+      ]);
+      
+      set({ 
+        products, 
+        sales, 
+        loading: false, 
+        isInitialized: true 
+      });
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
+      set({ 
+        error: 'Failed to initialize database', 
+        loading: false,
+        isInitialized: false
+      });
+    }
+  },
   
   // Product actions
   fetchProducts: async () => {

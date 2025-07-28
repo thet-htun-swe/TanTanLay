@@ -18,7 +18,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getSaleById } from "@/services/storage";
+import { getSaleById } from "@/services/database";
 import { useAppStore } from "@/store";
 import { Product, Sale } from "@/types";
 
