@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(npm run lint)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npx expo lint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

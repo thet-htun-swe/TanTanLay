@@ -8,7 +8,7 @@ interface FilterState {
   dateRangeActive: boolean;
 }
 
-export const useSalesFilter = (sales: Sale[]) => {
+export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     startDate: new Date(new Date().setDate(new Date().getDate() - 30)),

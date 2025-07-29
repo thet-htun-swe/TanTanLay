@@ -6,8 +6,8 @@ import { SaleItem } from '@/types';
 
 interface SaleItemsListProps {
   items: SaleItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdateQuantity: (productId: number | string, quantity: number) => void;
+  onRemoveItem: (productId: number | string) => void;
 }
 
 export const SaleItemsList: React.FC<SaleItemsListProps> = ({
@@ -24,7 +24,7 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
       <ThemedText style={styles.title}>Sale Items</ThemedText>
       
       {items.map((item) => (
-        <View key={item.productId} style={styles.item}>
+        <View key={item.productId?.toString() ?? `item-${item.productName}`} style={styles.item}>
           <View style={styles.itemHeader}>
             <ThemedText style={styles.itemName}>
               {item.productName}

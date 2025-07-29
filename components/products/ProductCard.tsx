@@ -6,9 +6,9 @@ import { Button } from '../ui/Button';
 import { Product } from '@/types';
 
 interface ProductCardProps {
-  product: Product;
-  onEdit: (productId: string) => void;
-  onDelete: (productId: string) => void;
+  product: Product & { id: number };
+  onEdit: (productId: number) => void;
+  onDelete: (productId: number) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({

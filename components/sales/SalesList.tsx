@@ -5,8 +5,8 @@ import { SaleCard } from './SaleCard';
 import { Sale } from '@/types';
 
 interface SalesListProps {
-  sales: Sale[];
-  onSalePress: (saleId: string) => void;
+  sales: (Sale & { id: number })[];
+  onSalePress: (saleId: number) => void;
   emptyMessage?: string;
 }
 
@@ -15,7 +15,7 @@ export const SalesList: React.FC<SalesListProps> = ({
   onSalePress,
   emptyMessage = "No sales found. Create your first sale!",
 }) => {
-  const renderSaleItem = ({ item }: { item: Sale }) => (
+  const renderSaleItem = ({ item }: { item: Sale & { id: number } }) => (
     <SaleCard sale={item} onPress={onSalePress} />
   );
 
@@ -23,7 +23,7 @@ export const SalesList: React.FC<SalesListProps> = ({
     <FlatList
       data={sales}
       renderItem={renderSaleItem}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id?.toString() ?? `sale-${Math.random()}`}
       contentContainerStyle={styles.list}
       ListEmptyComponent={
         <ThemedText style={styles.emptyText}>

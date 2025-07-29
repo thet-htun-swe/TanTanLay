@@ -14,7 +14,7 @@ export class ExportUtils {
     );
   }
 
-  static async generateExcel(sales: Sale[]): Promise<void> {
+  static async generateExcel(sales: (Sale & { id: number })[]): Promise<void> {
     try {
       // Create worksheet data
       const wsData = [
@@ -23,7 +23,7 @@ export class ExportUtils {
 
       sales.forEach((sale) => {
         wsData.push([
-          sale.id,
+          sale.id.toString(),
           this.formatDate(sale.date),
           sale.customer.name,
           sale.customer.contact,
@@ -48,7 +48,7 @@ export class ExportUtils {
       sales.forEach((sale) => {
         sale.items.forEach((item) => {
           itemsData.push([
-            sale.id,
+            sale.id.toString(),
             this.formatDate(sale.date),
             sale.customer.name,
             item.productName,
@@ -93,7 +93,7 @@ export class ExportUtils {
     }
   }
 
-  static async generateShippingLabels(sales: Sale[]): Promise<void> {
+  static async generateShippingLabels(sales: (Sale & { id: number })[]): Promise<void> {
     try {
       if (sales.length === 0) {
         throw new Error("No sales to generate shipping labels for.");
@@ -117,7 +117,7 @@ export class ExportUtils {
     }
   }
 
-  private static generateShippingLabelsHTML(sales: Sale[]): string {
+  private static generateShippingLabelsHTML(sales: (Sale & { id: number })[]): string {
     const LABELS_PER_PAGE = 6;
     const totalSales = sales.length;
     const totalPages = Math.ceil(totalSales / LABELS_PER_PAGE);

@@ -28,7 +28,7 @@ export default function EditProductScreen() {
   // Load product data when component mounts
   useEffect(() => {
     if (id) {
-      const product = products.find((p) => p.id === id);
+      const product = products.find((p) => p.id === parseInt(id, 10));
       if (product) {
         setName(product.name);
         setPrice(product.price.toString());
@@ -66,7 +66,7 @@ export default function EditProductScreen() {
 
     try {
       const updatedProduct = {
-        id,
+        id: parseInt(id, 10),
         name: name.trim(),
         price: parseFloat(parseFloat(price).toFixed(2)),
         stockQty: parseInt(stockQty, 10),

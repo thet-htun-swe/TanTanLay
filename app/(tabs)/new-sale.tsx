@@ -68,7 +68,7 @@ export default function NewSaleScreen() {
     });
   };
 
-  const updateItemQuantity = (productId: string, quantity: number) => {
+  const updateItemQuantity = (productId: number | string, quantity: number) => {
     if (quantity <= 0) {
       setSelectedProducts(prev => prev.filter(item => item.productId !== productId));
       return;
@@ -87,7 +87,7 @@ export default function NewSaleScreen() {
     );
   };
 
-  const removeItem = (productId: string) => {
+  const removeItem = (productId: number | string) => {
     setSelectedProducts(prev => prev.filter(item => item.productId !== productId));
   };
 
@@ -144,8 +144,7 @@ export default function NewSaleScreen() {
         address: customerAddress.trim(),
       };
 
-      const newSale: Sale = {
-        id: generateUUID(),
+      const newSale: Omit<Sale, 'id'> = {
         date: new Date().toISOString(),
         customer,
         items: selectedProducts,
@@ -153,10 +152,10 @@ export default function NewSaleScreen() {
         total,
       };
 
-      await addSale(newSale);
+      const saleId = await addSale(newSale);
 
       Alert.alert("Success", "Sale created successfully", [
-        { text: "OK", onPress: () => router.push(`/sale/${newSale.id}`) },
+        { text: "OK", onPress: () => router.push(`/sale/${saleId}`) },
       ]);
     } catch (error) {
       Alert.alert("Error", "Failed to create sale. Please try again.");

@@ -9,7 +9,7 @@ import { Product, SaleItem } from '@/types';
 import { generateUUID } from '@/utils/uuid';
 
 interface ProductSelectorProps {
-  products: Product[];
+  products: (Product & { id: number })[];
   onAddItem: (item: SaleItem) => void;
 }
 
@@ -20,19 +20,19 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
   const [selectedOption, setSelectedOption] = useState<{
     id: string;
     label: string;
-    value: Product;
+    value: Product & { id: number };
   } | null>(null);
   const [customProductName, setCustomProductName] = useState("");
   const [customProductPrice, setCustomProductPrice] = useState("");
   const [showCustomProductForm, setShowCustomProductForm] = useState(false);
 
   const productOptions = products.map((product) => ({
-    id: product.id,
+    id: product.id?.toString() ?? `product-${product.name}`,
     label: product.name,
     value: product,
   }));
 
-  const addProductToSale = (product: Product) => {
+  const addProductToSale = (product: (Product & { id: number }) | (Product & { id: string })) => {
     const newItem: SaleItem = {
       productId: product.id,
       productName: product.name,
@@ -49,12 +49,12 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       return;
     }
 
-    const customProduct: Product = {
+    const customProduct = {
       id: `custom-${generateUUID()}`,
       name: customProductName,
       price: parseFloat(customProductPrice) || 0,
       stockQty: 0,
-    };
+    } as Product & { id: string };
 
     addProductToSale(customProduct);
 

@@ -13,7 +13,6 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAppStore } from "@/store";
-import { generateUUID } from "@/utils/uuid";
 
 export default function CreateProductScreen() {
   const { addProduct } = useAppStore();
@@ -50,7 +49,6 @@ export default function CreateProductScreen() {
 
     try {
       const newProduct = {
-        id: generateUUID(),
         name: name.trim(),
         price: parseFloat(parseFloat(price).toFixed(2)),
         stockQty: parseInt(stockQty, 10),

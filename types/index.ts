@@ -1,6 +1,5 @@
 // Product model
 export interface Product {
-  id: string;
   name: string;
   price: number;
   stockQty: number;
@@ -15,7 +14,7 @@ export interface Customer {
 
 // Line item in a sale
 export interface SaleItem {
-  productId: string;
+  productId: number | string; // number for products, string for custom products
   productName: string; // Added product name to store directly with the sale item
   quantity: number;
   unitPrice: number;
@@ -24,7 +23,6 @@ export interface SaleItem {
 
 // Sale/Invoice model
 export interface Sale {
-  id: string;
   date: string;
   customer: Customer;
   items: SaleItem[];

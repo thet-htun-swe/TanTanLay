@@ -23,7 +23,7 @@ export default function ProductsScreen() {
     fetchProducts();
   }, [fetchProducts]);
 
-  const confirmDeleteProduct = (productId: string) => {
+  const confirmDeleteProduct = (productId: number) => {
     Alert.alert(
       "Delete Product",
       "Are you sure you want to delete this product?",
@@ -41,7 +41,7 @@ export default function ProductsScreen() {
     );
   };
 
-  const renderProductItem = ({ item }: { item: Product }) => (
+  const renderProductItem = ({ item }: { item: Product & { id: number } }) => (
     <Card style={styles.productCard}>
       <View style={styles.productHeader}>
         <ThemedText style={styles.productName}>{item.name}</ThemedText>
@@ -78,7 +78,7 @@ export default function ProductsScreen() {
       <FlatList
         data={products}
         renderItem={renderProductItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.productList}
         ListEmptyComponent={
           <ThemedText style={styles.emptyText}>

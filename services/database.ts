@@ -1,7 +1,7 @@
-import * as SQLite from 'expo-sqlite';
-import { Product, Sale, Customer, SaleItem } from '@/types';
+import { Customer, Product, Sale, SaleItem } from "@/types";
+import * as SQLite from "expo-sqlite";
 
-const DB_NAME = 'tantanlay.db';
+const DB_NAME = "tantanlay.db";
 
 class DatabaseService {
   private db: SQLite.SQLiteDatabase | null = null;
@@ -9,27 +9,27 @@ class DatabaseService {
   async initializeDatabase(): Promise<void> {
     try {
       this.db = await SQLite.openDatabaseAsync(DB_NAME);
-      
+
       await this.db.execAsync(`
         PRAGMA journal_mode = WAL;
         PRAGMA foreign_keys = ON;
       `);
 
       await this.createTables();
-      console.log('Database initialized successfully');
+      console.log("Database initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize database:', error);
+      console.error("Failed to initialize database:", error);
       throw error;
     }
   }
 
   private async createTables(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     await this.db.execAsync(`
       -- Products table
       CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         price REAL NOT NULL,
         stock_qty INTEGER NOT NULL DEFAULT 0,
@@ -49,7 +49,7 @@ class DatabaseService {
 
       -- Sales table
       CREATE TABLE IF NOT EXISTS sales (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         customer_id INTEGER NOT NULL,
         customer_name TEXT NOT NULL,
         customer_contact TEXT,
@@ -64,8 +64,8 @@ class DatabaseService {
       -- Sale items table
       CREATE TABLE IF NOT EXISTS sale_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sale_id TEXT NOT NULL,
-        product_id TEXT NOT NULL,
+        sale_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
         product_name TEXT NOT NULL,
         quantity INTEGER NOT NULL,
         unit_price REAL NOT NULL,
@@ -97,57 +97,64 @@ class DatabaseService {
   }
 
   // Product operations
-  async saveProduct(product: Product): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+  async saveProduct(product: Omit<Product, "id">): Promise<number> {
+    if (!this.db) throw new Error("Database not initialized");
 
-    await this.db.runAsync(
-      'INSERT INTO products (id, name, price, stock_qty) VALUES (?, ?, ?, ?)',
-      [product.id, product.name, product.price, product.stockQty]
-    );
-  }
-
-  async getProducts(): Promise<Product[]> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const rows = await this.db.getAllAsync(
-      'SELECT id, name, price, stock_qty as stockQty FROM products ORDER BY name'
+    const result = await this.db.runAsync(
+      "INSERT INTO products (name, price, stock_qty) VALUES (?, ?, ?)",
+      [product.name, product.price, product.stockQty]
     );
     
-    return rows as Product[];
+    return result.lastInsertRowId;
   }
 
-  async getProductById(productId: string): Promise<Product | null> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getProducts(): Promise<(Product & { id: number })[]> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const rows = await this.db.getAllAsync(
+      "SELECT id, name, price, stock_qty as stockQty FROM products ORDER BY name"
+    );
+
+    // Filter out any rows with null or invalid ids
+    return rows.filter(
+      (row: any) => row.id != null && typeof row.id === "number"
+    ) as (Product & { id: number })[];
+  }
+
+  async getProductById(
+    productId: number
+  ): Promise<(Product & { id: number }) | null> {
+    if (!this.db) throw new Error("Database not initialized");
 
     const row = await this.db.getFirstAsync(
-      'SELECT id, name, price, stock_qty as stockQty FROM products WHERE id = ?',
+      "SELECT id, name, price, stock_qty as stockQty FROM products WHERE id = ?",
       [productId]
     );
 
-    return row as Product | null;
+    return row as (Product & { id: number }) | null;
   }
 
-  async updateProduct(product: Product): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+  async updateProduct(product: Product & { id: number }): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
 
     await this.db.runAsync(
-      'UPDATE products SET name = ?, price = ?, stock_qty = ? WHERE id = ?',
+      "UPDATE products SET name = ?, price = ?, stock_qty = ? WHERE id = ?",
       [product.name, product.price, product.stockQty, product.id]
     );
   }
 
-  async deleteProduct(productId: string): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+  async deleteProduct(productId: number): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
 
-    await this.db.runAsync('DELETE FROM products WHERE id = ?', [productId]);
+    await this.db.runAsync("DELETE FROM products WHERE id = ?", [productId]);
   }
 
   // Customer operations
   async saveCustomer(customer: Customer): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     const result = await this.db.runAsync(
-      'INSERT INTO customers (name, contact, address) VALUES (?, ?, ?)',
+      "INSERT INTO customers (name, contact, address) VALUES (?, ?, ?)",
       [customer.name, customer.contact || null, customer.address || null]
     );
 
@@ -155,12 +162,12 @@ class DatabaseService {
   }
 
   async findOrCreateCustomer(customer: Customer): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     // Try to find existing customer by name and contact
     const existingCustomer = await this.db.getFirstAsync(
-      'SELECT id FROM customers WHERE name = ? AND contact = ?',
-      [customer.name, customer.contact || '']
+      "SELECT id FROM customers WHERE name = ? AND contact = ?",
+      [customer.name, customer.contact || ""]
     );
 
     if (existingCustomer) {
@@ -172,75 +179,83 @@ class DatabaseService {
   }
 
   async getCustomers(): Promise<(Customer & { id: number })[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     const rows = await this.db.getAllAsync(
-      'SELECT id, name, contact, address FROM customers ORDER BY name'
+      "SELECT id, name, contact, address FROM customers ORDER BY name"
     );
-    
+
     return rows as (Customer & { id: number })[];
   }
 
   // Sale operations
-  async saveSale(sale: Sale): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+  async saveSale(sale: Omit<Sale, "id">): Promise<number> {
+    if (!this.db) throw new Error("Database not initialized");
 
     try {
       // Start transaction
-      await this.db.execAsync('BEGIN TRANSACTION');
+      await this.db.execAsync("BEGIN TRANSACTION");
 
       // Find or create customer
       const customerId = await this.findOrCreateCustomer(sale.customer);
 
       // Insert sale
-      await this.db.runAsync(`
-        INSERT INTO sales (id, customer_id, customer_name, customer_contact, customer_address, subtotal, total, date) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        sale.id,
-        customerId,
-        sale.customer.name,
-        sale.customer.contact || null,
-        sale.customer.address || null,
-        sale.subtotal,
-        sale.total,
-        sale.date
-      ]);
+      const saleResult = await this.db.runAsync(
+        `
+        INSERT INTO sales (customer_id, customer_name, customer_contact, customer_address, subtotal, total, date) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          customerId,
+          sale.customer.name,
+          sale.customer.contact || null,
+          sale.customer.address || null,
+          sale.subtotal,
+          sale.total,
+          sale.date,
+        ]
+      );
+
+      const saleId = saleResult.lastInsertRowId;
 
       // Insert sale items
       for (const item of sale.items) {
-        await this.db.runAsync(`
+        await this.db.runAsync(
+          `
           INSERT INTO sale_items (sale_id, product_id, product_name, quantity, unit_price, line_total) 
           VALUES (?, ?, ?, ?, ?, ?)
-        `, [
-          sale.id,
-          item.productId,
-          item.productName,
-          item.quantity,
-          item.unitPrice,
-          item.lineTotal
-        ]);
+        `,
+          [
+            saleId,
+            item.productId,
+            item.productName,
+            item.quantity,
+            item.unitPrice,
+            item.lineTotal,
+          ]
+        );
 
         // Update product stock for existing products (not custom products)
-        if (!item.productId.startsWith('custom-')) {
+        if (typeof item.productId === "number") {
           await this.db.runAsync(
-            'UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?',
+            "UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?",
             [item.quantity, item.productId]
           );
         }
       }
 
       // Commit transaction
-      await this.db.execAsync('COMMIT');
+      await this.db.execAsync("COMMIT");
+      return saleId;
     } catch (error) {
       // Rollback transaction on error
-      await this.db.execAsync('ROLLBACK');
+      await this.db.execAsync("ROLLBACK");
       throw error;
     }
   }
 
-  async getSales(): Promise<Sale[]> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getSales(): Promise<(Sale & { id: number })[]> {
+    if (!this.db) throw new Error("Database not initialized");
 
     const salesRows = await this.db.getAllAsync(`
       SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date 
@@ -248,11 +263,16 @@ class DatabaseService {
       ORDER BY date DESC
     `);
 
-    const sales: Sale[] = [];
+    // Filter out any rows with null or invalid ids
+    const validSalesRows = salesRows.filter(
+      (row: any) => row.id != null && typeof row.id === "number"
+    );
 
-    for (const saleRow of salesRows) {
+    const sales: (Sale & { id: number })[] = [];
+
+    for (const saleRow of validSalesRows) {
       const sale = saleRow as {
-        id: string;
+        id: number;
         customer_name: string;
         customer_contact: string | null;
         customer_address: string | null;
@@ -262,12 +282,15 @@ class DatabaseService {
       };
 
       // Get sale items
-      const itemsRows = await this.db.getAllAsync(`
+      const itemsRows = await this.db.getAllAsync(
+        `
         SELECT product_id, product_name, quantity, unit_price, line_total 
         FROM sale_items 
         WHERE sale_id = ?
         ORDER BY id
-      `, [sale.id]);
+      `,
+        [sale.id]
+      );
 
       const items: SaleItem[] = itemsRows.map((item: any) => ({
         productId: item.product_id,
@@ -282,8 +305,8 @@ class DatabaseService {
         date: sale.date,
         customer: {
           name: sale.customer_name,
-          contact: sale.customer_contact || '',
-          address: sale.customer_address || '',
+          contact: sale.customer_contact || "",
+          address: sale.customer_address || "",
         },
         items,
         subtotal: sale.subtotal,
@@ -294,19 +317,22 @@ class DatabaseService {
     return sales;
   }
 
-  async getSaleById(saleId: string): Promise<Sale | null> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getSaleById(saleId: number): Promise<(Sale & { id: number }) | null> {
+    if (!this.db) throw new Error("Database not initialized");
 
-    const saleRow = await this.db.getFirstAsync(`
+    const saleRow = await this.db.getFirstAsync(
+      `
       SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date 
       FROM sales 
       WHERE id = ?
-    `, [saleId]);
+    `,
+      [saleId]
+    );
 
     if (!saleRow) return null;
 
     const sale = saleRow as {
-      id: string;
+      id: number;
       customer_name: string;
       customer_contact: string | null;
       customer_address: string | null;
@@ -316,12 +342,15 @@ class DatabaseService {
     };
 
     // Get sale items
-    const itemsRows = await this.db.getAllAsync(`
+    const itemsRows = await this.db.getAllAsync(
+      `
       SELECT product_id, product_name, quantity, unit_price, line_total 
       FROM sale_items 
       WHERE sale_id = ?
       ORDER BY id
-    `, [saleId]);
+    `,
+      [saleId]
+    );
 
     const items: SaleItem[] = itemsRows.map((item: any) => ({
       productId: item.product_id,
@@ -336,8 +365,8 @@ class DatabaseService {
       date: sale.date,
       customer: {
         name: sale.customer_name,
-        contact: sale.customer_contact || '',
-        address: sale.customer_address || '',
+        contact: sale.customer_contact || "",
+        address: sale.customer_address || "",
       },
       items,
       subtotal: sale.subtotal,
@@ -346,21 +375,32 @@ class DatabaseService {
   }
 
   // Analytics and reporting methods
-  async getSalesByDateRange(startDate: string, endDate: string): Promise<Sale[]> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getSalesByDateRange(
+    startDate: string,
+    endDate: string
+  ): Promise<(Sale & { id: number })[]> {
+    if (!this.db) throw new Error("Database not initialized");
 
-    const salesRows = await this.db.getAllAsync(`
+    const salesRows = await this.db.getAllAsync(
+      `
       SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date 
       FROM sales 
       WHERE date >= ? AND date <= ?
       ORDER BY date DESC
-    `, [startDate, endDate]);
+    `,
+      [startDate, endDate]
+    );
 
-    const sales: Sale[] = [];
+    // Filter out any rows with null or invalid ids
+    const validSalesRows = salesRows.filter(
+      (row: any) => row.id != null && typeof row.id === "number"
+    );
 
-    for (const saleRow of salesRows) {
+    const sales: (Sale & { id: number })[] = [];
+
+    for (const saleRow of validSalesRows) {
       const sale = saleRow as {
-        id: string;
+        id: number;
         customer_name: string;
         customer_contact: string | null;
         customer_address: string | null;
@@ -369,11 +409,14 @@ class DatabaseService {
         date: string;
       };
 
-      const itemsRows = await this.db.getAllAsync(`
+      const itemsRows = await this.db.getAllAsync(
+        `
         SELECT product_id, product_name, quantity, unit_price, line_total 
         FROM sale_items 
         WHERE sale_id = ?
-      `, [sale.id]);
+      `,
+        [sale.id]
+      );
 
       const items: SaleItem[] = itemsRows.map((item: any) => ({
         productId: item.product_id,
@@ -388,8 +431,8 @@ class DatabaseService {
         date: sale.date,
         customer: {
           name: sale.customer_name,
-          contact: sale.customer_contact || '',
-          address: sale.customer_address || '',
+          contact: sale.customer_contact || "",
+          address: sale.customer_address || "",
         },
         items,
         subtotal: sale.subtotal,
@@ -401,26 +444,30 @@ class DatabaseService {
   }
 
   async getTotalSalesAmount(): Promise<number> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
-    const result = await this.db.getFirstAsync('SELECT SUM(total) as total FROM sales');
+    const result = await this.db.getFirstAsync(
+      "SELECT SUM(total) as total FROM sales"
+    );
     return (result as { total: number }).total || 0;
   }
 
-  async getLowStockProducts(threshold: number = 5): Promise<Product[]> {
-    if (!this.db) throw new Error('Database not initialized');
+  async getLowStockProducts(
+    threshold: number = 5
+  ): Promise<(Product & { id: number })[]> {
+    if (!this.db) throw new Error("Database not initialized");
 
     const rows = await this.db.getAllAsync(
-      'SELECT id, name, price, stock_qty as stockQty FROM products WHERE stock_qty <= ? ORDER BY stock_qty ASC',
+      "SELECT id, name, price, stock_qty as stockQty FROM products WHERE stock_qty <= ? ORDER BY stock_qty ASC",
       [threshold]
     );
-    
-    return rows as Product[];
+
+    return rows as (Product & { id: number })[];
   }
 
   // Migration helper methods
   async clearAllData(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     await this.db.execAsync(`
       DELETE FROM sale_items;
@@ -428,6 +475,20 @@ class DatabaseService {
       DELETE FROM customers;
       DELETE FROM products;
     `);
+  }
+
+  // Method to recreate tables with correct schema
+  async recreateTables(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    await this.db.execAsync(`
+      DROP TABLE IF EXISTS sale_items;
+      DROP TABLE IF EXISTS sales;
+      DROP TABLE IF EXISTS customers;
+      DROP TABLE IF EXISTS products;
+    `);
+
+    await this.createTables();
   }
 
   async closeDatabase(): Promise<void> {
@@ -444,17 +505,23 @@ export const databaseService = new DatabaseService();
 // Export individual functions for backward compatibility
 export const initializeDatabase = () => databaseService.initializeDatabase();
 
-export const saveProduct = (product: Product) => databaseService.saveProduct(product);
+export const saveProduct = (product: Omit<Product, "id">) =>
+  databaseService.saveProduct(product);
 export const getProducts = () => databaseService.getProducts();
-export const getProductById = (id: string) => databaseService.getProductById(id);
-export const updateProduct = (product: Product) => databaseService.updateProduct(product);
-export const deleteProduct = (id: string) => databaseService.deleteProduct(id);
+export const getProductById = (id: number) =>
+  databaseService.getProductById(id);
+export const updateProduct = (product: Product & { id: number }) =>
+  databaseService.updateProduct(product);
+export const deleteProduct = (id: number) => databaseService.deleteProduct(id);
 
-export const saveSale = (sale: Sale) => databaseService.saveSale(sale);
+export const saveSale = (sale: Omit<Sale, "id">) =>
+  databaseService.saveSale(sale);
 export const getSales = () => databaseService.getSales();
-export const getSaleById = (id: string) => databaseService.getSaleById(id);
+export const getSaleById = (id: number) => databaseService.getSaleById(id);
 
 export const getCustomers = () => databaseService.getCustomers();
-export const getSalesByDateRange = (start: string, end: string) => databaseService.getSalesByDateRange(start, end);
+export const getSalesByDateRange = (start: string, end: string) =>
+  databaseService.getSalesByDateRange(start, end);
 export const getTotalSalesAmount = () => databaseService.getTotalSalesAmount();
-export const getLowStockProducts = (threshold?: number) => databaseService.getLowStockProducts(threshold);
+export const getLowStockProducts = (threshold?: number) =>
+  databaseService.getLowStockProducts(threshold);

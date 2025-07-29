@@ -6,8 +6,8 @@ import { Card } from '../ui/Card';
 import { Sale } from '@/types';
 
 interface SaleCardProps {
-  sale: Sale;
-  onPress: (saleId: string) => void;
+  sale: Sale & { id: number };
+  onPress: (saleId: number) => void;
 }
 
 export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {

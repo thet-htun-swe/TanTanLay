@@ -17,7 +17,7 @@ export const useInvoice = () => {
     );
   };
 
-  const generateInvoiceHTML = (sale: Sale) => {
+  const generateInvoiceHTML = (sale: Sale & { id: number }) => {
     return `
       <!DOCTYPE html>
       <html>
@@ -94,7 +94,7 @@ export const useInvoice = () => {
             
             <div class="invoice-info">
               <h3>Invoice Details:</h3>
-              <div>Invoice #: ${sale.id.substring(0, 8)}</div>
+              <div>Invoice #: ${sale.id.toString().padStart(8, '0')}</div>
               <div>Date: ${formatDate(sale.date)}</div>
             </div>
           </div>
@@ -143,7 +143,7 @@ export const useInvoice = () => {
     `;
   };
 
-  const generatePdf = async (sale: Sale): Promise<string | null> => {
+  const generatePdf = async (sale: Sale & { id: number }): Promise<string | null> => {
     try {
       setIsGeneratingPdf(true);
       const htmlContent = generateInvoiceHTML(sale);
@@ -155,7 +155,7 @@ export const useInvoice = () => {
       });
 
       // Create a more descriptive filename
-      const pdfName = `invoice-${sale.id.substring(0, 8)}.pdf`;
+      const pdfName = `invoice-${sale.id.toString().padStart(8, '0')}.pdf`;
       const newUri = FileSystem.documentDirectory + pdfName;
 
       // Copy the file to a location with a better name
@@ -177,7 +177,7 @@ export const useInvoice = () => {
     }
   };
 
-  const sharePdfInvoice = async (sale: Sale) => {
+  const sharePdfInvoice = async (sale: Sale & { id: number }) => {
     try {
       const pdfUri = await generatePdf(sale);
       if (!pdfUri) return;

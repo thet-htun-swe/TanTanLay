@@ -22,7 +22,7 @@ import { useInvoice } from "@/hooks/useInvoice";
 
 export default function SaleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [sale, setSale] = useState<Sale | null>(null);
+  const [sale, setSale] = useState<(Sale & { id: number }) | null>(null);
   const [loading, setLoading] = useState(true);
   const { products } = useAppStore();
   const { formatDate, isGeneratingPdf, sharePdfInvoice } = useInvoice();
@@ -31,7 +31,7 @@ export default function SaleDetailsScreen() {
     const loadSale = async () => {
       if (id) {
         setLoading(true);
-        const saleData = await getSaleById(id);
+        const saleData = await getSaleById(parseInt(id, 10));
         setSale(saleData);
         setLoading(false);
       }
@@ -73,7 +73,7 @@ export default function SaleDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <InvoiceHeader invoiceId={sale.id} />
+        <InvoiceHeader invoiceId={sale.id?.toString() ?? 'N/A'} />
         
         <InvoiceDetails sale={sale} formatDate={formatDate} />
         

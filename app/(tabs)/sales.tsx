@@ -60,7 +60,7 @@ export default function SalesScreen() {
     setIsFilterSheetOpen(false);
   };
 
-  const viewSaleDetails = (saleId: string) => {
+  const viewSaleDetails = (saleId: number) => {
     router.push(`/sale/${saleId}`);
   };
 

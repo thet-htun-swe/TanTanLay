@@ -29,7 +29,7 @@ export const InvoiceItemsTable: React.FC<InvoiceItemsTableProps> = ({ items }) =
       </View>
 
       {items.map((item) => (
-        <View key={item.productId} style={styles.tableRow}>
+        <View key={item.productId?.toString() ?? `item-${item.productName}`} style={styles.tableRow}>
           <ThemedText style={styles.productCol}>
             {item.productName}
           </ThemedText>

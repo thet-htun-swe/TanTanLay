@@ -14,24 +14,28 @@ import { useAppStore } from "@/store";
 import * as Updates from "expo-updates";
 import { useEffect } from "react";
 
-useEffect(() => {
-  async function checkForUpdates() {
-    const update = await Updates.checkForUpdateAsync();
-    if (update.isAvailable) {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
-    }
-  }
-
-  checkForUpdates();
-}, []);
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { initializeApp, isInitialized, error } = useAppStore();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  useEffect(() => {
+    async function checkForUpdates() {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (error) {
+        console.warn('Update check failed:', error);
+      }
+    }
+
+    checkForUpdates();
+  }, []);
 
   useEffect(() => {
     if (loaded) {
