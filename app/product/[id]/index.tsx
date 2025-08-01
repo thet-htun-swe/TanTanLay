@@ -113,7 +113,7 @@ export default function EditProductScreen() {
             style={styles.input}
           />
           <Input
-            label="Price (MMK)"
+            label="Price"
             value={price}
             onChangeText={(text) => {
               // Allow only numbers and one decimal point
