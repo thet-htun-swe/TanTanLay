@@ -9,6 +9,7 @@ interface SaleSummaryProps {
   total: number;
   onCreateSale: () => void;
   loading?: boolean;
+  buttonText?: string;
 }
 
 export const SaleSummary: React.FC<SaleSummaryProps> = ({
@@ -16,6 +17,7 @@ export const SaleSummary: React.FC<SaleSummaryProps> = ({
   total,
   onCreateSale,
   loading = false,
+  buttonText = "Create Sale",
 }) => {
   return (
     <Card style={styles.card}>
@@ -34,7 +36,7 @@ export const SaleSummary: React.FC<SaleSummaryProps> = ({
       </View>
 
       <Button
-        title={loading ? "Creating..." : "Create Sale"}
+        title={loading ? `${buttonText.replace(/\b\w+$/, (match) => match + 'ing')}...` : buttonText}
         onPress={onCreateSale}
         style={styles.createButton}
         disabled={loading}

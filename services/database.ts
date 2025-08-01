@@ -374,6 +374,90 @@ class DatabaseService {
     };
   }
 
+  async updateSale(sale: Sale & { id: number }): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    try {
+      // Start transaction
+      await this.db.execAsync("BEGIN TRANSACTION");
+
+      // Get original sale items to restore stock quantities
+      const originalItemsRows = await this.db.getAllAsync(
+        "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
+        [sale.id]
+      );
+
+      // Restore stock quantities for original items
+      for (const originalItem of originalItemsRows) {
+        const originalItemData = originalItem as { product_id: number | string; quantity: number };
+        if (typeof originalItemData.product_id === "number") {
+          await this.db.runAsync(
+            "UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?",
+            [originalItemData.quantity, originalItemData.product_id]
+          );
+        }
+      }
+
+      // Find or create customer
+      const customerId = await this.findOrCreateCustomer(sale.customer);
+
+      // Update sale
+      await this.db.runAsync(
+        `
+        UPDATE sales 
+        SET customer_id = ?, customer_name = ?, customer_contact = ?, customer_address = ?, 
+            subtotal = ?, total = ?
+        WHERE id = ?
+      `,
+        [
+          customerId,
+          sale.customer.name,
+          sale.customer.contact || null,
+          sale.customer.address || null,
+          sale.subtotal,
+          sale.total,
+          sale.id,
+        ]
+      );
+
+      // Delete existing sale items
+      await this.db.runAsync("DELETE FROM sale_items WHERE sale_id = ?", [sale.id]);
+
+      // Insert new sale items
+      for (const item of sale.items) {
+        await this.db.runAsync(
+          `
+          INSERT INTO sale_items (sale_id, product_id, product_name, quantity, unit_price, line_total) 
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+          [
+            sale.id,
+            item.productId,
+            item.productName,
+            item.quantity,
+            item.unitPrice,
+            item.lineTotal,
+          ]
+        );
+
+        // Update product stock for existing products (not custom products)
+        if (typeof item.productId === "number") {
+          await this.db.runAsync(
+            "UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?",
+            [item.quantity, item.productId]
+          );
+        }
+      }
+
+      // Commit transaction
+      await this.db.execAsync("COMMIT");
+    } catch (error) {
+      // Rollback transaction on error
+      await this.db.execAsync("ROLLBACK");
+      throw error;
+    }
+  }
+
   // Analytics and reporting methods
   async getSalesByDateRange(
     startDate: string,
@@ -518,6 +602,8 @@ export const saveSale = (sale: Omit<Sale, "id">) =>
   databaseService.saveSale(sale);
 export const getSales = () => databaseService.getSales();
 export const getSaleById = (id: number) => databaseService.getSaleById(id);
+export const updateSale = (sale: Sale & { id: number }) =>
+  databaseService.updateSale(sale);
 
 export const getCustomers = () => databaseService.getCustomers();
 export const getSalesByDateRange = (start: string, end: string) =>

@@ -49,6 +49,12 @@ export default function SaleDetailsScreen() {
     }
   };
 
+  const handleEdit = () => {
+    if (sale) {
+      router.push(`/edit-sale/${sale.id}` as any);
+    }
+  };
+
   if (loading) {
     return (
       <ThemedView style={styles.container}>
@@ -84,6 +90,7 @@ export default function SaleDetailsScreen() {
         <InvoiceActions 
           onSharePdf={handleSharePdf}
           isGeneratingPdf={isGeneratingPdf}
+          onEdit={handleEdit}
         />
       </ScrollView>
     </ThemedView>

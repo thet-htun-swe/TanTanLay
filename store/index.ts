@@ -7,6 +7,7 @@ import {
   saveProduct,
   saveSale,
   updateProduct,
+  updateSale,
 } from "@/services/database";
 import { Product, Sale } from "@/types";
 import { create } from "zustand";
@@ -30,6 +31,7 @@ interface AppState {
   // Sale actions
   fetchSales: () => Promise<void>;
   addSale: (sale: Omit<Sale, "id">) => Promise<number>;
+  editSale: (sale: Sale & { id: number }) => Promise<void>;
 
   // Utility actions
   clearAllData: () => Promise<void>;
@@ -137,6 +139,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       return saleId;
     } catch (error) {
       set({ error: "Failed to add sale", loading: false });
+      throw error;
+    }
+  },
+
+  editSale: async (sale: Sale & { id: number }) => {
+    set({ loading: true, error: null });
+    try {
+      // Update the sale (database service handles stock updates automatically in transaction)
+      await updateSale(sale);
+
+      // Refresh sales and products data to reflect the changes
+      const [sales, products] = await Promise.all([getSales(), getProducts()]);
+      set({ sales, products, loading: false });
+    } catch (error) {
+      set({ error: "Failed to update sale", loading: false });
       throw error;
     }
   },

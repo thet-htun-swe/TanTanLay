@@ -6,24 +6,36 @@ import { ThemedText } from '../ThemedText';
 interface InvoiceActionsProps {
   onSharePdf: () => void;
   isGeneratingPdf: boolean;
+  onEdit?: () => void;
 }
 
 export const InvoiceActions: React.FC<InvoiceActionsProps> = ({ 
   onSharePdf, 
-  isGeneratingPdf 
+  isGeneratingPdf,
+  onEdit
 }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={onSharePdf}
-        disabled={isGeneratingPdf}
-        style={[
-          styles.shareButton,
-          isGeneratingPdf && { opacity: 0.5 },
-        ]}
-      >
-        <Ionicons name="share-outline" size={24} color="#0066cc" />
-      </TouchableOpacity>
+      <View style={styles.buttonsRow}>
+        {onEdit && (
+          <TouchableOpacity
+            onPress={onEdit}
+            style={styles.actionButton}
+          >
+            <Ionicons name="create-outline" size={24} color="#0066cc" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={onSharePdf}
+          disabled={isGeneratingPdf}
+          style={[
+            styles.actionButton,
+            isGeneratingPdf && { opacity: 0.5 },
+          ]}
+        >
+          <Ionicons name="share-outline" size={24} color="#0066cc" />
+        </TouchableOpacity>
+      </View>
       {isGeneratingPdf && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#0066cc" />
@@ -42,7 +54,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  shareButton: {
+  buttonsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  actionButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
