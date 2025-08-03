@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, Alert, StyleSheet } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { Card } from '../ui/Card';
-import { CreatableSelect } from '../ui/CreatableSelect';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
-import { Product, SaleItem } from '@/types';
-import { generateUUID } from '@/utils/uuid';
+import { Product, SaleItem } from "@/types";
+import { generateUUID } from "@/utils/uuid";
+import React, { useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
+import { ThemedText } from "../ThemedText";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { CreatableSelect } from "../ui/CreatableSelect";
+import { Input } from "../ui/Input";
 
 interface ProductSelectorProps {
   products: (Product & { id: number })[];
@@ -32,7 +32,9 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
     value: product,
   }));
 
-  const addProductToSale = (product: (Product & { id: number }) | (Product & { id: string })) => {
+  const addProductToSale = (
+    product: (Product & { id: number }) | (Product & { id: string })
+  ) => {
     const newItem: SaleItem = {
       productId: product.id,
       productName: product.name,
@@ -41,6 +43,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       lineTotal: product.price,
     };
     onAddItem(newItem);
+    setSelectedOption(null);
   };
 
   const handleCreateCustomProduct = () => {
@@ -102,14 +105,14 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
       {showCustomProductForm && (
         <View style={styles.customProductForm}>
           <ThemedText style={styles.formTitle}>Add Custom Product</ThemedText>
-          
+
           <Input
             placeholder="Product name"
             value={customProductName}
             onChangeText={setCustomProductName}
             containerStyle={styles.customProductInput}
           />
-          
+
           <Input
             placeholder="Price"
             value={customProductPrice}
@@ -117,7 +120,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
             keyboardType="decimal-pad"
             containerStyle={styles.customProductInput}
           />
-          
+
           <View style={styles.customProductButtons}>
             <Button
               title="Cancel"
@@ -144,7 +147,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 16,
   },
   searchContainer: {
@@ -154,24 +157,24 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   customProductForm: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 16,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   formTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
   },
   customProductInput: {
     marginBottom: 8,
   },
   customProductButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 16,
   },
   cancelButton: {

@@ -32,6 +32,7 @@ interface CreatableSelectProps {
   disabled?: boolean;
   noOptionsMessage?: string;
   createOptionMessage?: string;
+  clearInputAfterSelect?: boolean;
 }
 
 const DROPDOWN_MAX_HEIGHT = 200;
@@ -48,6 +49,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
   disabled = false,
   noOptionsMessage = "No options found",
   createOptionMessage = "Create",
+  clearInputAfterSelect = true,
 }) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
@@ -159,12 +161,18 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
     setIsFocused(false);
     Keyboard.dismiss();
     onSelect?.(option);
+    if (clearInputAfterSelect) {
+      setInputValue("");
+    }
   };
 
   const handleCreateOption = () => {
     onCreate(inputValue);
     setIsFocused(false);
     Keyboard.dismiss();
+    if (clearInputAfterSelect) {
+      setInputValue("");
+    }
   };
 
   const showCreateOption =
