@@ -188,6 +188,21 @@ class DatabaseService {
     return rows as (Customer & { id: number })[];
   }
 
+  async updateCustomer(customer: Customer & { id: number }): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    await this.db.runAsync(
+      "UPDATE customers SET name = ?, contact = ?, address = ? WHERE id = ?",
+      [customer.name, customer.contact || null, customer.address || null, customer.id]
+    );
+  }
+
+  async deleteCustomer(customerId: number): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    await this.db.runAsync("DELETE FROM customers WHERE id = ?", [customerId]);
+  }
+
   // Sale operations
   async saveSale(sale: Omit<Sale, "id">): Promise<number> {
     if (!this.db) throw new Error("Database not initialized");
@@ -606,6 +621,10 @@ export const updateSale = (sale: Sale & { id: number }) =>
   databaseService.updateSale(sale);
 
 export const getCustomers = () => databaseService.getCustomers();
+export const updateCustomer = (customer: Customer & { id: number }) =>
+  databaseService.updateCustomer(customer);
+export const deleteCustomer = (id: number) => databaseService.deleteCustomer(id);
+
 export const getSalesByDateRange = (start: string, end: string) =>
   databaseService.getSalesByDateRange(start, end);
 export const getTotalSalesAmount = () => databaseService.getTotalSalesAmount();
