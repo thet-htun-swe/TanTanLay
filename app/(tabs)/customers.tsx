@@ -10,12 +10,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CustomerDetailsBottomSheet } from "@/components/CustomerDetailsBottomSheet";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/ui/Card";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { deleteCustomer, getCustomers } from "@/services/database";
+import { getCustomers } from "@/services/database";
 import { Customer } from "@/types";
 import { useRouter } from "expo-router";
 
@@ -24,6 +25,10 @@ export default function CustomersScreen() {
   const router = useRouter();
   const [customers, setCustomers] = useState<(Customer & { id: number })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<
+    (Customer & { id: number }) | null
+  >(null);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   const loadCustomers = async () => {
     try {
@@ -49,35 +54,21 @@ export default function CustomersScreen() {
   };
 
   const handleViewCustomer = (customer: Customer & { id: number }) => {
-    router.push(`/customer/${customer.id}`);
+    setSelectedCustomer(customer);
+    setIsBottomSheetVisible(true);
   };
 
   const handleEditCustomer = (customer: Customer & { id: number }) => {
     router.push(`/customer/${customer.id}/edit`);
   };
 
-  const handleDeleteCustomer = (customer: Customer & { id: number }) => {
-    Alert.alert(
-      "Delete Customer",
-      `Are you sure you want to delete ${customer.name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteCustomer(customer.id);
-              loadCustomers();
-              Alert.alert("Success", "Customer deleted successfully");
-            } catch (error) {
-              console.error("Failed to delete customer:", error);
-              Alert.alert("Error", "Failed to delete customer");
-            }
-          },
-        },
-      ]
-    );
+  const handleCloseBottomSheet = () => {
+    setIsBottomSheetVisible(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleDeleteCustomer = () => {
+    loadCustomers();
   };
 
   const CustomerCard = ({
@@ -96,34 +87,6 @@ export default function CustomersScreen() {
               📞 {customer.contact}
             </ThemedText>
           )}
-          {customer.address && (
-            <ThemedText style={styles.customerDetail}>
-              📍 {customer.address}
-            </ThemedText>
-          )}
-        </View>
-        <View style={styles.customerActions}>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              { backgroundColor: Colors[colorScheme ?? "light"].tint },
-            ]}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleEditCustomer(customer);
-            }}
-          >
-            <MaterialCommunityIcons name="pencil" size={20} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleDeleteCustomer(customer);
-            }}
-          >
-            <MaterialCommunityIcons name="delete" size={20} color="white" />
-          </TouchableOpacity>
         </View>
       </Card>
     </TouchableOpacity>
@@ -168,6 +131,14 @@ export default function CustomersScreen() {
       >
         <MaterialCommunityIcons name="plus" size={24} color="white" />
       </TouchableOpacity>
+
+      <CustomerDetailsBottomSheet
+        customer={selectedCustomer}
+        isVisible={isBottomSheetVisible}
+        onClose={handleCloseBottomSheet}
+        onEdit={handleEditCustomer}
+        onDelete={handleDeleteCustomer}
+      />
     </SafeAreaView>
   );
 }
@@ -235,7 +206,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   deleteButton: {
-    backgroundColor: "#ff4444",
+    backgroundColor: "#666",
   },
   centerContainer: {
     flex: 1,
