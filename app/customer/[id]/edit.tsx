@@ -3,6 +3,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -39,6 +43,15 @@ export default function EditCustomerScreen() {
   useEffect(() => {
     loadCustomer();
   }, [id]);
+
+  // Handle orientation change to dismiss keyboard
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', () => {
+      Keyboard.dismiss();
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   useEffect(() => {
     if (customer) {
@@ -172,11 +185,38 @@ export default function EditCustomerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
         <Card style={styles.formCard}>
           <View style={styles.formSection}>
             <View style={styles.formGroup}>
-              <ThemedText style={styles.label}>Contact Information</ThemedText>
+              <ThemedText style={styles.label}>Customer Name *</ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: Colors[colorScheme ?? "light"].background,
+                    borderColor: Colors[colorScheme ?? "light"].border,
+                    color: Colors[colorScheme ?? "light"].text,
+                  },
+                ]}
+                value={formData.name}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, name: text })
+                }
+                placeholder="Enter customer name"
+                placeholderTextColor={
+                  Colors[colorScheme ?? "light"].tabIconDefault
+                }
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <ThemedText style={styles.label}>Phone Number</ThemedText>
               <TextInput
                 style={[
                   styles.input,
@@ -187,17 +227,19 @@ export default function EditCustomerScreen() {
                   },
                 ]}
                 value={formData.contact}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, contact: text })
-                }
-                placeholder="Phone number or email"
+                onChangeText={(text) => {
+                  // Only allow numeric input
+                  const numericValue = text.replace(/[^0-9]/g, "");
+                  setFormData({ ...formData, contact: numericValue });
+                }}
+                placeholder="Enter phone number"
                 placeholderTextColor={
                   Colors[colorScheme ?? "light"].tabIconDefault
                 }
-                keyboardType="email-address"
+                keyboardType="phone-pad"
               />
               <ThemedText style={styles.helpText}>
-                Phone number, email, or other contact method
+                Enter phone number (numbers only)
               </ThemedText>
             </View>
 
@@ -248,13 +290,17 @@ export default function EditCustomerScreen() {
             />
           </View>
         </Card>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   header: {

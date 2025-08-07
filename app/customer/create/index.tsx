@@ -1,6 +1,16 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -20,6 +30,15 @@ export default function CreateCustomerScreen() {
     contact: "",
     address: "",
   });
+
+  // Handle orientation change to dismiss keyboard
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', () => {
+      Keyboard.dismiss();
+    });
+
+    return () => subscription?.remove();
+  }, []);
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -62,88 +81,124 @@ export default function CreateCustomerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content}>
-        <Card style={styles.formCard}>
-          <View style={styles.formSection}>
-            <View style={styles.formGroup}>
-              <ThemedText style={styles.label}>Contact Information</ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: Colors[colorScheme ?? "light"].background,
-                    borderColor: Colors[colorScheme ?? "light"].border,
-                    color: Colors[colorScheme ?? "light"].text,
-                  },
-                ]}
-                value={formData.contact}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, contact: text })
-                }
-                placeholder="Phone number or email"
-                placeholderTextColor={
-                  Colors[colorScheme ?? "light"].tabIconDefault
-                }
-                keyboardType="email-address"
-              />
-              <ThemedText style={styles.helpText}>
-                Phone number, email, or other contact method
-              </ThemedText>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 100}
+      >
+        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+          <Card style={styles.formCard}>
+            <View style={styles.formSection}>
+              <View style={styles.formGroup}>
+                <ThemedText style={styles.label}>Customer Name *</ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor:
+                        Colors[colorScheme ?? "light"].background,
+                      borderColor: Colors[colorScheme ?? "light"].border,
+                      color: Colors[colorScheme ?? "light"].text,
+                    },
+                  ]}
+                  value={formData.name}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, name: text })
+                  }
+                  placeholder="Enter customer name"
+                  placeholderTextColor={
+                    Colors[colorScheme ?? "light"].tabIconDefault
+                  }
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <ThemedText style={styles.label}>Phone Number</ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor:
+                        Colors[colorScheme ?? "light"].background,
+                      borderColor: Colors[colorScheme ?? "light"].border,
+                      color: Colors[colorScheme ?? "light"].text,
+                    },
+                  ]}
+                  value={formData.contact}
+                  onChangeText={(text) => {
+                    // Only allow numeric input
+                    const numericValue = text.replace(/[^0-9]/g, "");
+                    setFormData({ ...formData, contact: numericValue });
+                  }}
+                  placeholder="Enter phone number"
+                  placeholderTextColor={
+                    Colors[colorScheme ?? "light"].tabIconDefault
+                  }
+                  keyboardType="phone-pad"
+                />
+                <ThemedText style={styles.helpText}>
+                  Enter phone number (numbers only)
+                </ThemedText>
+              </View>
+
+              <View style={styles.formGroup}>
+                <ThemedText style={styles.label}>Address</ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    {
+                      backgroundColor:
+                        Colors[colorScheme ?? "light"].background,
+                      borderColor: Colors[colorScheme ?? "light"].border,
+                      color: Colors[colorScheme ?? "light"].text,
+                    },
+                  ]}
+                  value={formData.address}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, address: text })
+                  }
+                  placeholder="Enter customer address"
+                  placeholderTextColor={
+                    Colors[colorScheme ?? "light"].tabIconDefault
+                  }
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
             </View>
 
-            <View style={styles.formGroup}>
-              <ThemedText style={styles.label}>Address</ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.textArea,
-                  {
-                    backgroundColor: Colors[colorScheme ?? "light"].background,
-                    borderColor: Colors[colorScheme ?? "light"].border,
-                    color: Colors[colorScheme ?? "light"].text,
-                  },
-                ]}
-                value={formData.address}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, address: text })
-                }
-                placeholder="Enter customer address"
-                placeholderTextColor={
-                  Colors[colorScheme ?? "light"].tabIconDefault
-                }
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
+            <View style={styles.buttonSection}>
+              <Button
+                title="Create Customer"
+                onPress={handleSave}
+                disabled={isLoading || !formData.name.trim()}
+                style={{
+                  ...styles.saveButton,
+                  backgroundColor: Colors[colorScheme ?? "light"].tint,
+                  opacity: isLoading || !formData.name.trim() ? 0.5 : 1,
+                }}
+              />
+              <Button
+                title="Cancel"
+                onPress={handleCancel}
+                style={styles.cancelButton}
+                textStyle={{ color: Colors[colorScheme ?? "light"].text }}
               />
             </View>
-          </View>
-
-          <View style={styles.buttonSection}>
-            <Button
-              title="Create Customer"
-              onPress={handleSave}
-              disabled={isLoading || !formData.name.trim()}
-              style={{
-                ...styles.saveButton,
-                backgroundColor: Colors[colorScheme ?? "light"].tint,
-                opacity: isLoading || !formData.name.trim() ? 0.5 : 1,
-              }}
-            />
-            <Button
-              title="Cancel"
-              onPress={handleCancel}
-              style={styles.cancelButton}
-              textStyle={{ color: Colors[colorScheme ?? "light"].text }}
-            />
-          </View>
-        </Card>
-      </ScrollView>
+          </Card>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   header: {
