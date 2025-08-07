@@ -178,38 +178,39 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="formSheet"
       onRequestClose={onClose}
     >
       <ThemedView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <ThemedText style={styles.modalTitle}>Select Customer</ThemedText>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <ThemedText style={styles.closeButtonText}>✕</ThemedText>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <Input
-            placeholder="Search by name or phone number..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            containerStyle={styles.searchInput}
-          />
-        </View>
-
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" />
+        <ScrollView
+          style={styles.modalScrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          <View style={styles.modalHeader}>
+            <ThemedText style={styles.modalTitle}>Select Customer</ThemedText>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <ThemedText style={styles.closeButtonText}>✕</ThemedText>
+            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.contentContainer}>
-            {showCreateForm ? (
-              <ScrollView
-                style={styles.createFormScrollView}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
+
+          <View style={styles.searchContainer}>
+            <Input
+              placeholder="Search by name or phone number..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              containerStyle={styles.searchInput}
+            />
+          </View>
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" />
+            </View>
+          ) : (
+            <View style={styles.contentContainer}>
+              {showCreateForm ? (
                 <View style={styles.createFormContainer}>
                   <ThemedText style={styles.createFormTitle}>
                     Create New Customer
@@ -254,25 +255,44 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
                     style={styles.createButton}
                   />
                 </View>
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={filteredCustomers}
-                renderItem={renderCustomerItem}
-                keyExtractor={(item) => item.id.toString()}
-                style={styles.customersList}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                    <ThemedText style={styles.emptyText}>
-                      No customers found
-                    </ThemedText>
-                  </View>
-                }
-              />
-            )}
-          </View>
-        )}
+              ) : (
+                <View style={styles.customersListContainer}>
+                  {filteredCustomers.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <ThemedText style={styles.emptyText}>
+                        No customers found
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    filteredCustomers.map((customer) => (
+                      <TouchableOpacity
+                        key={customer.id}
+                        style={styles.customerItem}
+                        onPress={() => handleSelectCustomer(customer)}
+                      >
+                        <View style={styles.customerInfo}>
+                          <ThemedText style={styles.customerName}>
+                            {customer.name}
+                          </ThemedText>
+                          {customer.contact && (
+                            <ThemedText style={styles.customerContact}>
+                              {customer.contact}
+                            </ThemedText>
+                          )}
+                          {customer.address && (
+                            <ThemedText style={styles.customerAddress}>
+                              {customer.address}
+                            </ThemedText>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
+          )}
+        </ScrollView>
       </ThemedView>
     </Modal>
   );
@@ -293,10 +313,13 @@ const styles = StyleSheet.create({
   // Modal styles
   modalContainer: {
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 20,
   },
-  createFormScrollView: {
+  modalScrollContainer: {
     flex: 1,
+  },
+  customersListContainer: {
+    paddingBottom: 20,
   },
   modalHeader: {
     flexDirection: "row",
