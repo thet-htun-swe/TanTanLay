@@ -11,7 +11,7 @@ import { router } from "expo-router";
 
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
-import { CustomerForm } from "@/components/sales/CustomerForm";
+import { CustomerSelector } from "@/components/sales/CustomerSelector";
 import { ProductSelector } from "@/components/sales/ProductSelector";
 import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
@@ -19,14 +19,12 @@ import { SaleSummary } from "@/components/sales/SaleSummary";
 import { useAppStore } from "@/store";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
 import { Customer, Sale, SaleItem } from "@/types";
-import { generateUUID } from "@/utils/uuid";
+
 
 export default function NewSaleScreen() {
   const { products, fetchProducts, addSale } = useAppStore();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
-  const [customerName, setCustomerName] = useState("");
-  const [customerContact, setCustomerContact] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<(Customer & { id?: number }) | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const { subtotal, total } = useSaleCalculations(selectedProducts);
@@ -40,9 +38,7 @@ export default function NewSaleScreen() {
     React.useCallback(() => {
       const resetForm = () => {
         setSelectedProducts([]);
-        setCustomerName("");
-        setCustomerContact("");
-        setCustomerAddress("");
+        setSelectedCustomer(null);
       };
       resetForm();
     }, [])
@@ -96,8 +92,8 @@ export default function NewSaleScreen() {
       return { isValid: false, error: "Please add at least one product to the sale" };
     }
 
-    if (!customerName.trim()) {
-      return { isValid: false, error: "Please enter customer name" };
+    if (!selectedCustomer?.name?.trim()) {
+      return { isValid: false, error: "Please select a customer" };
     }
 
     // Validate stock quantities for existing products
@@ -139,9 +135,9 @@ export default function NewSaleScreen() {
 
     try {
       const customer: Customer = {
-        name: customerName.trim(),
-        contact: customerContact.trim(),
-        address: customerAddress.trim(),
+        name: selectedCustomer!.name.trim(),
+        contact: selectedCustomer!.contact?.trim() || '',
+        address: selectedCustomer!.address?.trim() || '',
       };
 
       const newSale: Omit<Sale, 'id'> = {
@@ -157,7 +153,7 @@ export default function NewSaleScreen() {
       Alert.alert("Success", "Sale created successfully", [
         { text: "OK", onPress: () => router.push(`/sale/${saleId}`) },
       ]);
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to create sale. Please try again.");
     } finally {
       setIsCreating(false);
@@ -178,13 +174,9 @@ export default function NewSaleScreen() {
         >
           <ScreenHeader title="New Sale" />
 
-          <CustomerForm
-            name={customerName}
-            contact={customerContact}
-            address={customerAddress}
-            onNameChange={setCustomerName}
-            onContactChange={setCustomerContact}
-            onAddressChange={setCustomerAddress}
+          <CustomerSelector
+            selectedCustomer={selectedCustomer}
+            onCustomerSelect={setSelectedCustomer}
           />
 
           <ProductSelector

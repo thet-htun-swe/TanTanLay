@@ -1,7 +1,8 @@
 // Sales-related Components
 export { SaleCard } from './SaleCard';
 export { SalesList } from './SalesList';
-export { CustomerForm } from './CustomerForm';
+export { CustomerForm, CustomerSelectionModal } from './CustomerForm';
+export { CustomerSelector } from './CustomerSelector';
 export { ProductSelector } from './ProductSelector';
 export { SaleItemsList } from './SaleItemsList';
 export { SaleSummary } from './SaleSummary';

@@ -621,6 +621,7 @@ export const updateSale = (sale: Sale & { id: number }) =>
   databaseService.updateSale(sale);
 
 export const getCustomers = () => databaseService.getCustomers();
+export const saveCustomer = (customer: Customer) => databaseService.saveCustomer(customer);
 export const updateCustomer = (customer: Customer & { id: number }) =>
   databaseService.updateCustomer(customer);
 export const deleteCustomer = (id: number) => databaseService.deleteCustomer(id);
