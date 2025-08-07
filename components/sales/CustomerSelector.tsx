@@ -9,6 +9,7 @@ import { CustomerSelectionModal } from "./CustomerForm";
 interface CustomerSelectorProps {
   selectedCustomer: (Customer & { id?: number }) | null;
   onCustomerSelect: (customer: Customer & { id?: number }) => void;
+  style?: any;
 }
 
 export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
@@ -33,33 +34,24 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
   return (
     <Card style={styles.card}>
-      <ThemedText style={styles.title}>Customer Information</ThemedText>
+      <ThemedText style={styles.title}>Customer Info</ThemedText>
 
-      <TouchableOpacity
-        style={styles.selectorButton}
-        onPress={() => setIsModalVisible(true)}
-      >
-        {selectedCustomer ? (
-          <View>
-            <ThemedText style={styles.selectedCustomerName}>
-              {selectedCustomer.name}
-            </ThemedText>
-            {selectedCustomer.contact && (
-              <ThemedText style={styles.selectedCustomerContact}>
-                {selectedCustomer.contact}
-              </ThemedText>
-            )}
-            {selectedCustomer.address && (
-              <ThemedText style={styles.selectedCustomerAddress}>
-                {selectedCustomer.address}
-              </ThemedText>
-            )}
-          </View>
-        ) : (
-          <ThemedText style={styles.placeholderText}>
-            Tap to select or create customer
+      {selectedCustomer && (
+        <View>
+          <ThemedText style={styles.selectedCustomerName}>
+            {selectedCustomer.name}
           </ThemedText>
-        )}
+          {selectedCustomer.contact && (
+            <ThemedText style={styles.selectedCustomerContact}>
+              {selectedCustomer.contact}
+            </ThemedText>
+          )}
+        </View>
+      )}
+      <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+        <ThemedText style={styles.chooseCustomerText}>
+          + choose customer
+        </ThemedText>
       </TouchableOpacity>
 
       <CustomerSelectionModal
@@ -74,7 +66,9 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
+    marginBottom: 0,
+    marginTop: 0,
+    flex: 1,
   },
   title: {
     fontSize: 18,
@@ -108,5 +102,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.5,
     fontStyle: "italic",
+  },
+  chooseCustomerText: {
+    fontSize: 14,
+    opacity: 0.6,
+    marginTop: 8,
+    color: "#007AFF",
   },
 });

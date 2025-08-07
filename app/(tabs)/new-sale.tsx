@@ -1,3 +1,6 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useFocusEffect } from "@react-navigation/native";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -9,9 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { router } from "expo-router";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
@@ -20,15 +20,16 @@ import { ProductSelector } from "@/components/sales/ProductSelector";
 import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
-import { useAppStore } from "@/store";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
+import { useAppStore } from "@/store";
 import { Customer, Sale, SaleItem } from "@/types";
-
 
 export default function NewSaleScreen() {
   const { products, fetchProducts, addSale } = useAppStore();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<(Customer & { id?: number }) | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<
+    (Customer & { id?: number }) | null
+  >(null);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -52,16 +53,20 @@ export default function NewSaleScreen() {
   );
 
   const addProductToSale = (newItem: SaleItem) => {
-    setSelectedProducts(prev => {
-      const existingIndex = prev.findIndex(item => item.productId === newItem.productId);
-      
+    setSelectedProducts((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) => item.productId === newItem.productId
+      );
+
       if (existingIndex >= 0) {
         // Update existing item
         const updated = [...prev];
         updated[existingIndex] = {
           ...updated[existingIndex],
           quantity: updated[existingIndex].quantity + 1,
-          lineTotal: (updated[existingIndex].quantity + 1) * updated[existingIndex].unitPrice,
+          lineTotal:
+            (updated[existingIndex].quantity + 1) *
+            updated[existingIndex].unitPrice,
         };
         return updated;
       } else {
@@ -73,12 +78,14 @@ export default function NewSaleScreen() {
 
   const updateItemQuantity = (productId: number | string, quantity: number) => {
     if (quantity <= 0) {
-      setSelectedProducts(prev => prev.filter(item => item.productId !== productId));
+      setSelectedProducts((prev) =>
+        prev.filter((item) => item.productId !== productId)
+      );
       return;
     }
 
-    setSelectedProducts(prev =>
-      prev.map(item =>
+    setSelectedProducts((prev) =>
+      prev.map((item) =>
         item.productId === productId
           ? {
               ...item,
@@ -91,27 +98,32 @@ export default function NewSaleScreen() {
   };
 
   const removeItem = (productId: number | string) => {
-    setSelectedProducts(prev => prev.filter(item => item.productId !== productId));
+    setSelectedProducts((prev) =>
+      prev.filter((item) => item.productId !== productId)
+    );
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || orderDate;
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(Platform.OS === "ios");
     setOrderDate(currentDate);
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const validateSale = (): { isValid: boolean; error?: string } => {
     if (selectedProducts.length === 0) {
-      return { isValid: false, error: "Please add at least one product to the sale" };
+      return {
+        isValid: false,
+        error: "Please add at least one product to the sale",
+      };
     }
 
     if (!selectedCustomer?.name?.trim()) {
@@ -122,7 +134,7 @@ export default function NewSaleScreen() {
     const insufficientStockItems = [];
 
     for (const item of selectedProducts) {
-      const product = products.find(p => p.id === item.productId);
+      const product = products.find((p) => p.id === item.productId);
       if (product && product.stockQty < item.quantity) {
         insufficientStockItems.push({
           name: product.name,
@@ -134,12 +146,15 @@ export default function NewSaleScreen() {
 
     if (insufficientStockItems.length > 0) {
       const itemsList = insufficientStockItems
-        .map(item => `${item.name} (Requested: ${item.requested}, Available: ${item.available})`)
+        .map(
+          (item) =>
+            `${item.name} (Requested: ${item.requested}, Available: ${item.available})`
+        )
         .join("\n");
-      
+
       return {
         isValid: false,
-        error: `The following items don't have enough stock:\n\n${itemsList}`
+        error: `The following items don't have enough stock:\n\n${itemsList}`,
       };
     }
 
@@ -158,11 +173,11 @@ export default function NewSaleScreen() {
     try {
       const customer: Customer = {
         name: selectedCustomer!.name.trim(),
-        contact: selectedCustomer!.contact?.trim() || '',
-        address: selectedCustomer!.address?.trim() || '',
+        contact: selectedCustomer!.contact?.trim() || "",
+        address: selectedCustomer!.address?.trim() || "",
       };
 
-      const newSale: Omit<Sale, 'id'> = {
+      const newSale: Omit<Sale, "id"> = {
         date: new Date().toISOString(),
         orderDate: orderDate.toISOString(),
         customer,
@@ -197,34 +212,37 @@ export default function NewSaleScreen() {
         >
           <ScreenHeader title="New Sale" />
 
-          <CustomerSelector
-            selectedCustomer={selectedCustomer}
-            onCustomerSelect={setSelectedCustomer}
-          />
+          <View style={styles.customerDateRow}>
+            <View style={styles.customerSelectorContainer}>
+              <CustomerSelector
+                selectedCustomer={selectedCustomer}
+                onCustomerSelect={setSelectedCustomer}
+              />
+            </View>
 
-          <View style={styles.datePickerContainer}>
-            <Text style={styles.datePickerLabel}>Order Date</Text>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={styles.datePickerText}>{formatDate(orderDate)}</Text>
-            </TouchableOpacity>
+            <View style={styles.datePickerContainer}>
+              <Text style={styles.datePickerLabel}>Order Date</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={styles.datePickerText}>
+                  {formatDate(orderDate)}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {showDatePicker && (
             <DateTimePicker
               value={orderDate}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={onDateChange}
             />
           )}
 
-          <ProductSelector
-            products={products}
-            onAddItem={addProductToSale}
-          />
+          <ProductSelector products={products} onAddItem={addProductToSale} />
 
           <SaleItemsList
             items={selectedProducts}
@@ -240,8 +258,6 @@ export default function NewSaleScreen() {
               loading={isCreating}
             />
           )}
-
-
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -259,27 +275,36 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
   },
-  datePickerContainer: {
+  customerDateRow: {
+    flexDirection: "row",
     marginBottom: 16,
-    backgroundColor: '#f8f9fa',
+    gap: 12,
+    alignItems: "stretch",
+  },
+  customerSelectorContainer: {
+    flex: 2,
+  },
+  datePickerContainer: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
     borderRadius: 8,
     padding: 16,
   },
   datePickerLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   datePickerButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 6,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   datePickerText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
 });
