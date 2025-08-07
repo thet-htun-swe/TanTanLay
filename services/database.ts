@@ -57,6 +57,7 @@ class DatabaseService {
         subtotal REAL NOT NULL,
         total REAL NOT NULL,
         date DATETIME NOT NULL,
+        order_date DATETIME NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (customer_id) REFERENCES customers (id)
       );
@@ -94,6 +95,30 @@ class DatabaseService {
           UPDATE customers SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
         END;
     `);
+
+    // Migration: Add order_date column if it doesn't exist
+    await this.migrateOrderDateColumn();
+  }
+
+  private async migrateOrderDateColumn(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    try {
+      // Check if order_date column exists
+      const tableInfo = await this.db.getAllAsync('PRAGMA table_info(sales)');
+      const orderDateExists = tableInfo.some((column: any) => column.name === 'order_date');
+
+      if (!orderDateExists) {
+        console.log("Adding order_date column to sales table");
+        await this.db.execAsync(`
+          ALTER TABLE sales ADD COLUMN order_date DATETIME;
+          UPDATE sales SET order_date = date WHERE order_date IS NULL;
+        `);
+        console.log("order_date column added successfully");
+      }
+    } catch (error) {
+      console.error("Failed to migrate order_date column:", error);
+    }
   }
 
   // Product operations
@@ -217,8 +242,8 @@ class DatabaseService {
       // Insert sale
       const saleResult = await this.db.runAsync(
         `
-        INSERT INTO sales (customer_id, customer_name, customer_contact, customer_address, subtotal, total, date) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO sales (customer_id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
         [
           customerId,
@@ -228,6 +253,7 @@ class DatabaseService {
           sale.subtotal,
           sale.total,
           sale.date,
+          sale.orderDate,
         ]
       );
 
@@ -273,7 +299,7 @@ class DatabaseService {
     if (!this.db) throw new Error("Database not initialized");
 
     const salesRows = await this.db.getAllAsync(`
-      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date 
+      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
       FROM sales 
       ORDER BY date DESC
     `);
@@ -294,6 +320,7 @@ class DatabaseService {
         subtotal: number;
         total: number;
         date: string;
+        order_date: string;
       };
 
       // Get sale items
@@ -318,6 +345,7 @@ class DatabaseService {
       sales.push({
         id: sale.id,
         date: sale.date,
+        orderDate: sale.order_date,
         customer: {
           name: sale.customer_name,
           contact: sale.customer_contact || "",
@@ -337,7 +365,7 @@ class DatabaseService {
 
     const saleRow = await this.db.getFirstAsync(
       `
-      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date 
+      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
       FROM sales 
       WHERE id = ?
     `,
@@ -354,6 +382,7 @@ class DatabaseService {
       subtotal: number;
       total: number;
       date: string;
+      order_date: string;
     };
 
     // Get sale items
@@ -378,6 +407,7 @@ class DatabaseService {
     return {
       id: sale.id,
       date: sale.date,
+      orderDate: sale.order_date,
       customer: {
         name: sale.customer_name,
         contact: sale.customer_contact || "",
@@ -482,7 +512,7 @@ class DatabaseService {
 
     const salesRows = await this.db.getAllAsync(
       `
-      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date 
+      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
       FROM sales 
       WHERE date >= ? AND date <= ?
       ORDER BY date DESC
@@ -506,6 +536,7 @@ class DatabaseService {
         subtotal: number;
         total: number;
         date: string;
+        order_date: string;
       };
 
       const itemsRows = await this.db.getAllAsync(
@@ -528,6 +559,7 @@ class DatabaseService {
       sales.push({
         id: sale.id,
         date: sale.date,
+        orderDate: sale.order_date,
         customer: {
           name: sale.customer_name,
           contact: sale.customer_contact || "",

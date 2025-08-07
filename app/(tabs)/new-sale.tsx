@@ -5,9 +5,13 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
@@ -25,6 +29,8 @@ export default function NewSaleScreen() {
   const { products, fetchProducts, addSale } = useAppStore();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<(Customer & { id?: number }) | null>(null);
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const { subtotal, total } = useSaleCalculations(selectedProducts);
@@ -39,6 +45,7 @@ export default function NewSaleScreen() {
       const resetForm = () => {
         setSelectedProducts([]);
         setSelectedCustomer(null);
+        setOrderDate(new Date());
       };
       resetForm();
     }, [])
@@ -85,6 +92,21 @@ export default function NewSaleScreen() {
 
   const removeItem = (productId: number | string) => {
     setSelectedProducts(prev => prev.filter(item => item.productId !== productId));
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    const currentDate = selectedDate || orderDate;
+    setShowDatePicker(Platform.OS === 'ios');
+    setOrderDate(currentDate);
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   const validateSale = (): { isValid: boolean; error?: string } => {
@@ -142,6 +164,7 @@ export default function NewSaleScreen() {
 
       const newSale: Omit<Sale, 'id'> = {
         date: new Date().toISOString(),
+        orderDate: orderDate.toISOString(),
         customer,
         items: selectedProducts,
         subtotal,
@@ -179,6 +202,25 @@ export default function NewSaleScreen() {
             onCustomerSelect={setSelectedCustomer}
           />
 
+          <View style={styles.datePickerContainer}>
+            <Text style={styles.datePickerLabel}>Order Date</Text>
+            <TouchableOpacity
+              style={styles.datePickerButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.datePickerText}>{formatDate(orderDate)}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={orderDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onDateChange}
+            />
+          )}
+
           <ProductSelector
             products={products}
             onAddItem={addProductToSale}
@@ -198,6 +240,8 @@ export default function NewSaleScreen() {
               loading={isCreating}
             />
           )}
+
+
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -214,5 +258,28 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+  },
+  datePickerContainer: {
+    marginBottom: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 16,
+  },
+  datePickerLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
+  },
+  datePickerButton: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: '#333',
   },
 });

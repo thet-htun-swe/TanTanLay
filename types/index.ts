@@ -24,6 +24,7 @@ export interface SaleItem {
 // Sale/Invoice model
 export interface Sale {
   date: string;
+  orderDate: string;
   customer: Customer;
   items: SaleItem[];
   subtotal: number;
