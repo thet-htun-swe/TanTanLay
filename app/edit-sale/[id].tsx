@@ -11,7 +11,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { CustomerForm } from "@/components/sales/CustomerForm";
-import { ProductSelector } from "@/components/sales/ProductSelector";
 import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
@@ -225,15 +224,12 @@ export default function EditSaleScreen() {
             onAddressChange={setCustomerAddress}
           />
 
-          <ProductSelector
-            products={products}
-            onAddItem={addProductToSale}
-          />
-
           <SaleItemsList
             items={selectedProducts}
             onUpdateQuantity={updateItemQuantity}
             onRemoveItem={removeItem}
+            onAddProduct={addProductToSale}
+            products={products}
           />
 
           {selectedProducts.length > 0 && (

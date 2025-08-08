@@ -1,28 +1,44 @@
-import { SaleItem } from "@/types";
-import React from "react";
+import { Product, SaleItem } from "@/types";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Card } from "../ui/Card";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { ProductSelectorModal } from "./ProductSelectorModal";
 
 interface SaleItemsListProps {
   items: SaleItem[];
   onUpdateQuantity: (productId: number | string, quantity: number) => void;
   onRemoveItem: (productId: number | string) => void;
+  onAddProduct: (item: SaleItem) => void;
+  products: (Product & { id: number })[];
 }
 
 export const SaleItemsList: React.FC<SaleItemsListProps> = ({
   items,
   onUpdateQuantity,
   onRemoveItem,
+  onAddProduct,
+  products,
 }) => {
-  if (items.length === 0) {
-    return null;
-  }
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
     <Card style={styles.card}>
-      {/* <ThemedText style={styles.title}>Sale Items</ThemedText> */}
+      {/* Header with title and select button */}
+      <View style={styles.header}>
+        <ThemedText style={styles.title}>Sale Items</ThemedText>
+        <TouchableOpacity
+          style={styles.selectButton}
+          onPress={() => setIsModalVisible(true)}
+        >
+          <ThemedText style={styles.selectButtonText}>
+            + select product
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
 
+      {/* Items table */}
       <View style={styles.table}>
         {/* Table Header */}
         <View style={styles.tableHeader}>
@@ -42,85 +58,111 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
         </View>
 
         {/* Table Body */}
-        <ScrollView style={styles.tableBody} nestedScrollEnabled>
-          {items.map((item) => (
-            <View
-              key={item.productId?.toString() ?? `item-${item.productName}`}
-              style={styles.tableRow}
-            >
-              <View style={styles.productColumn}>
-                <ThemedText style={styles.productName} numberOfLines={2}>
-                  {item.productName}
-                </ThemedText>
-              </View>
+        {items.length > 0 && (
+          <ScrollView style={styles.tableBody} nestedScrollEnabled>
+            {items.map((item) => (
+              <View
+                key={item.productId?.toString() ?? `item-${item.productName}`}
+                style={styles.tableRow}
+              >
+                <View style={styles.productColumn}>
+                  <ThemedText style={styles.productName} numberOfLines={2}>
+                    {item.productName}
+                  </ThemedText>
+                </View>
 
-              <View style={styles.priceColumn}>
-                <ThemedText style={styles.cellText}>
-                  ${item.unitPrice.toFixed(2)}
-                </ThemedText>
-              </View>
+                <View style={styles.priceColumn}>
+                  <ThemedText style={styles.cellText}>
+                    ${item.unitPrice.toFixed(2)}
+                  </ThemedText>
+                </View>
 
-              <View style={[styles.quantityColumn, styles.quantityCell]}>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() =>
-                    onUpdateQuantity(item.productId, item.quantity - 1)
-                  }
-                >
-                  <ThemedText style={styles.quantityButtonText}>-</ThemedText>
-                </TouchableOpacity>
-                <ThemedText style={styles.quantityText}>
-                  {item.quantity}
-                </ThemedText>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() =>
-                    onUpdateQuantity(item.productId, item.quantity + 1)
-                  }
-                >
-                  <ThemedText style={styles.quantityButtonText}>+</ThemedText>
-                </TouchableOpacity>
-              </View>
+                <View style={[styles.quantityColumn, styles.quantityCell]}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() =>
+                      onUpdateQuantity(item.productId, item.quantity - 1)
+                    }
+                  >
+                    <ThemedText style={styles.quantityButtonText}>-</ThemedText>
+                  </TouchableOpacity>
+                  <ThemedText style={styles.quantityText}>
+                    {item.quantity}
+                  </ThemedText>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() =>
+                      onUpdateQuantity(item.productId, item.quantity + 1)
+                    }
+                  >
+                    <ThemedText style={styles.quantityButtonText}>+</ThemedText>
+                  </TouchableOpacity>
+                </View>
 
-              <View style={styles.totalColumn}>
-                <ThemedText style={styles.totalText}>
-                  ${item.lineTotal.toFixed(2)}
-                </ThemedText>
-              </View>
+                <View style={styles.totalColumn}>
+                  <ThemedText style={styles.totalText}>
+                    ${item.lineTotal.toFixed(2)}
+                  </ThemedText>
+                </View>
 
-              <View style={styles.actionColumn}>
-                <TouchableOpacity onPress={() => onRemoveItem(item.productId)}>
-                  <ThemedText style={styles.removeText}>×</ThemedText>
-                </TouchableOpacity>
+                <View style={styles.actionColumn}>
+                  <TouchableOpacity
+                    onPress={() => onRemoveItem(item.productId)}
+                  >
+                    <MaterialCommunityIcons name="delete" size={16} color="#ff6b6b" />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        )}
       </View>
+
+      {/* Product Selector Modal */}
+      <ProductSelectorModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        products={products}
+        onAddItem={onAddProduct}
+      />
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    padding: 0,
-    marginBottom: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
-    marginBottom: 8,
+  },
+  selectButton: {
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  selectButtonText: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "500",
   },
   table: {
-    // borderWidth: 1,
-    // borderColor: "#e0e0e0",
     borderRadius: 6,
     overflow: "hidden",
     width: "100%",
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#e9ecef",
     paddingVertical: 6,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
@@ -146,7 +188,7 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: 12,
-    textAlign: "center",
+    textAlign: "left",
   },
   productColumn: {
     width: "40%",
@@ -177,12 +219,12 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: 12,
     fontWeight: "600",
-    textAlign: "center",
+    textAlign: "left",
     color: "#007AFF",
   },
   quantityCell: {
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     flexDirection: "row",
   },
   quantityControl: {
@@ -210,13 +252,10 @@ const styles = StyleSheet.create({
     minWidth: 16,
     textAlign: "center",
   },
-  removeText: {
-    color: "#ff6b6b",
-    fontSize: 16,
-    fontWeight: "bold",
-    width: 20,
-    height: 20,
-    textAlign: "center",
-    textAlignVertical: "center",
+  removeButton: {
+    padding: 4,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

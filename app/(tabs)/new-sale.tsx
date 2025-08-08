@@ -16,7 +16,6 @@ import {
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { CustomerSelector } from "@/components/sales/CustomerSelector";
-import { ProductSelector } from "@/components/sales/ProductSelector";
 import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
@@ -242,12 +241,12 @@ export default function NewSaleScreen() {
             />
           )}
 
-          <ProductSelector products={products} onAddItem={addProductToSale} />
-
           <SaleItemsList
             items={selectedProducts}
             onUpdateQuantity={updateItemQuantity}
             onRemoveItem={removeItem}
+            onAddProduct={addProductToSale}
+            products={products}
           />
 
           {selectedProducts.length > 0 && (
