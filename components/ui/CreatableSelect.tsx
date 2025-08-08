@@ -276,7 +276,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
                 color={theme.tint}
               />
               <Text style={[styles.createOptionText, { color: theme.tint }]}>
-                {createOptionMessage} "{inputValue}"
+                {createOptionMessage} &quot;{inputValue}&quot;
               </Text>
             </TouchableOpacity>
           )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { Card } from '../ui/Card';
 import { SaleItem } from '@/types';
@@ -23,26 +23,33 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
     <Card style={styles.card}>
       <ThemedText style={styles.title}>Sale Items</ThemedText>
       
-      {items.map((item) => (
-        <View key={item.productId?.toString() ?? `item-${item.productName}`} style={styles.item}>
-          <View style={styles.itemHeader}>
-            <ThemedText style={styles.itemName}>
-              {item.productName}
-            </ThemedText>
-            <TouchableOpacity onPress={() => onRemoveItem(item.productId)}>
-              <ThemedText style={styles.removeText}>Remove</ThemedText>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.table}>
+        {/* Table Header */}
+        <View style={styles.tableHeader}>
+          <ThemedText style={[styles.headerText, styles.productColumn]}>Product</ThemedText>
+          <ThemedText style={[styles.headerText, styles.priceColumn]}>Price</ThemedText>
+          <ThemedText style={[styles.headerText, styles.quantityColumn]}>Qty</ThemedText>
+          <ThemedText style={[styles.headerText, styles.totalColumn]}>Total</ThemedText>
+          <View style={styles.actionColumn} />
+        </View>
 
-          <View style={styles.itemDetails}>
-            <View style={styles.itemDetail}>
-              <ThemedText>Unit Price:</ThemedText>
-              <ThemedText>{item.unitPrice.toFixed(2)}</ThemedText>
-            </View>
-
-            <View style={styles.itemDetail}>
-              <ThemedText>Quantity:</ThemedText>
-              <View style={styles.quantityControl}>
+        {/* Table Body */}
+        <ScrollView style={styles.tableBody} nestedScrollEnabled>
+          {items.map((item) => (
+            <View key={item.productId?.toString() ?? `item-${item.productName}`} style={styles.tableRow}>
+              <View style={styles.productColumn}>
+                <ThemedText style={styles.productName} numberOfLines={2}>
+                  {item.productName}
+                </ThemedText>
+              </View>
+              
+              <View style={styles.priceColumn}>
+                <ThemedText style={styles.cellText}>
+                  ${item.unitPrice.toFixed(2)}
+                </ThemedText>
+              </View>
+              
+              <View style={[styles.quantityColumn, styles.quantityCell]}>
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() => onUpdateQuantity(item.productId, item.quantity - 1)}
@@ -59,17 +66,22 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
                   <ThemedText style={styles.quantityButtonText}>+</ThemedText>
                 </TouchableOpacity>
               </View>
+              
+              <View style={styles.totalColumn}>
+                <ThemedText style={styles.totalText}>
+                  ${item.lineTotal.toFixed(2)}
+                </ThemedText>
+              </View>
+              
+              <View style={styles.actionColumn}>
+                <TouchableOpacity onPress={() => onRemoveItem(item.productId)}>
+                  <ThemedText style={styles.removeText}>×</ThemedText>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <View style={styles.itemDetail}>
-              <ThemedText>Line Total:</ThemedText>
-              <ThemedText style={styles.lineTotal}>
-                {item.lineTotal.toFixed(2)}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-      ))}
+          ))}
+        </ScrollView>
+      </View>
     </Card>
   );
 };
@@ -83,56 +95,109 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
   },
-  item: {
+  table: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 12,
-    marginBottom: 12,
+    borderBottomColor: '#e0e0e0',
   },
-  itemHeader: {
+  tableBody: {
+    maxHeight: 300,
+  },
+  tableRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  itemName: {
+  headerText: {
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
-  removeText: {
-    color: '#ff6b6b',
+  cellText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
-  itemDetails: {
-    marginLeft: 8,
+  productColumn: {
+    flex: 2,
+    paddingHorizontal: 4,
   },
-  itemDetail: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  priceColumn: {
+    flex: 1,
+    paddingHorizontal: 4,
+  },
+  quantityColumn: {
+    flex: 1.5,
+    paddingHorizontal: 4,
+  },
+  totalColumn: {
+    flex: 1,
+    paddingHorizontal: 4,
+  },
+  actionColumn: {
+    width: 40,
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  totalText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#007AFF',
+  },
+  quantityCell: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   quantityButton: {
-    backgroundColor: '#0066cc',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    backgroundColor: '#007AFF',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   quantityText: {
     marginHorizontal: 8,
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    minWidth: 20,
+    textAlign: 'center',
   },
-  lineTotal: {
-    fontWeight: '600',
+  removeText: {
+    color: '#ff6b6b',
+    fontSize: 18,
+    fontWeight: 'bold',
+    width: 24,
+    height: 24,
+    textAlign: 'center',
+    textAlignVertical: 'center',
   },
 });
