@@ -38,13 +38,15 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
 
       {selectedCustomer && (
         <View>
-          <ThemedText style={styles.selectedCustomerName}>
-            {selectedCustomer.name}
-          </ThemedText>
+          <View style={styles.customerRow}>
+            <ThemedText style={styles.label}>Name:</ThemedText>
+            <ThemedText style={styles.value}>{selectedCustomer.name}</ThemedText>
+          </View>
           {selectedCustomer.contact && (
-            <ThemedText style={styles.selectedCustomerContact}>
-              {selectedCustomer.contact}
-            </ThemedText>
+            <View style={styles.customerRow}>
+              <ThemedText style={styles.label}>Ph:</ThemedText>
+              <ThemedText style={styles.value}>{selectedCustomer.contact}</ThemedText>
+            </View>
           )}
         </View>
       )}
@@ -84,15 +86,21 @@ const styles = StyleSheet.create({
     minHeight: 60,
     justifyContent: "center",
   },
-  selectedCustomerName: {
-    fontSize: 16,
-    fontWeight: "600",
+  customerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
   },
-  selectedCustomerContact: {
+  label: {
     fontSize: 14,
+    fontWeight: "400",
+    width: 50,
     opacity: 0.7,
-    marginBottom: 2,
+  },
+  value: {
+    fontSize: 16,
+    fontWeight: "400",
+    flex: 1,
   },
   selectedCustomerAddress: {
     fontSize: 14,
