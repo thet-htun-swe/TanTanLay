@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { saveCustomer } from "../../services/database";
 import { Customer } from "../../types";
 import { ThemedText } from "../ThemedText";
+import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { CustomerSelectionModal } from "./CustomerForm";
 
@@ -40,21 +41,26 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
         <View>
           <View style={styles.customerRow}>
             <ThemedText style={styles.label}>Name:</ThemedText>
-            <ThemedText style={styles.value}>{selectedCustomer.name}</ThemedText>
+            <ThemedText style={styles.value}>
+              {selectedCustomer.name}
+            </ThemedText>
           </View>
           {selectedCustomer.contact && (
             <View style={styles.customerRow}>
               <ThemedText style={styles.label}>Ph:</ThemedText>
-              <ThemedText style={styles.value}>{selectedCustomer.contact}</ThemedText>
+              <ThemedText style={styles.value}>
+                {selectedCustomer.contact}
+              </ThemedText>
             </View>
           )}
         </View>
       )}
-      <TouchableOpacity onPress={() => setIsModalVisible(true)}>
-        <ThemedText style={styles.chooseCustomerText}>
-          + choose customer
-        </ThemedText>
-      </TouchableOpacity>
+      <Button
+        title="+ choose customer"
+        onPress={() => setIsModalVisible(true)}
+        variant="primary"
+        style={styles.chooseCustomerButton}
+      />
 
       <CustomerSelectionModal
         visible={isModalVisible}
@@ -75,16 +81,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 16,
-  },
-  selectorButton: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
-    minHeight: 60,
-    justifyContent: "center",
+    marginBottom: 8,
   },
   customerRow: {
     flexDirection: "row",
@@ -111,10 +108,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     fontStyle: "italic",
   },
-  chooseCustomerText: {
-    fontSize: 14,
-    opacity: 0.6,
-    marginTop: 8,
-    color: "#007AFF",
+  chooseCustomerButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
 });

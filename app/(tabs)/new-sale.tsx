@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   datePickerButton: {
     backgroundColor: "#fff",
     borderRadius: 6,
-    padding: 12,
+    padding: 8,
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },

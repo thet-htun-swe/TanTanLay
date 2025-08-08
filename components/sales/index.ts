@@ -3,7 +3,6 @@ export { SaleCard } from './SaleCard';
 export { SalesList } from './SalesList';
 export { CustomerForm, CustomerSelectionModal } from './CustomerForm';
 export { CustomerSelector } from './CustomerSelector';
-export { ProductSelector } from './ProductSelector';
 export { ProductSelectorModal } from './ProductSelectorModal';
 export { SaleItemsList } from './SaleItemsList';
 export { SaleSummary } from './SaleSummary';

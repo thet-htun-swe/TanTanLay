@@ -3,6 +3,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
+import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { ProductSelectorModal } from "./ProductSelectorModal";
 
@@ -28,14 +29,12 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
       {/* Header with title and select button */}
       <View style={styles.header}>
         <ThemedText style={styles.title}>Sale Items</ThemedText>
-        <TouchableOpacity
-          style={styles.selectButton}
+        <Button
+          title="+ select product"
           onPress={() => setIsModalVisible(true)}
-        >
-          <ThemedText style={styles.selectButtonText}>
-            + select product
-          </ThemedText>
-        </TouchableOpacity>
+          variant="primary"
+          style={styles.selectButton}
+        />
       </View>
 
       {/* Items table */}
@@ -149,15 +148,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   selectButton: {
-    backgroundColor: "#f0f0f0",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
-  },
-  selectButtonText: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "500",
   },
   table: {
     borderRadius: 6,
