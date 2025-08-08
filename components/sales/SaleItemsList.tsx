@@ -1,9 +1,9 @@
 import { Product, SaleItem } from "@/types";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Card } from "../ui/Card";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { ProductSelectorModal } from "./ProductSelectorModal";
 
 interface SaleItemsListProps {
@@ -109,7 +109,11 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
                   <TouchableOpacity
                     onPress={() => onRemoveItem(item.productId)}
                   >
-                    <MaterialCommunityIcons name="delete" size={16} color="#ff6b6b" />
+                    <MaterialCommunityIcons
+                      name="delete"
+                      size={16}
+                      color="#ff6b6b"
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -132,7 +136,7 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
 const styles = StyleSheet.create({
   card: {
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   header: {
     flexDirection: "row",
@@ -182,12 +186,12 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontWeight: "600",
-    fontSize: 12,
+    fontSize: 14,
     color: "#666",
     textAlign: "left",
   },
   cellText: {
-    fontSize: 12,
+    fontSize: 14,
     textAlign: "left",
   },
   productColumn: {
@@ -212,12 +216,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   productName: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "500",
     lineHeight: 14,
   },
   totalText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "left",
     color: "#007AFF",
@@ -247,7 +251,7 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     marginHorizontal: 4,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "500",
     minWidth: 16,
     textAlign: "center",

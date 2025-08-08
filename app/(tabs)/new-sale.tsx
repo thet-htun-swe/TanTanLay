@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   customerDateRow: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: 4,
     gap: 12,
     alignItems: "stretch",
   },
