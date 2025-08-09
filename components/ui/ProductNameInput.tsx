@@ -42,7 +42,6 @@ export function ProductNameInput({
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
 
-  const [showMatches, setShowMatches] = useState(false);
   const [validation, setValidation] = useState<ValidationState>({
     isExactMatch: false,
     isSimilarMatch: false,
@@ -106,7 +105,6 @@ export function ProductNameInput({
             suggestions: [],
           };
           setValidation(emptyValidation);
-          setShowMatches(false);
 
           // Notify parent component
           if (onValidationChange) {
@@ -156,7 +154,6 @@ export function ProductNameInput({
         };
 
         setValidation(newValidation);
-        setShowMatches(suggestions.length > 0);
 
         // Notify parent component of validation state
         if (onValidationChange) {
@@ -214,14 +211,10 @@ export function ProductNameInput({
           placeholderTextColor={theme.tabIconDefault}
           value={value}
           onChangeText={onChangeText}
-          onFocus={() =>
-            validation.suggestions.length > 0 && setShowMatches(true)
-          }
-          onBlur={() => setTimeout(() => setShowMatches(false), 150)}
           {...props}
         />
 
-        {showMatches && validation.suggestions.length > 0 && (
+        {validation.suggestions.length > 0 && !validation.isExactMatch && (
           <View style={styles.matchesContainer}>
             <Text style={[styles.matchesText, { color: "#f59e0b" }]}>
               {validation.suggestions.map((item) => item.name).join(" / ")}
@@ -230,7 +223,7 @@ export function ProductNameInput({
         )}
       </View>
 
-      {/* {validationMessage && (
+      {validationMessage && validation.isExactMatch && (
         <Text
           style={[
             styles.validationMessage,
@@ -241,7 +234,7 @@ export function ProductNameInput({
         </Text>
       )}
 
-      {error && <Text style={styles.error}>{error}</Text>} */}
+      {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }

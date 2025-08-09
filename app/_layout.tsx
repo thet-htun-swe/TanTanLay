@@ -30,7 +30,7 @@ export default function RootLayout() {
           await Updates.reloadAsync();
         }
       } catch (error) {
-        console.warn('Update check failed:', error);
+        console.warn("Update check failed:", error);
       }
     }
 
@@ -50,7 +50,7 @@ export default function RootLayout() {
 
   if (error) {
     // Handle database initialization error
-    console.error('Database initialization error:', error);
+    console.error("Database initialization error:", error);
     // You could show an error screen here
   }
 
@@ -61,6 +61,14 @@ export default function RootLayout() {
         <Stack.Screen
           name="sale/[id]"
           options={{ title: "Sale Details", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="product/[id]/index"
+          options={{ title: "Edit Product", headerBackTitle: "Back" }}
+        />
+        <Stack.Screen
+          name="product/create/index"
+          options={{ title: "Create Product", headerBackTitle: "Back" }}
         />
         <Stack.Screen name="+not-found" />
       </Stack>

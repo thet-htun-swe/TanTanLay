@@ -8,7 +8,6 @@ import {
   View,
 } from "react-native";
 
-import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -95,7 +94,6 @@ export default function CreateProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Add New Product</ThemedText>
       <KeyboardAvoidingView behavior="padding">
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <ProductNameInput

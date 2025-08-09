@@ -120,7 +120,6 @@ export default function EditProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Edit Product</ThemedText>
       <KeyboardAvoidingView behavior="padding">
         <ScrollView
           contentContainerStyle={styles.scrollContent}
