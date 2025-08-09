@@ -101,8 +101,8 @@ export default function SalesScreen() {
         isVisible={isFilterSheetOpen}
         onClose={() => setIsFilterSheetOpen(false)}
         height={Dimensions.get("window").height * 0.6}
-        expandable={true}
-        scrollable={true}
+        // expandable={true}
+        // scrollable={true}
       >
         <SalesHistoryFilter
           orderStartDate={orderStartDate}
