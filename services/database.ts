@@ -50,6 +50,7 @@ class DatabaseService {
       -- Sales table
       CREATE TABLE IF NOT EXISTS sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        invoice_number TEXT,
         customer_id INTEGER NOT NULL,
         customer_name TEXT NOT NULL,
         customer_contact TEXT,
@@ -98,6 +99,9 @@ class DatabaseService {
 
     // Migration: Add order_date column if it doesn't exist
     await this.migrateOrderDateColumn();
+    
+    // Migration: Add invoice_number column if it doesn't exist
+    await this.migrateInvoiceNumberColumn();
   }
 
   private async migrateOrderDateColumn(): Promise<void> {
@@ -118,6 +122,74 @@ class DatabaseService {
       }
     } catch (error) {
       console.error("Failed to migrate order_date column:", error);
+    }
+  }
+
+  private async migrateInvoiceNumberColumn(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    try {
+      // Check if invoice_number column exists
+      const columns = await this.db.getAllAsync(`
+        PRAGMA table_info(sales);
+      `);
+      
+      const hasInvoiceNumber = columns.some((col: any) => col.name === 'invoice_number');
+      
+      if (!hasInvoiceNumber) {
+        await this.db.execAsync(`
+          ALTER TABLE sales ADD COLUMN invoice_number TEXT;
+        `);
+        console.log("Added invoice_number column to sales table");
+      }
+    } catch (error) {
+      console.error("Failed to migrate invoice_number column:", error);
+    }
+  }
+
+  private async generateInvoiceNumber(orderDate: string): Promise<string> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    try {
+      // Extract date and format as YYMMDD
+      const date = new Date(orderDate);
+      const year = date.getFullYear().toString().slice(-2); // Last 2 digits of year
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const datePrefix = `${year}${month}${day}`;
+      
+      // Find the highest invoice number for this date
+      const result = await this.db.getFirstAsync(`
+        SELECT invoice_number 
+        FROM sales 
+        WHERE DATE(order_date) = ? 
+          AND invoice_number IS NOT NULL
+          AND invoice_number LIKE ?
+        ORDER BY CAST(SUBSTR(invoice_number, 7) AS INTEGER) DESC
+        LIMIT 1
+      `, [date.toISOString().split('T')[0], `${datePrefix}%`]);
+
+      let nextNumber = 1;
+      
+      if (result && (result as any).invoice_number) {
+        // Extract number from invoice format: 250910001
+        const invoiceNumber = (result as any).invoice_number;
+        const numberPart = invoiceNumber.substring(6); // Get everything after YYMMDD
+        if (numberPart) {
+          const currentNumber = parseInt(numberPart, 10);
+          if (!isNaN(currentNumber)) {
+            nextNumber = currentNumber + 1;
+          }
+        }
+      }
+
+      // Format: YYMMDD001
+      const paddedNumber = nextNumber.toString().padStart(3, '0');
+      
+      return `${datePrefix}${paddedNumber}`;
+    } catch (error) {
+      console.error("Failed to generate invoice number:", error);
+      throw error;
     }
   }
 
@@ -238,12 +310,15 @@ class DatabaseService {
 
       // Find or create customer
       const customerId = await this.findOrCreateCustomer(sale.customer);
+      
+      // Generate invoice number based on order date
+      const invoiceNumber = await this.generateInvoiceNumber(sale.orderDate);
 
       // Insert sale
       const saleResult = await this.db.runAsync(
         `
-        INSERT INTO sales (customer_id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO sales (customer_id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date, invoice_number) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
         [
           customerId,
@@ -254,6 +329,7 @@ class DatabaseService {
           sale.total,
           sale.date,
           sale.orderDate,
+          invoiceNumber,
         ]
       );
 
@@ -299,7 +375,7 @@ class DatabaseService {
     if (!this.db) throw new Error("Database not initialized");
 
     const salesRows = await this.db.getAllAsync(`
-      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
+      SELECT id, invoice_number, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
       FROM sales 
       ORDER BY date DESC
     `);
@@ -314,6 +390,7 @@ class DatabaseService {
     for (const saleRow of validSalesRows) {
       const sale = saleRow as {
         id: number;
+        invoice_number: string | null;
         customer_name: string;
         customer_contact: string | null;
         customer_address: string | null;
@@ -344,6 +421,7 @@ class DatabaseService {
 
       sales.push({
         id: sale.id,
+        invoiceNumber: sale.invoice_number || undefined,
         date: sale.date,
         orderDate: sale.order_date,
         customer: {
@@ -365,7 +443,7 @@ class DatabaseService {
 
     const saleRow = await this.db.getFirstAsync(
       `
-      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
+      SELECT id, invoice_number, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
       FROM sales 
       WHERE id = ?
     `,
@@ -375,15 +453,16 @@ class DatabaseService {
     if (!saleRow) return null;
 
     const sale = saleRow as {
-      id: number;
-      customer_name: string;
-      customer_contact: string | null;
-      customer_address: string | null;
-      subtotal: number;
-      total: number;
-      date: string;
-      order_date: string;
-    };
+        id: number;
+        invoice_number: string | null;
+        customer_name: string;
+        customer_contact: string | null;
+        customer_address: string | null;
+        subtotal: number;
+        total: number;
+        date: string;
+        order_date: string;
+      };
 
     // Get sale items
     const itemsRows = await this.db.getAllAsync(
@@ -406,6 +485,7 @@ class DatabaseService {
 
     return {
       id: sale.id,
+      invoiceNumber: sale.invoice_number || undefined,
       date: sale.date,
       orderDate: sale.order_date,
       customer: {
@@ -512,7 +592,7 @@ class DatabaseService {
 
     const salesRows = await this.db.getAllAsync(
       `
-      SELECT id, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
+      SELECT id, invoice_number, customer_name, customer_contact, customer_address, subtotal, total, date, order_date 
       FROM sales 
       WHERE date >= ? AND date <= ?
       ORDER BY date DESC
@@ -530,6 +610,7 @@ class DatabaseService {
     for (const saleRow of validSalesRows) {
       const sale = saleRow as {
         id: number;
+        invoice_number: string | null;
         customer_name: string;
         customer_contact: string | null;
         customer_address: string | null;
@@ -558,6 +639,7 @@ class DatabaseService {
 
       sales.push({
         id: sale.id,
+        invoiceNumber: sale.invoice_number || undefined,
         date: sale.date,
         orderDate: sale.order_date,
         customer: {

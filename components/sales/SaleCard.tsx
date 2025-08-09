@@ -24,8 +24,12 @@ export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
       <Card style={styles.card}>
         <View style={styles.header}>
           <View style={styles.leftContent}>
-            <ThemedText style={styles.invoiceNumber}>Invoice #{sale.id}</ThemedText>
-            <ThemedText style={styles.customerName}>{sale.customer.name}</ThemedText>
+            <ThemedText style={styles.invoiceNumber}>
+              Invoice #{sale.invoiceNumber}
+            </ThemedText>
+            <ThemedText style={styles.customerName}>
+              {sale.customer.name}
+            </ThemedText>
           </View>
           <ThemedText style={styles.total}>{sale.total.toFixed(2)}</ThemedText>
         </View>

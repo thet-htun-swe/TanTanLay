@@ -23,6 +23,8 @@ export interface SaleItem {
 
 // Sale/Invoice model
 export interface Sale {
+  id?: number;
+  invoiceNumber?: string;
   date: string;
   orderDate: string;
   customer: Customer;

@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { Dimensions, Alert, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert, Dimensions, StyleSheet } from "react-native";
 
-import { ThemedView } from "@/components/ThemedView";
-import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ActionButtons } from "@/components/common/ActionButtons";
+import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { SearchBar } from "@/components/common/SearchBar";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
-import { ActionButtons } from "@/components/common/ActionButtons";
 import { SalesList } from "@/components/sales/SalesList";
-import { useAppStore } from "@/store";
+import { ThemedView } from "@/components/ThemedView";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { useSalesFilter } from "@/hooks/useSalesFilter";
+import { useAppStore } from "@/store";
 import { ExportUtils } from "@/utils/exportUtils";
 
 export default function SalesScreen() {
   const { sales, fetchSales } = useAppStore();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  
+
   const {
     filteredSales,
     searchQuery,
@@ -33,12 +33,14 @@ export default function SalesScreen() {
     fetchSales();
   }, [fetchSales]);
 
-
   const handleExportExcel = async () => {
     try {
       await ExportUtils.generateExcel(filteredSales);
     } catch (error) {
-      Alert.alert("Error", error instanceof Error ? error.message : "Failed to export");
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to export"
+      );
     }
   };
 
@@ -46,7 +48,10 @@ export default function SalesScreen() {
     try {
       await ExportUtils.generateShippingLabels(filteredSales);
     } catch (error) {
-      Alert.alert("Error", error instanceof Error ? error.message : "Failed to generate labels");
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to generate labels"
+      );
     }
   };
 
@@ -65,9 +70,19 @@ export default function SalesScreen() {
   };
 
   const exportButtons = [
-    { title: "Export", onPress: handleExportExcel, variant: "secondary" as const },
-    { title: "Print Labels", onPress: handleExportLabels, variant: "secondary" as const },
+    {
+      title: "Export",
+      onPress: handleExportExcel,
+      variant: "secondary" as const,
+    },
+    {
+      title: "Print Labels",
+      onPress: handleExportLabels,
+      variant: "secondary" as const,
+    },
   ];
+
+  console.log("sales", JSON.stringify(filteredSales, null, 2));
 
   return (
     <ThemedView style={styles.container}>
@@ -82,16 +97,9 @@ export default function SalesScreen() {
         filterActive={dateRangeActive}
       />
 
-      <ActionButtons 
-        buttons={exportButtons}
-        direction="row"
-        spacing={8}
-      />
+      <ActionButtons buttons={exportButtons} direction="row" spacing={8} />
 
-      <SalesList
-        sales={filteredSales}
-        onSalePress={viewSaleDetails}
-      />
+      <SalesList sales={filteredSales} onSalePress={viewSaleDetails} />
 
       <BottomSheet
         isVisible={isFilterSheetOpen}
