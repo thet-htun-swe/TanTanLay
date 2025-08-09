@@ -87,7 +87,7 @@ export default function SalesScreen() {
       <SearchBar
         value={searchQuery}
         onChangeText={updateSearchQuery}
-        placeholder="Search by customer name or contact"
+        placeholder="Search by customer name, contact, or invoice number"
         showFilterButton={true}
         onFilterPress={() => setIsFilterSheetOpen(true)}
         filterActive={hasActiveFilters}

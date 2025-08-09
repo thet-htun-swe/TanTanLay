@@ -12,11 +12,11 @@ interface SaleCardProps {
 export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return (
-      date.toLocaleDateString() +
-      " " +
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = date.getFullYear().toString().slice(-2);
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${day}${month},${year} ${time}`;
   };
 
   return (
@@ -28,7 +28,8 @@ export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
               Invoice #{sale.invoiceNumber}
             </ThemedText>
             <ThemedText style={styles.customerName}>
-              {sale.customer.name}
+              {sale.customer.name}/ {sale.customer.contact}/{" "}
+              {formatDate(sale.orderDate)}
             </ThemedText>
           </View>
           <ThemedText style={styles.total}>{sale.total.toFixed(2)}</ThemedText>

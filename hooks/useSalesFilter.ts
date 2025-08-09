@@ -56,7 +56,8 @@ export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
       filtered = filtered.filter(
         (sale) =>
           sale.customer.name.toLowerCase().includes(query) ||
-          sale.customer.contact.toLowerCase().includes(query)
+          sale.customer.contact.toLowerCase().includes(query) ||
+          (sale.invoiceNumber && sale.invoiceNumber.toLowerCase().includes(query))
       );
     }
 
