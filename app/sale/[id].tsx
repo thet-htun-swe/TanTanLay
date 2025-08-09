@@ -1,24 +1,21 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-} from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 
+import {
+  InvoiceActions,
+  InvoiceDetails,
+  InvoiceHeader,
+  InvoiceItemsTable,
+  InvoiceSummary,
+} from "@/components/sales";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
-import {
-  InvoiceHeader,
-  InvoiceDetails,
-  InvoiceItemsTable,
-  InvoiceSummary,
-  InvoiceActions,
-} from "@/components/sales";
+import { useInvoice } from "@/hooks/useInvoice";
 import { getSaleById } from "@/services/database";
 import { useAppStore } from "@/store";
 import { Sale } from "@/types";
-import { useInvoice } from "@/hooks/useInvoice";
 
 export default function SaleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,9 +36,6 @@ export default function SaleDetailsScreen() {
 
     loadSale();
   }, [id]);
-
-
-
 
   const handleSharePdf = () => {
     if (sale) {
@@ -79,15 +73,15 @@ export default function SaleDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <InvoiceHeader invoiceId={sale.id?.toString() ?? 'N/A'} />
-        
+        <InvoiceHeader invoiceId={sale.invoiceNumber ?? "N/A"} />
+
         <InvoiceDetails sale={sale} formatDate={formatDate} />
-        
+
         <InvoiceItemsTable items={sale.items} />
-        
+
         <InvoiceSummary subtotal={sale.subtotal} total={sale.total} />
-        
-        <InvoiceActions 
+
+        <InvoiceActions
           onSharePdf={handleSharePdf}
           isGeneratingPdf={isGeneratingPdf}
           onEdit={handleEdit}

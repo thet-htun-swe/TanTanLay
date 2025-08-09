@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Alert } from 'react-native';
-import * as FileSystem from 'expo-file-system';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-import { Sale } from '@/types';
+import { Sale } from "@/types";
+import * as FileSystem from "expo-file-system";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import { useState } from "react";
+import { Alert } from "react-native";
 
 export const useInvoice = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -94,7 +94,7 @@ export const useInvoice = () => {
             
             <div class="invoice-info">
               <h3>Invoice Details:</h3>
-              <div>Invoice #: ${sale.id.toString().padStart(8, '0')}</div>
+              <div>Invoice #: ${sale.invoiceNumber}</div>
               <div>Date: ${formatDate(sale.date)}</div>
             </div>
           </div>
@@ -143,7 +143,9 @@ export const useInvoice = () => {
     `;
   };
 
-  const generatePdf = async (sale: Sale & { id: number }): Promise<string | null> => {
+  const generatePdf = async (
+    sale: Sale & { id: number }
+  ): Promise<string | null> => {
     try {
       setIsGeneratingPdf(true);
       const htmlContent = generateInvoiceHTML(sale);
@@ -155,7 +157,7 @@ export const useInvoice = () => {
       });
 
       // Create a more descriptive filename
-      const pdfName = `invoice-${sale.id.toString().padStart(8, '0')}.pdf`;
+      const pdfName = `invoice-${sale.id.toString().padStart(8, "0")}.pdf`;
       const newUri = FileSystem.documentDirectory + pdfName;
 
       // Copy the file to a location with a better name
