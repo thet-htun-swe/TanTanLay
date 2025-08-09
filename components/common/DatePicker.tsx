@@ -61,9 +61,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 12,
-  },
+  container: {},
   label: {
     fontSize: 16,
     marginBottom: 4,
@@ -72,7 +70,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
-    padding: 12,
+    padding: 6,
     backgroundColor: "#fff",
   },
 });

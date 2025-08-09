@@ -2,7 +2,7 @@ import React from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Button } from "../ui/Button";
-import { DatePicker } from "./DatePicker";
+import { DateTimePicker } from "./DateTimePicker";
 
 interface DateRangeFilterProps {
   // Order date filter
@@ -60,22 +60,22 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.title}>Filter by Date Range</ThemedText>
+      <ThemedText style={styles.title}>Filter</ThemedText>
 
       {/* Order Date Filter Section */}
       <View style={styles.filterSection}>
-        <ThemedText style={styles.sectionTitle}>Order Date Filter</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Order Date Range</ThemedText>
 
         <View style={styles.dateRowSideBySide}>
           <View style={styles.datePickerHalf}>
-            <DatePicker
+            <DateTimePicker
               value={orderStartDate}
               onChange={onOrderStartDateChange}
             />
           </View>
           <ThemedText style={styles.separator}>--</ThemedText>
           <View style={styles.datePickerHalf}>
-            <DatePicker
+            <DateTimePicker
               value={orderEndDate}
               onChange={onOrderEndDateChange}
               minimumDate={orderStartDate}
@@ -86,18 +86,18 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
       {/* Created Date Filter Section */}
       <View style={styles.filterSection}>
-        <ThemedText style={styles.sectionTitle}>Created Date Filter</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Created Date Range</ThemedText>
 
         <View style={styles.dateRowSideBySide}>
           <View style={styles.datePickerHalf}>
-            <DatePicker
+            <DateTimePicker
               value={createdStartDate}
               onChange={onCreatedStartDateChange}
             />
           </View>
           <ThemedText style={styles.separator}>--</ThemedText>
           <View style={styles.datePickerHalf}>
-            <DatePicker
+            <DateTimePicker
               value={createdEndDate}
               onChange={onCreatedEndDateChange}
               minimumDate={createdStartDate}
@@ -141,11 +141,12 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     paddingBottom: 6,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   dateRow: {
     marginBottom: 4,

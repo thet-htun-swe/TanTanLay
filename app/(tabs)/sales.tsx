@@ -61,8 +61,6 @@ export default function SalesScreen() {
     }
   };
 
-  
-
   const viewSaleDetails = (saleId: number) => {
     router.push(`/sale/${saleId}`);
   };
@@ -79,8 +77,6 @@ export default function SalesScreen() {
       variant: "secondary" as const,
     },
   ];
-
-  console.log("sales", JSON.stringify(filteredSales, null, 2));
 
   return (
     <ThemedView style={styles.container}>
@@ -110,13 +106,21 @@ export default function SalesScreen() {
           orderStartDate={orderStartDate}
           orderEndDate={orderEndDate}
           orderDateRangeActive={orderDateRangeActive}
-          onOrderStartDateChange={(date) => updateOrderDateRange(date, orderEndDate)}
-          onOrderEndDateChange={(date) => updateOrderDateRange(orderStartDate, date)}
+          onOrderStartDateChange={(date) =>
+            updateOrderDateRange(date, orderEndDate)
+          }
+          onOrderEndDateChange={(date) =>
+            updateOrderDateRange(orderStartDate, date)
+          }
           createdStartDate={createdStartDate}
           createdEndDate={createdEndDate}
           createdDateRangeActive={createdDateRangeActive}
-          onCreatedStartDateChange={(date) => updateCreatedDateRange(date, createdEndDate)}
-          onCreatedEndDateChange={(date) => updateCreatedDateRange(createdStartDate, date)}
+          onCreatedStartDateChange={(date) =>
+            updateCreatedDateRange(date, createdEndDate)
+          }
+          onCreatedEndDateChange={(date) =>
+            updateCreatedDateRange(createdStartDate, date)
+          }
           onApplyFilters={() => {
             applyOrderDateFilter();
             applyCreatedDateFilter();
