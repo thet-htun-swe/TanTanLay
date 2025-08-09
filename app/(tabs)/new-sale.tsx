@@ -1,4 +1,4 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { DateTimePicker } from "@/components/common/DateTimePicker";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -8,8 +8,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -30,7 +28,7 @@ export default function NewSaleScreen() {
     (Customer & { id?: number }) | null
   >(null);
   const [orderDate, setOrderDate] = useState<Date>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [isCreating, setIsCreating] = useState(false);
 
   const { subtotal, total } = useSaleCalculations(selectedProducts);
@@ -102,20 +100,11 @@ export default function NewSaleScreen() {
     );
   };
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || orderDate;
-    setShowDatePicker(Platform.OS === "ios");
-    setOrderDate(currentDate);
+  const onDateChange = (date: Date) => {
+    setOrderDate(date);
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+
 
   const validateSale = (): { isValid: boolean; error?: string } => {
     if (selectedProducts.length === 0) {
@@ -220,26 +209,15 @@ export default function NewSaleScreen() {
             </View>
 
             <View style={styles.datePickerContainer}>
-              <Text style={styles.datePickerLabel}>Order Date</Text>
-              <TouchableOpacity
-                style={styles.datePickerButton}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={styles.datePickerText}>
-                  {formatDate(orderDate)}
-                </Text>
-              </TouchableOpacity>
+              <DateTimePicker
+                label="Order Date"
+                value={orderDate}
+                onChange={onDateChange}
+              />
             </View>
           </View>
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={orderDate}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={onDateChange}
-            />
-          )}
+
 
           <SaleItemsList
             items={selectedProducts}
@@ -289,21 +267,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
   },
-  datePickerLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#333",
-  },
-  datePickerButton: {
-    backgroundColor: "#fff",
-    borderRadius: 6,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  datePickerText: {
-    fontSize: 16,
-    color: "#333",
-  },
+
 });

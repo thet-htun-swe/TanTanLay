@@ -24,7 +24,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
-    
+
     if (selectedDate) {
       const newDate = new Date(selectedDate);
       // Preserve the time from current value
@@ -44,7 +44,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const onTimeChange = (event: any, selectedTime?: Date) => {
     setShowTimePicker(Platform.OS === "ios");
-    
+
     if (selectedTime) {
       const newDateTime = new Date(tempDate);
       newDateTime.setHours(selectedTime.getHours());
@@ -96,7 +96,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
         <DateTimePickerNative
           value={tempDate}
           mode="time"
-          display="default"
+          display="spinner"
           onChange={onTimeChange}
         />
       )}
