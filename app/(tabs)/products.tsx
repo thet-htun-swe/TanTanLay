@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -12,16 +12,28 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 import { useAppStore } from "@/store";
 import { Product } from "@/types";
 import { router } from "expo-router";
 
 export default function ProductsScreen() {
-  const { products, fetchProducts, removeProduct } = useAppStore();
+  const { products, fetchProducts, searchProducts, removeProduct } =
+    useAppStore();
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  const handleSearch = (text: string) => {
+    setSearchTerm(text);
+    if (text.trim()) {
+      searchProducts(text);
+    } else {
+      fetchProducts();
+    }
+  };
 
   const confirmDeleteProduct = (productId: number) => {
     Alert.alert(
@@ -75,6 +87,12 @@ export default function ProductsScreen() {
         <ThemedText style={styles.title}>Products</ThemedText>
       </View>
 
+      <Input
+        placeholder="Search products..."
+        value={searchTerm}
+        onChangeText={handleSearch}
+      />
+
       <FlatList
         data={products}
         renderItem={renderProductItem}
@@ -82,7 +100,9 @@ export default function ProductsScreen() {
         contentContainerStyle={styles.productList}
         ListEmptyComponent={
           <ThemedText style={styles.emptyText}>
-            No products found. Add your first product!
+            {searchTerm
+              ? "No products found matching your search."
+              : "No products found. Add your first product!"}
           </ThemedText>
         }
       />

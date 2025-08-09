@@ -6,6 +6,7 @@ import {
   initializeDatabase,
   saveProduct,
   saveSale,
+  searchProducts,
   updateProduct,
   updateSale,
 } from "@/services/database";
@@ -24,6 +25,7 @@ interface AppState {
 
   // Product actions
   fetchProducts: () => Promise<void>;
+  searchProducts: (searchTerm: string) => Promise<void>;
   addProduct: (product: Product) => Promise<void>;
   editProduct: (product: Product & { id: number }) => Promise<void>;
   removeProduct: (productId: number) => Promise<void>;
@@ -80,6 +82,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ products, loading: false });
     } catch (error) {
       set({ error: "Failed to fetch products", loading: false });
+    }
+  },
+
+  searchProducts: async (searchTerm: string) => {
+    set({ loading: true, error: null });
+    try {
+      const products = await searchProducts(searchTerm);
+      set({ products, loading: false });
+    } catch (error) {
+      set({ error: "Failed to search products", loading: false });
     }
   },
 
