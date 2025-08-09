@@ -102,6 +102,7 @@ export const useInvoice = () => {
           <table>
             <thead>
               <tr>
+                <th>No.</th>
                 <th>Item</th>
                 <th>Quantity</th>
                 <th>Unit Price</th>
@@ -110,9 +111,10 @@ export const useInvoice = () => {
             </thead>
             <tbody>
               ${sale.items
-                .map((item) => {
+                .map((item, index) => {
                   return `
                   <tr>
+                    <td>${index + 1}</td>
                     <td>${item.productName}</td>
                     <td>${item.quantity}</td>
                     <td>${item.unitPrice.toFixed(2)}</td>
