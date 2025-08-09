@@ -1,10 +1,12 @@
 import React from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Button } from "../ui/Button";
 import { DateTimePicker } from "./DateTimePicker";
 
-interface DateRangeFilterProps {
+export type SortOrder = "asc" | "desc";
+
+interface SalesHistoryFilterProps {
   // Order date filter
   orderStartDate: Date;
   orderEndDate: Date;
@@ -19,13 +21,17 @@ interface DateRangeFilterProps {
   onCreatedStartDateChange: (date: Date) => void;
   onCreatedEndDateChange: (date: Date) => void;
 
+  // Sort options
+  sortOrder: SortOrder;
+  onSortOrderChange: (order: SortOrder) => void;
+
   // Single controls for entire filter
   onApplyFilters: () => void;
   onClearAllFilters: () => void;
   hasActiveFilters: boolean;
 }
 
-export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
+export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
   orderStartDate,
   orderEndDate,
   orderDateRangeActive,
@@ -36,6 +42,8 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   createdDateRangeActive,
   onCreatedStartDateChange,
   onCreatedEndDateChange,
+  sortOrder,
+  onSortOrderChange,
   onApplyFilters,
   onClearAllFilters,
   hasActiveFilters,
@@ -103,6 +111,43 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
               minimumDate={createdStartDate}
             />
           </View>
+        </View>
+      </View>
+
+      {/* Sort Options Section */}
+      <View style={styles.filterSection}>
+        <ThemedText style={styles.sectionTitle}>Sort Order</ThemedText>
+
+        <View style={styles.radioGroup}>
+          <TouchableOpacity
+            style={styles.radioItem}
+            onPress={() => onSortOrderChange("desc")}
+          >
+            <View
+              style={[
+                styles.radioCircle,
+                sortOrder === "desc" && styles.radioCircleSelected,
+              ]}
+            >
+              {sortOrder === "desc" && <View style={styles.radioDot} />}
+            </View>
+            <ThemedText style={styles.radioLabel}>Newest First</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.radioItem}
+            onPress={() => onSortOrderChange("asc")}
+          >
+            <View
+              style={[
+                styles.radioCircle,
+                sortOrder === "asc" && styles.radioCircleSelected,
+              ]}
+            >
+              {sortOrder === "asc" && <View style={styles.radioDot} />}
+            </View>
+            <ThemedText style={styles.radioLabel}>Oldest First</ThemedText>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -179,5 +224,38 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+  },
+  radioGroup: {
+    // gap: 8,
+  },
+  radioItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    gap: 12,
+  },
+  radioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  radioCircleSelected: {
+    borderColor: "#007AFF",
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#007AFF",
+  },
+  radioLabel: {
+    fontSize: 16,
+    color: "#374151",
+    fontWeight: "400",
   },
 });

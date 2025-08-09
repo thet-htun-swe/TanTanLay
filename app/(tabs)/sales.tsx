@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Alert, Dimensions, StyleSheet } from "react-native";
 
 import { ActionButtons } from "@/components/common/ActionButtons";
-import { DateRangeFilter } from "@/components/common/DateRangeFilter";
+import { SalesHistoryFilter } from "@/components/common/SalesHistoryFilter";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { SearchBar } from "@/components/common/SearchBar";
 import { SalesList } from "@/components/sales/SalesList";
@@ -26,10 +26,12 @@ export default function SalesScreen() {
     createdStartDate,
     createdEndDate,
     createdDateRangeActive,
+    sortOrder,
     hasActiveFilters,
     updateSearchQuery,
     updateOrderDateRange,
     updateCreatedDateRange,
+    updateSortOrder,
     applyOrderDateFilter,
     applyCreatedDateFilter,
     clearAllFilters,
@@ -102,7 +104,7 @@ export default function SalesScreen() {
         expandable={true}
         scrollable={true}
       >
-        <DateRangeFilter
+        <SalesHistoryFilter
           orderStartDate={orderStartDate}
           orderEndDate={orderEndDate}
           orderDateRangeActive={orderDateRangeActive}
@@ -121,6 +123,8 @@ export default function SalesScreen() {
           onCreatedEndDateChange={(date) =>
             updateCreatedDateRange(createdStartDate, date)
           }
+          sortOrder={sortOrder}
+          onSortOrderChange={updateSortOrder}
           onApplyFilters={() => {
             applyOrderDateFilter();
             applyCreatedDateFilter();

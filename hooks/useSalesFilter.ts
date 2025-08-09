@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Sale } from '@/types';
+import { SortOrder } from '@/components/common/SalesHistoryFilter';
 
 interface FilterState {
   searchQuery: string;
@@ -11,6 +12,8 @@ interface FilterState {
   createdStartDate: Date;
   createdEndDate: Date;
   createdDateRangeActive: boolean;
+  // Sort order
+  sortOrder: SortOrder;
 }
 
 export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
@@ -24,6 +27,8 @@ export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
     createdStartDate: new Date(new Date().setDate(new Date().getDate() - 30)),
     createdEndDate: new Date(),
     createdDateRangeActive: false,
+    // Sort order - default to newest first
+    sortOrder: 'desc',
   });
 
   const filteredSales = useMemo(() => {
@@ -55,10 +60,12 @@ export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
       );
     }
 
-    // Sort by date with latest at the top
-    filtered.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    // Sort by date based on sort order
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return filters.sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
 
     return filtered;
   }, [sales, filters]);
@@ -73,6 +80,10 @@ export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
 
   const updateCreatedDateRange = (startDate: Date, endDate: Date) => {
     setFilters(prev => ({ ...prev, createdStartDate: startDate, createdEndDate: endDate }));
+  };
+
+  const updateSortOrder = (sortOrder: SortOrder) => {
+    setFilters(prev => ({ ...prev, sortOrder }));
   };
 
   const applyOrderDateFilter = () => {
@@ -112,12 +123,15 @@ export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
     createdStartDate: filters.createdStartDate,
     createdEndDate: filters.createdEndDate,
     createdDateRangeActive: filters.createdDateRangeActive,
+    // Sort order
+    sortOrder: filters.sortOrder,
     // Filter status
     hasActiveFilters,
     // Functions
     updateSearchQuery,
     updateOrderDateRange,
     updateCreatedDateRange,
+    updateSortOrder,
     applyOrderDateFilter,
     clearOrderDateFilter,
     applyCreatedDateFilter,
