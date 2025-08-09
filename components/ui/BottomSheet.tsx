@@ -4,6 +4,7 @@ import {
   Dimensions,
   Modal,
   PanResponder,
+  ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -17,6 +18,8 @@ interface BottomSheetProps {
   onClose: () => void;
   children: React.ReactNode;
   height?: number;
+  expandable?: boolean;
+  scrollable?: boolean;
 }
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
@@ -24,9 +27,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   onClose,
   children,
   height: sheetHeight = height * 0.5,
+  expandable = false,
+  scrollable = false,
 }) => {
   const translateY = useRef(new Animated.Value(sheetHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  
+  const maxHeight = height * 0.9; // 90% of screen height
+  const currentHeight = isExpanded && expandable ? maxHeight : sheetHeight;
 
   useEffect(() => {
     if (isVisible) {
@@ -45,7 +54,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     } else {
       Animated.parallel([
         Animated.timing(translateY, {
-          toValue: sheetHeight,
+          toValue: currentHeight,
           duration: 300,
           useNativeDriver: true,
         }),
@@ -55,21 +64,42 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           useNativeDriver: true,
         }),
       ]).start();
+      // Reset expanded state when closing
+      setIsExpanded(false);
     }
-  }, [isVisible, translateY, backdropOpacity, sheetHeight]);
+  }, [isVisible, translateY, backdropOpacity, currentHeight]);
+
+  // Update animation when expanding/contracting
+  useEffect(() => {
+    if (isVisible && expandable) {
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isExpanded, expandable, isVisible, translateY]);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only respond to downward swipes when not scrollable or at top of scroll
+        return !scrollable || gestureState.dy > 0;
+      },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) {
           translateY.setValue(gestureState.dy);
+        } else if (expandable && gestureState.dy < -50 && !isExpanded) {
+          // Expand on upward swipe
+          setIsExpanded(true);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > sheetHeight * 0.2 || gestureState.vy > 0.5) {
+        if (gestureState.dy > currentHeight * 0.2 || gestureState.vy > 0.5) {
           onClose();
+        } else if (expandable && gestureState.dy < -50 && !isExpanded) {
+          setIsExpanded(true);
         } else {
           Animated.spring(translateY, {
             toValue: 0,
@@ -81,6 +111,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   ).current;
 
   if (!isVisible) return null;
+
+  const ContentWrapper = scrollable ? ScrollView : View;
+  const contentWrapperProps = scrollable 
+    ? { 
+        showsVerticalScrollIndicator: false,
+        bounces: false,
+        style: styles.scrollContent 
+      }
+    : { style: styles.content };
 
   return (
     <Modal transparent animationType="none" visible={isVisible}>
@@ -95,7 +134,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           style={[
             styles.sheet,
             {
-              height: sheetHeight,
+              height: currentHeight,
               transform: [{ translateY }],
             },
           ]}
@@ -104,8 +143,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             style={styles.handle} 
             {...panResponder.panHandlers}
           />
-          <ThemedView style={styles.content} pointerEvents="box-none">
-            {children}
+          {expandable && (
+            <TouchableWithoutFeedback
+              onPress={() => setIsExpanded(!isExpanded)}
+            >
+              <View style={styles.expandButton}>
+                <View style={[
+                  styles.expandIndicator,
+                  { transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }
+                ]} />
+              </View>
+            </TouchableWithoutFeedback>
+          )}
+          <ThemedView style={styles.contentContainer} pointerEvents="box-none">
+            <ContentWrapper {...contentWrapperProps}>
+              {children}
+            </ContentWrapper>
           </ThemedView>
         </Animated.View>
       </View>
@@ -141,8 +194,31 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 10,
   },
+  expandButton: {
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  expandIndicator: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: "#999",
+  },
+  contentContainer: {
+    flex: 1,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
 });

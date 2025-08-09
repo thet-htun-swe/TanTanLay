@@ -20,13 +20,19 @@ export default function SalesScreen() {
   const {
     filteredSales,
     searchQuery,
-    startDate,
-    endDate,
-    dateRangeActive,
+    orderStartDate,
+    orderEndDate,
+    orderDateRangeActive,
+    createdStartDate,
+    createdEndDate,
+    createdDateRangeActive,
+    hasActiveFilters,
     updateSearchQuery,
-    updateDateRange,
-    applyDateFilter,
-    clearDateFilter,
+    updateOrderDateRange,
+    updateCreatedDateRange,
+    applyOrderDateFilter,
+    applyCreatedDateFilter,
+    clearAllFilters,
   } = useSalesFilter(sales);
 
   useEffect(() => {
@@ -55,15 +61,7 @@ export default function SalesScreen() {
     }
   };
 
-  const handleApplyFilter = () => {
-    applyDateFilter();
-    setIsFilterSheetOpen(false);
-  };
-
-  const handleClearFilter = () => {
-    clearDateFilter();
-    setIsFilterSheetOpen(false);
-  };
+  
 
   const viewSaleDetails = (saleId: number) => {
     router.push(`/sale/${saleId}`);
@@ -94,7 +92,7 @@ export default function SalesScreen() {
         placeholder="Search by customer name or contact"
         showFilterButton={true}
         onFilterPress={() => setIsFilterSheetOpen(true)}
-        filterActive={dateRangeActive}
+        filterActive={hasActiveFilters}
       />
 
       <ActionButtons buttons={exportButtons} direction="row" spacing={8} />
@@ -104,16 +102,27 @@ export default function SalesScreen() {
       <BottomSheet
         isVisible={isFilterSheetOpen}
         onClose={() => setIsFilterSheetOpen(false)}
-        height={Dimensions.get("window").height * 0.4}
+        height={Dimensions.get("window").height * 0.6}
+        expandable={true}
+        scrollable={true}
       >
         <DateRangeFilter
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={(date) => updateDateRange(date, endDate)}
-          onEndDateChange={(date) => updateDateRange(startDate, date)}
-          onApply={handleApplyFilter}
-          onClear={handleClearFilter}
-          showClearButton={dateRangeActive}
+          orderStartDate={orderStartDate}
+          orderEndDate={orderEndDate}
+          orderDateRangeActive={orderDateRangeActive}
+          onOrderStartDateChange={(date) => updateOrderDateRange(date, orderEndDate)}
+          onOrderEndDateChange={(date) => updateOrderDateRange(orderStartDate, date)}
+          createdStartDate={createdStartDate}
+          createdEndDate={createdEndDate}
+          createdDateRangeActive={createdDateRangeActive}
+          onCreatedStartDateChange={(date) => updateCreatedDateRange(date, createdEndDate)}
+          onCreatedEndDateChange={(date) => updateCreatedDateRange(createdStartDate, date)}
+          onApplyFilters={() => {
+            applyOrderDateFilter();
+            applyCreatedDateFilter();
+          }}
+          onClearAllFilters={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
         />
       </BottomSheet>
     </ThemedView>

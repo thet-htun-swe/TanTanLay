@@ -1,72 +1,129 @@
-import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { Button } from '../ui/Button';
-import { DatePicker } from './DatePicker';
+import React from "react";
+import { Alert, StyleSheet, View } from "react-native";
+import { ThemedText } from "../ThemedText";
+import { Button } from "../ui/Button";
+import { DatePicker } from "./DatePicker";
 
 interface DateRangeFilterProps {
-  startDate: Date;
-  endDate: Date;
-  onStartDateChange: (date: Date) => void;
-  onEndDateChange: (date: Date) => void;
-  onApply: () => void;
-  onClear?: () => void;
-  showClearButton?: boolean;
+  // Order date filter
+  orderStartDate: Date;
+  orderEndDate: Date;
+  orderDateRangeActive: boolean;
+  onOrderStartDateChange: (date: Date) => void;
+  onOrderEndDateChange: (date: Date) => void;
+
+  // Created date filter
+  createdStartDate: Date;
+  createdEndDate: Date;
+  createdDateRangeActive: boolean;
+  onCreatedStartDateChange: (date: Date) => void;
+  onCreatedEndDateChange: (date: Date) => void;
+
+  // Single controls for entire filter
+  onApplyFilters: () => void;
+  onClearAllFilters: () => void;
+  hasActiveFilters: boolean;
 }
 
 export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
-  startDate,
-  endDate,
-  onStartDateChange,
-  onEndDateChange,
-  onApply,
-  onClear,
-  showClearButton = false,
+  orderStartDate,
+  orderEndDate,
+  orderDateRangeActive,
+  onOrderStartDateChange,
+  onOrderEndDateChange,
+  createdStartDate,
+  createdEndDate,
+  createdDateRangeActive,
+  onCreatedStartDateChange,
+  onCreatedEndDateChange,
+  onApplyFilters,
+  onClearAllFilters,
+  hasActiveFilters,
 }) => {
-  const handleApply = () => {
-    if (startDate > endDate) {
-      Alert.alert("Invalid Date Range", "Start date cannot be after end date");
+  const handleApplyFilters = () => {
+    if (orderStartDate > orderEndDate) {
+      Alert.alert(
+        "Invalid Date Range",
+        "Order start date cannot be after end date"
+      );
       return;
     }
-    onApply();
+    if (createdStartDate > createdEndDate) {
+      Alert.alert(
+        "Invalid Date Range",
+        "Created start date cannot be after end date"
+      );
+      return;
+    }
+    onApplyFilters();
   };
 
   return (
     <View style={styles.container}>
       <ThemedText style={styles.title}>Filter by Date Range</ThemedText>
-      
-      <View style={styles.dateRow}>
-        <DatePicker
-          label="Start Date:"
-          value={startDate}
-          onChange={onStartDateChange}
-        />
+
+      {/* Order Date Filter Section */}
+      <View style={styles.filterSection}>
+        <ThemedText style={styles.sectionTitle}>Order Date Filter</ThemedText>
+
+        <View style={styles.dateRowSideBySide}>
+          <View style={styles.datePickerHalf}>
+            <DatePicker
+              value={orderStartDate}
+              onChange={onOrderStartDateChange}
+            />
+          </View>
+          <ThemedText style={styles.separator}>--</ThemedText>
+          <View style={styles.datePickerHalf}>
+            <DatePicker
+              value={orderEndDate}
+              onChange={onOrderEndDateChange}
+              minimumDate={orderStartDate}
+            />
+          </View>
+        </View>
       </View>
-      
-      <View style={styles.dateRow}>
-        <DatePicker
-          label="End Date:"
-          value={endDate}
-          onChange={onEndDateChange}
-          minimumDate={startDate}
-        />
+
+      {/* Created Date Filter Section */}
+      <View style={styles.filterSection}>
+        <ThemedText style={styles.sectionTitle}>Created Date Filter</ThemedText>
+
+        <View style={styles.dateRowSideBySide}>
+          <View style={styles.datePickerHalf}>
+            <DatePicker
+              value={createdStartDate}
+              onChange={onCreatedStartDateChange}
+            />
+          </View>
+          <ThemedText style={styles.separator}>--</ThemedText>
+          <View style={styles.datePickerHalf}>
+            <DatePicker
+              value={createdEndDate}
+              onChange={onCreatedEndDateChange}
+              minimumDate={createdStartDate}
+            />
+          </View>
+        </View>
       </View>
-      
-      <View style={styles.buttonRow}>
-        {showClearButton && onClear && (
+
+      {/* Single Apply/Clear Buttons */}
+      <View style={styles.actionButtonsSection}>
+        <View style={styles.buttonRow}>
+          {hasActiveFilters && (
+            <Button
+              title="Clear All Filters"
+              variant="secondary"
+              onPress={onClearAllFilters}
+              style={styles.button}
+            />
+          )}
           <Button
-            title="Clear Filter"
-            variant="secondary"
-            onPress={onClear}
+            title="Apply Filters"
+            variant="primary"
+            onPress={handleApplyFilters}
             style={styles.button}
           />
-        )}
-        <Button
-          title="Apply Filter"
-          variant="primary"
-          onPress={handleApply}
-          style={styles.button}
-        />
+        </View>
       </View>
     </View>
   );
@@ -74,24 +131,52 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    textAlign: 'center',
+    fontWeight: "600",
+    marginBottom: 12,
+    textAlign: "center",
   },
-  dateRow: {
+  filterSection: {
+    paddingBottom: 6,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
     marginBottom: 8,
   },
+  dateRow: {
+    marginBottom: 4,
+  },
+  dateRowSideBySide: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  datePickerHalf: {
+    flex: 1,
+  },
+  separator: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#666",
+    paddingHorizontal: 4,
+  },
+  actionButtonsSection: {
+    marginTop: 6,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5E5",
+  },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
   },
   button: {
     flex: 1,
-    marginHorizontal: 4,
   },
 });

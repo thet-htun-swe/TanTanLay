@@ -3,27 +3,45 @@ import { Sale } from '@/types';
 
 interface FilterState {
   searchQuery: string;
-  startDate: Date;
-  endDate: Date;
-  dateRangeActive: boolean;
+  // Order date filter
+  orderStartDate: Date;
+  orderEndDate: Date;
+  orderDateRangeActive: boolean;
+  // Created date filter
+  createdStartDate: Date;
+  createdEndDate: Date;
+  createdDateRangeActive: boolean;
 }
 
 export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
-    startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
-    endDate: new Date(),
-    dateRangeActive: false,
+    // Order date filter - default to last 30 days
+    orderStartDate: new Date(new Date().setDate(new Date().getDate() - 30)),
+    orderEndDate: new Date(),
+    orderDateRangeActive: false,
+    // Created date filter - default to last 30 days
+    createdStartDate: new Date(new Date().setDate(new Date().getDate() - 30)),
+    createdEndDate: new Date(),
+    createdDateRangeActive: false,
   });
 
   const filteredSales = useMemo(() => {
     let filtered = [...sales];
 
-    // Apply date range filter if active
-    if (filters.dateRangeActive) {
+    // Apply order date range filter if active
+    if (filters.orderDateRangeActive) {
       filtered = filtered.filter((sale) => {
-        const saleDate = new Date(sale.date);
-        return saleDate >= filters.startDate && saleDate <= filters.endDate;
+        const orderDate = new Date(sale.orderDate);
+        return orderDate >= filters.orderStartDate && orderDate <= filters.orderEndDate;
+      });
+    }
+
+    // Apply created date range filter if active
+    if (filters.createdDateRangeActive) {
+      filtered = filtered.filter((sale) => {
+        const createdDate = new Date(sale.date);
+        return createdDate >= filters.createdStartDate && createdDate <= filters.createdEndDate;
       });
     }
 
@@ -49,27 +67,61 @@ export const useSalesFilter = (sales: (Sale & { id: number })[]) => {
     setFilters(prev => ({ ...prev, searchQuery: query }));
   };
 
-  const updateDateRange = (startDate: Date, endDate: Date) => {
-    setFilters(prev => ({ ...prev, startDate, endDate }));
+  const updateOrderDateRange = (startDate: Date, endDate: Date) => {
+    setFilters(prev => ({ ...prev, orderStartDate: startDate, orderEndDate: endDate }));
   };
 
-  const applyDateFilter = () => {
-    setFilters(prev => ({ ...prev, dateRangeActive: true }));
+  const updateCreatedDateRange = (startDate: Date, endDate: Date) => {
+    setFilters(prev => ({ ...prev, createdStartDate: startDate, createdEndDate: endDate }));
   };
 
-  const clearDateFilter = () => {
-    setFilters(prev => ({ ...prev, dateRangeActive: false }));
+  const applyOrderDateFilter = () => {
+    setFilters(prev => ({ ...prev, orderDateRangeActive: true }));
   };
+
+  const clearOrderDateFilter = () => {
+    setFilters(prev => ({ ...prev, orderDateRangeActive: false }));
+  };
+
+  const applyCreatedDateFilter = () => {
+    setFilters(prev => ({ ...prev, createdDateRangeActive: true }));
+  };
+
+  const clearCreatedDateFilter = () => {
+    setFilters(prev => ({ ...prev, createdDateRangeActive: false }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters(prev => ({ 
+      ...prev, 
+      orderDateRangeActive: false,
+      createdDateRangeActive: false 
+    }));
+  };
+
+  const hasActiveFilters = filters.orderDateRangeActive || filters.createdDateRangeActive;
 
   return {
     filteredSales,
     searchQuery: filters.searchQuery,
-    startDate: filters.startDate,
-    endDate: filters.endDate,
-    dateRangeActive: filters.dateRangeActive,
+    // Order date filter
+    orderStartDate: filters.orderStartDate,
+    orderEndDate: filters.orderEndDate,
+    orderDateRangeActive: filters.orderDateRangeActive,
+    // Created date filter
+    createdStartDate: filters.createdStartDate,
+    createdEndDate: filters.createdEndDate,
+    createdDateRangeActive: filters.createdDateRangeActive,
+    // Filter status
+    hasActiveFilters,
+    // Functions
     updateSearchQuery,
-    updateDateRange,
-    applyDateFilter,
-    clearDateFilter,
+    updateOrderDateRange,
+    updateCreatedDateRange,
+    applyOrderDateFilter,
+    clearOrderDateFilter,
+    applyCreatedDateFilter,
+    clearCreatedDateFilter,
+    clearAllFilters,
   };
-};
+};;

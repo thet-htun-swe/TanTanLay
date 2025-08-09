@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { ThemedText } from '../ThemedText';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useState } from "react";
+import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ThemedText } from "../ThemedText";
 
 interface DatePickerProps {
-  label: string;
+  label?: string;
   value: Date;
   onChange: (date: Date) => void;
-  mode?: 'date' | 'time' | 'datetime';
+  mode?: "date" | "time" | "datetime";
   maximumDate?: Date;
   minimumDate?: Date;
 }
@@ -16,36 +16,36 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   label,
   value,
   onChange,
-  mode = 'date',
+  mode = "date",
   maximumDate,
   minimumDate,
 }) => {
   const [show, setShow] = useState(false);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShow(Platform.OS === 'ios');
+    setShow(Platform.OS === "ios");
     if (selectedDate) {
       onChange(selectedDate);
     }
   };
 
   const formatDate = (date: Date) => {
-    if (mode === 'time') {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (mode === "time") {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     }
     return date.toLocaleDateString();
   };
 
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.label}>{label}</ThemedText>
-      <TouchableOpacity
-        style={styles.dateButton}
-        onPress={() => setShow(true)}
-      >
+      {label && <ThemedText style={styles.label}>{label}</ThemedText>}
+      <TouchableOpacity style={styles.dateButton} onPress={() => setShow(true)}>
         <ThemedText>{formatDate(value)}</ThemedText>
       </TouchableOpacity>
-      
+
       {show && (
         <DateTimePicker
           value={value}
@@ -70,9 +70,9 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
 });
