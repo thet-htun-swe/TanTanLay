@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,6 +12,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ProductNameInput } from "@/components/ui/ProductNameInput";
 import { useAppStore } from "@/store";
 
 export default function EditProductScreen() {
@@ -24,6 +25,17 @@ export default function EditProductScreen() {
   const [stockQty, setStockQty] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [nameValidation, setNameValidation] = useState({
+    isValid: true,
+    hasExactMatch: false,
+  });
+
+  const handleValidationChange = useCallback(
+    (isValid: boolean, hasExactMatch: boolean) => {
+      setNameValidation({ isValid, hasExactMatch });
+    },
+    []
+  );
 
   // Load product data when component mounts
   useEffect(() => {
@@ -44,6 +56,14 @@ export default function EditProductScreen() {
   const handleUpdateProduct = async () => {
     if (!name.trim()) {
       Alert.alert("Error", "Please enter a product name");
+      return;
+    }
+
+    if (nameValidation.hasExactMatch) {
+      Alert.alert(
+        "Error",
+        "A product with this name already exists. Please choose a different name."
+      );
       return;
     }
 
@@ -102,8 +122,12 @@ export default function EditProductScreen() {
     <ThemedView style={styles.container}>
       <ThemedText style={styles.title}>Edit Product</ThemedText>
       <KeyboardAvoidingView behavior="padding">
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Input
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          nestedScrollEnabled={true}
+          scrollEnabled={true}
+        >
+          <ProductNameInput
             label="Product Name"
             value={name}
             onChangeText={setName}
@@ -111,6 +135,9 @@ export default function EditProductScreen() {
             autoCapitalize="words"
             autoCorrect={false}
             style={styles.input}
+            existingProducts={products}
+            excludeId={id ? parseInt(id, 10) : undefined}
+            onValidationChange={handleValidationChange}
           />
           <Input
             label="Price"
@@ -150,7 +177,13 @@ export default function EditProductScreen() {
               title={isSubmitting ? "Updating..." : "Update Product"}
               onPress={handleUpdateProduct}
               style={styles.button}
-              disabled={isSubmitting || !name || !price || !stockQty}
+              disabled={
+                isSubmitting ||
+                !name ||
+                !price ||
+                !stockQty ||
+                nameValidation.hasExactMatch
+              }
             />
           </View>
         </ScrollView>

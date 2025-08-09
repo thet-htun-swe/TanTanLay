@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,16 +12,22 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ProductNameInput } from "@/components/ui/ProductNameInput";
 import { useAppStore } from "@/store";
 
 export default function CreateProductScreen() {
-  const { addProduct } = useAppStore();
+  const { addProduct, products } = useAppStore();
 
   // Form state
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stockQty, setStockQty] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nameValidation, setNameValidation] = useState({ isValid: true, hasExactMatch: false });
+
+  const handleValidationChange = useCallback((isValid: boolean, hasExactMatch: boolean) => {
+    setNameValidation({ isValid, hasExactMatch });
+  }, []);
 
   const resetForm = () => {
     setName("");
@@ -32,6 +38,11 @@ export default function CreateProductScreen() {
   const handleCreateProduct = async () => {
     if (!name.trim()) {
       Alert.alert("Error", "Please enter a product name");
+      return;
+    }
+
+    if (nameValidation.hasExactMatch) {
+      Alert.alert("Error", "A product with this name already exists. Please choose a different name.");
       return;
     }
 
@@ -78,7 +89,7 @@ export default function CreateProductScreen() {
       <ThemedText style={styles.title}>Add New Product</ThemedText>
       <KeyboardAvoidingView behavior="padding">
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Input
+          <ProductNameInput
             label="Product Name"
             value={name}
             onChangeText={setName}
@@ -86,6 +97,8 @@ export default function CreateProductScreen() {
             autoCapitalize="words"
             autoCorrect={false}
             style={styles.input}
+            existingProducts={products}
+            onValidationChange={handleValidationChange}
           />
           <Input
             label="Price"
@@ -125,7 +138,7 @@ export default function CreateProductScreen() {
               title={isSubmitting ? "Creating..." : "Create Product"}
               onPress={handleCreateProduct}
               style={styles.button}
-              disabled={isSubmitting || !name || !price || !stockQty}
+              disabled={isSubmitting || !name || !price || !stockQty || nameValidation.hasExactMatch}
             />
           </View>
         </ScrollView>
