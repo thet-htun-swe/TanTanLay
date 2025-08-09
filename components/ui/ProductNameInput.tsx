@@ -3,12 +3,10 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { Product } from "@/types";
 import { useEffect, useRef, useState } from "react";
 import {
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TextInputProps,
-  TouchableOpacity,
   View,
   ViewStyle,
 } from "react-native";
@@ -44,7 +42,7 @@ export function ProductNameInput({
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
 
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showMatches, setShowMatches] = useState(false);
   const [validation, setValidation] = useState<ValidationState>({
     isExactMatch: false,
     isSimilarMatch: false,
@@ -108,8 +106,8 @@ export function ProductNameInput({
             suggestions: [],
           };
           setValidation(emptyValidation);
-          setShowSuggestions(false);
-          
+          setShowMatches(false);
+
           // Notify parent component
           if (onValidationChange) {
             onValidationChange(true, false); // Empty is valid, no exact match
@@ -158,11 +156,14 @@ export function ProductNameInput({
         };
 
         setValidation(newValidation);
-        setShowSuggestions(suggestions.length > 0);
+        setShowMatches(suggestions.length > 0);
 
         // Notify parent component of validation state
         if (onValidationChange) {
-          onValidationChange(!newValidation.isExactMatch, newValidation.isExactMatch);
+          onValidationChange(
+            !newValidation.isExactMatch,
+            newValidation.isExactMatch
+          );
         }
       }, 300);
     };
@@ -175,11 +176,6 @@ export function ProductNameInput({
       }
     };
   }, [value, existingProducts, excludeId, onValidationChange]);
-
-  const handleSuggestionSelect = (productName: string) => {
-    onChangeText(productName);
-    setShowSuggestions(false);
-  };
 
   const getValidationMessage = () => {
     if (validation.isExactMatch) {
@@ -219,63 +215,22 @@ export function ProductNameInput({
           value={value}
           onChangeText={onChangeText}
           onFocus={() =>
-            validation.suggestions.length > 0 && setShowSuggestions(true)
+            validation.suggestions.length > 0 && setShowMatches(true)
           }
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          onBlur={() => setTimeout(() => setShowMatches(false), 150)}
           {...props}
         />
 
-        {showSuggestions && validation.suggestions.length > 0 && (
-          <View
-            style={[
-              styles.dropdown,
-              {
-                backgroundColor: theme.background,
-                borderColor: validation.isExactMatch
-                  ? "#ff6b6b"
-                  : validationMessage
-                  ? "#f59e0b"
-                  : theme.border,
-                height: Math.min(validation.suggestions.length * 58, 200), // Dynamic height based on items
-              },
-            ]}
-          >
-            <ScrollView
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-              keyboardShouldPersistTaps="handled"
-              bounces={false}
-              scrollEnabled={true}
-              contentContainerStyle={styles.dropdownContent}
-            >
-              {validation.suggestions.map((item, index) => (
-                <TouchableOpacity
-                  key={`product-${item.id}`}
-                  style={[
-                    styles.dropdownItem,
-                    index < validation.suggestions.length - 1 && {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.border + "30",
-                    },
-                  ]}
-                  onPress={() => handleSuggestionSelect(item.name)}
-                >
-                  <Text
-                    style={[styles.dropdownItemText, { color: theme.text }]}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.dropdownItemSubText, { color: theme.tabIconDefault }]}>
-                    ${item.price.toFixed(2)} • Stock: {item.stockQty}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+        {showMatches && validation.suggestions.length > 0 && (
+          <View style={styles.matchesContainer}>
+            <Text style={[styles.matchesText, { color: "#f59e0b" }]}>
+              {validation.suggestions.map((item) => item.name).join(" / ")}
+            </Text>
           </View>
         )}
       </View>
 
-      {validationMessage && (
+      {/* {validationMessage && (
         <Text
           style={[
             styles.validationMessage,
@@ -286,7 +241,7 @@ export function ProductNameInput({
         </Text>
       )}
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={styles.error}>{error}</Text>} */}
     </View>
   );
 }
@@ -312,46 +267,13 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     includeFontPadding: false,
   },
-  inputWithDropdown: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderBottomWidth: 0,
+  matchesContainer: {
+    paddingHorizontal: 4,
   },
-  dropdown: {
-    position: "absolute",
-    top: 47, // Just below the input
-    left: 0,
-    right: 0,
-    borderWidth: 1,
-    borderRadius: 8,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    zIndex: 1000,
-    overflow: 'hidden',
-  },
-  dropdownContent: {
-    flexGrow: 1,
-  },
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 58, // Adjusted to match the calculation: 12 + 16 + 12 + 2 (for sub text) + border
-    justifyContent: 'center',
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  dropdownItemSubText: {
+  matchesText: {
     fontSize: 12,
-    marginTop: 2,
-    opacity: 0.7,
+    fontStyle: "italic",
+    lineHeight: 16,
   },
   validationMessage: {
     fontSize: 12,

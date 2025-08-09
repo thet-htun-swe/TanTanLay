@@ -23,11 +23,17 @@ export default function CreateProductScreen() {
   const [price, setPrice] = useState("");
   const [stockQty, setStockQty] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [nameValidation, setNameValidation] = useState({ isValid: true, hasExactMatch: false });
+  const [nameValidation, setNameValidation] = useState({
+    isValid: true,
+    hasExactMatch: false,
+  });
 
-  const handleValidationChange = useCallback((isValid: boolean, hasExactMatch: boolean) => {
-    setNameValidation({ isValid, hasExactMatch });
-  }, []);
+  const handleValidationChange = useCallback(
+    (isValid: boolean, hasExactMatch: boolean) => {
+      setNameValidation({ isValid, hasExactMatch });
+    },
+    []
+  );
 
   const resetForm = () => {
     setName("");
@@ -42,7 +48,10 @@ export default function CreateProductScreen() {
     }
 
     if (nameValidation.hasExactMatch) {
-      Alert.alert("Error", "A product with this name already exists. Please choose a different name.");
+      Alert.alert(
+        "Error",
+        "A product with this name already exists. Please choose a different name."
+      );
       return;
     }
 
@@ -96,7 +105,8 @@ export default function CreateProductScreen() {
             placeholder="Enter product name"
             autoCapitalize="words"
             autoCorrect={false}
-            style={styles.input}
+            style={[styles.input, { marginBottom: 4 }]}
+            containerStyle={{ marginBottom: 16 }}
             existingProducts={products}
             onValidationChange={handleValidationChange}
           />
@@ -138,7 +148,13 @@ export default function CreateProductScreen() {
               title={isSubmitting ? "Creating..." : "Create Product"}
               onPress={handleCreateProduct}
               style={styles.button}
-              disabled={isSubmitting || !name || !price || !stockQty || nameValidation.hasExactMatch}
+              disabled={
+                isSubmitting ||
+                !name ||
+                !price ||
+                !stockQty ||
+                nameValidation.hasExactMatch
+              }
             />
           </View>
         </ScrollView>
