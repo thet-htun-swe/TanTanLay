@@ -1,6 +1,7 @@
 import {
   databaseService,
   deleteProduct,
+  deleteSale,
   getProducts,
   getSales,
   initializeDatabase,
@@ -34,6 +35,7 @@ interface AppState {
   fetchSales: () => Promise<void>;
   addSale: (sale: Omit<Sale, "id">) => Promise<number>;
   editSale: (sale: Sale & { id: number }) => Promise<void>;
+  removeSale: (saleId: number) => Promise<void>;
 
   // Utility actions
   clearAllData: () => Promise<void>;
@@ -166,6 +168,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ sales, products, loading: false });
     } catch (error) {
       set({ error: "Failed to update sale", loading: false });
+      throw error;
+    }
+  },
+
+  removeSale: async (saleId: number) => {
+    set({ loading: true, error: null });
+    try {
+      // Delete the sale (database service handles stock restoration automatically in transaction)
+      await deleteSale(saleId);
+
+      // Refresh sales and products data to reflect the changes
+      const [sales, products] = await Promise.all([getSales(), getProducts()]);
+      set({ sales, products, loading: false });
+    } catch (error) {
+      set({ error: "Failed to delete sale", loading: false });
       throw error;
     }
   },

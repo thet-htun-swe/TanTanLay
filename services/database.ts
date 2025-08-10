@@ -600,6 +600,45 @@ class DatabaseService {
     }
   }
 
+  async deleteSale(saleId: number): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    try {
+      // Start transaction
+      await this.db.execAsync("BEGIN TRANSACTION");
+
+      // Get sale items to restore stock quantities
+      const itemsRows = await this.db.getAllAsync(
+        "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
+        [saleId]
+      );
+
+      // Restore stock quantities for products (not custom products)
+      for (const item of itemsRows) {
+        const itemData = item as { product_id: number | string; quantity: number };
+        if (typeof itemData.product_id === "number") {
+          await this.db.runAsync(
+            "UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?",
+            [itemData.quantity, itemData.product_id]
+          );
+        }
+      }
+
+      // Delete sale items first (foreign key constraint)
+      await this.db.runAsync("DELETE FROM sale_items WHERE sale_id = ?", [saleId]);
+
+      // Delete the sale
+      await this.db.runAsync("DELETE FROM sales WHERE id = ?", [saleId]);
+
+      // Commit transaction
+      await this.db.execAsync("COMMIT");
+    } catch (error) {
+      // Rollback transaction on error
+      await this.db.execAsync("ROLLBACK");
+      throw error;
+    }
+  }
+
   // Analytics and reporting methods
   async getSalesByDateRange(
     startDate: string,
@@ -751,6 +790,7 @@ export const getSales = () => databaseService.getSales();
 export const getSaleById = (id: number) => databaseService.getSaleById(id);
 export const updateSale = (sale: Sale & { id: number }) =>
   databaseService.updateSale(sale);
+export const deleteSale = (id: number) => databaseService.deleteSale(id);
 
 export const getCustomers = () => databaseService.getCustomers();
 export const saveCustomer = (customer: Customer) => databaseService.saveCustomer(customer);

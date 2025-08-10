@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, Alert } from "react-native";
 
 import {
   InvoiceActions,
@@ -22,7 +22,7 @@ export default function SaleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [sale, setSale] = useState<(Sale & { id: number }) | null>(null);
   const [loading, setLoading] = useState(true);
-  const { products } = useAppStore();
+  const { products, removeSale } = useAppStore();
   const { formatDate, isGeneratingPdf, sharePdfInvoice } = useInvoice();
 
   const loadSale = async () => {
@@ -56,6 +56,33 @@ export default function SaleDetailsScreen() {
   const handleEdit = () => {
     if (sale) {
       router.push(`/edit-sale/${sale.id}` as any);
+    }
+  };
+
+  const handleDelete = () => {
+    if (sale) {
+      Alert.alert(
+        "Delete Sale",
+        `Are you sure you want to delete this sale (Invoice #${sale.invoiceNumber || sale.id})? This action cannot be undone.`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await removeSale(sale.id);
+                router.back();
+              } catch (error) {
+                Alert.alert("Error", "Failed to delete sale. Please try again.");
+              }
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -95,6 +122,7 @@ export default function SaleDetailsScreen() {
           onSharePdf={handleSharePdf}
           isGeneratingPdf={isGeneratingPdf}
           onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </ScrollView>
     </ThemedView>

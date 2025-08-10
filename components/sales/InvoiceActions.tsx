@@ -7,12 +7,14 @@ interface InvoiceActionsProps {
   onSharePdf: () => void;
   isGeneratingPdf: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export const InvoiceActions: React.FC<InvoiceActionsProps> = ({ 
   onSharePdf, 
   isGeneratingPdf,
-  onEdit
+  onEdit,
+  onDelete
 }) => {
   return (
     <View style={styles.container}>
@@ -23,6 +25,14 @@ export const InvoiceActions: React.FC<InvoiceActionsProps> = ({
             style={styles.actionButton}
           >
             <Ionicons name="create-outline" size={24} color="#0066cc" />
+          </TouchableOpacity>
+        )}
+        {onDelete && (
+          <TouchableOpacity
+            onPress={onDelete}
+            style={[styles.actionButton, styles.deleteButton]}
+          >
+            <Ionicons name="trash-outline" size={24} color="#dc3545" />
           </TouchableOpacity>
         )}
         <TouchableOpacity
@@ -70,6 +80,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  deleteButton: {
+    backgroundColor: '#ffe6e6',
   },
   loadingOverlay: {
     position: 'absolute',
