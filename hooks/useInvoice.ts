@@ -18,274 +18,127 @@ export const useInvoice = () => {
   };
 
   const generateInvoiceHTML = (sale: Sale & { id: number }) => {
-    const currentDate = new Date().toLocaleDateString();
-    const orderDate = sale.orderDate ? formatDate(sale.orderDate) : formatDate(sale.date);
-    const itemCount = sale.items.length;
-    const totalQuantity = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-    
     return `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Invoice #${sale.invoiceNumber || sale.id}</title>
+          <title>Invoice</title>
           <style>
-            @page {
-              margin: 20mm;
-              size: A4;
-            }
             body {
-              font-family: 'Arial', 'Helvetica', sans-serif;
+              font-family: Arial, sans-serif;
               margin: 0;
-              padding: 0;
+              padding: 20px;
               color: #333;
-              line-height: 1.4;
-            }
-            .invoice-container {
-              max-width: 800px;
-              margin: 0 auto;
             }
             .invoice-header {
               text-align: center;
-              border-bottom: 3px solid #0066cc;
-              padding-bottom: 20px;
               margin-bottom: 30px;
             }
             .invoice-title {
-              font-size: 32px;
+              font-size: 24px;
               font-weight: bold;
-              color: #0066cc;
               margin-bottom: 5px;
-              letter-spacing: 2px;
-            }
-            .company-info {
-              font-size: 16px;
-              color: #666;
-              margin-bottom: 10px;
-            }
-            .invoice-number {
-              font-size: 14px;
-              color: #999;
-              background: #f8f9fa;
-              padding: 5px 10px;
-              border-radius: 5px;
-              display: inline-block;
             }
             .invoice-details {
               display: flex;
               justify-content: space-between;
-              margin-bottom: 30px;
+              margin-bottom: 20px;
             }
             .customer-info, .invoice-info {
-              width: 45%;
+              width: 48%;
             }
-            .info-section {
-              background: #f8f9fa;
-              padding: 20px;
-              border-radius: 8px;
-              border-left: 4px solid #0066cc;
-            }
-            .info-section h3 {
-              margin: 0 0 15px 0;
-              color: #0066cc;
-              font-size: 16px;
-              font-weight: bold;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 5px;
-            }
-            .info-section div {
-              margin-bottom: 5px;
-              font-size: 14px;
-            }
-            .items-table {
+            table {
               width: 100%;
               border-collapse: collapse;
-              margin-bottom: 30px;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-              border-radius: 8px;
-              overflow: hidden;
+              margin-bottom: 20px;
             }
-            .items-table th {
-              background: linear-gradient(135deg, #0066cc, #004499);
-              color: white;
-              padding: 15px 10px;
+            th, td {
+              border: 1px solid #ddd;
+              padding: 10px;
               text-align: left;
-              font-weight: bold;
-              font-size: 14px;
             }
-            .items-table td {
-              border-bottom: 1px solid #eee;
-              padding: 12px 10px;
-              font-size: 14px;
-            }
-            .items-table tbody tr:hover {
-              background-color: #f8f9fa;
-            }
-            .items-table tbody tr:nth-child(even) {
-              background-color: #fbfcfd;
-            }
-            .text-right {
-              text-align: right;
-            }
-            .text-center {
-              text-align: center;
-            }
-            .summary-section {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 30px;
-            }
-            .summary-stats {
-              background: #f8f9fa;
-              padding: 20px;
-              border-radius: 8px;
-              border-left: 4px solid #28a745;
-            }
-            .summary-stats h4 {
-              margin: 0 0 10px 0;
-              color: #28a745;
-              font-size: 16px;
+            th {
+              background-color: #f2f2f2;
             }
             .totals {
-              background: #f8f9fa;
-              padding: 20px;
-              border-radius: 8px;
-              border-left: 4px solid #0066cc;
-              min-width: 300px;
+              width: 300px;
+              margin-left: auto;
             }
             .total-row {
               display: flex;
               justify-content: space-between;
-              padding: 8px 0;
-              border-bottom: 1px solid #eee;
-            }
-            .total-row:last-child {
-              border-bottom: none;
+              padding: 5px 0;
             }
             .grand-total {
               font-weight: bold;
               font-size: 18px;
-              color: #0066cc;
-              background: white;
-              margin: 10px -10px -10px -10px;
-              padding: 15px;
-              border-radius: 5px;
-              border: 2px solid #0066cc;
-            }
-            .footer {
-              margin-top: 50px;
-              padding-top: 20px;
-              border-top: 2px solid #eee;
-              text-align: center;
-            }
-            .footer-message {
-              font-size: 16px;
-              color: #0066cc;
-              font-weight: bold;
-              margin-bottom: 10px;
-            }
-            .footer-details {
-              font-size: 12px;
-              color: #666;
-            }
-            .currency {
-              font-weight: bold;
-              color: #0066cc;
+              border-top: 2px solid #333;
+              padding-top: 5px;
             }
           </style>
         </head>
         <body>
-          <div class="invoice-container">
-            <div class="invoice-header">
-              <div class="invoice-title">INVOICE</div>
-              <div class="company-info">TantanLay Invoicing System</div>
-              <div class="invoice-number">Invoice #${sale.invoiceNumber || sale.id}</div>
+          <div class="invoice-header">
+            <div class="invoice-title">INVOICE</div>
+            <div>TantanLay Invoicing</div>
+          </div>
+          
+          <div class="invoice-details">
+            <div class="customer-info">
+              <h3>Bill To:</h3>
+              <div>${sale.customer.name}</div>
+              <div>${sale.customer.contact || "No contact provided"}</div>
+              <div>${sale.customer.address || "No address provided"}</div>
             </div>
             
-            <div class="invoice-details">
-              <div class="customer-info">
-                <div class="info-section">
-                  <h3>📋 Bill To</h3>
-                  <div><strong>${sale.customer.name}</strong></div>
-                  ${sale.customer.contact ? `<div>📞 ${sale.customer.contact}</div>` : ''}
-                  ${sale.customer.address ? `<div>📍 ${sale.customer.address}</div>` : ''}
-                </div>
-              </div>
-              
-              <div class="invoice-info">
-                <div class="info-section">
-                  <h3>📄 Invoice Details</h3>
-                  <div><strong>Invoice Date:</strong> ${formatDate(sale.date)}</div>
-                  ${sale.orderDate && sale.orderDate !== sale.date ? `<div><strong>Order Date:</strong> ${orderDate}</div>` : ''}
-                  <div><strong>Generated:</strong> ${currentDate}</div>
-                  <div><strong>Payment Terms:</strong> Due on Receipt</div>
-                </div>
-              </div>
+            <div class="invoice-info">
+              <h3>Invoice Details:</h3>
+              <div>Invoice #: ${sale.invoiceNumber}</div>
+              <div>Date: ${formatDate(sale.date)}</div>
             </div>
-            
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Description</th>
-                  <th class="text-center">Qty</th>
-                  <th class="text-right">Unit Price</th>
-                  <th class="text-right">Line Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${sale.items
-                  .map((item, index) => {
-                    return `
-                    <tr>
-                      <td class="text-center">${index + 1}</td>
-                      <td>
-                        <strong>${item.productName}</strong>
-                        ${typeof item.productId === 'string' && item.productId.startsWith('custom-') ? '<br><small style="color: #666;">Custom Item</small>' : ''}
-                      </td>
-                      <td class="text-center">${item.quantity}</td>
-                      <td class="text-right currency">$${item.unitPrice.toFixed(2)}</td>
-                      <td class="text-right currency">$${item.lineTotal.toFixed(2)}</td>
-                    </tr>
-                  `;
-                  })
-                  .join("")}
-              </tbody>
-            </table>
-            
-            <div class="summary-section">
-              <div class="summary-stats">
-                <h4>📊 Order Summary</h4>
-                <div><strong>Total Items:</strong> ${itemCount}</div>
-                <div><strong>Total Quantity:</strong> ${totalQuantity}</div>
-                <div><strong>Average per Item:</strong> $${(sale.total / itemCount).toFixed(2)}</div>
-              </div>
-              
-              <div class="totals">
-                <div class="total-row">
-                  <div>Subtotal:</div>
-                  <div class="currency">$${sale.subtotal.toFixed(2)}</div>
-                </div>
-                ${sale.total !== sale.subtotal ? `
-                <div class="total-row">
-                  <div>Discount/Tax:</div>
-                  <div class="currency">$${(sale.total - sale.subtotal).toFixed(2)}</div>
-                </div>
-                ` : ''}
-                <div class="total-row grand-total">
-                  <div>TOTAL AMOUNT:</div>
-                  <div class="currency">$${sale.total.toFixed(2)}</div>
-                </div>
-              </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sale.items
+                .map((item, index) => {
+                  return `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.productName}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.unitPrice.toFixed(2)}</td>
+                    <td>${item.lineTotal.toFixed(2)}</td>
+                  </tr>
+                `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+          
+          <div class="totals">
+            <div class="total-row">
+              <div>Subtotal:</div>
+              <div>${sale.subtotal.toFixed(2)}</div>
             </div>
-            
-            <div class="footer">
-              <div class="footer-message">🙏 Thank you for your business!</div>
-              <div class="footer-details">
-                This invoice was generated electronically by TantanLay Invoicing System<br>
-                For questions about this invoice, please contact us with the invoice number above.
-              </div>
+            <div class="total-row grand-total">
+              <div>Total:</div>
+              <div>${sale.total.toFixed(2)}</div>
             </div>
+          </div>
+          
+          <div style="margin-top: 40px; text-align: center;">
+            <p>Thank you for your business!</p>
           </div>
         </body>
       </html>
