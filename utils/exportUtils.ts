@@ -1,8 +1,8 @@
+import { Sale } from "@/types";
 import * as FileSystem from "expo-file-system";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { utils as XLSXUtils, write as XLSXWrite } from "xlsx";
-import { Sale } from "@/types";
 
 export class ExportUtils {
   static formatDate(dateString: string): string {
@@ -93,7 +93,9 @@ export class ExportUtils {
     }
   }
 
-  static async generateShippingLabels(sales: (Sale & { id: number })[]): Promise<void> {
+  static async generateShippingLabels(
+    sales: (Sale & { id: number })[]
+  ): Promise<void> {
     try {
       if (sales.length === 0) {
         throw new Error("No sales to generate shipping labels for.");
@@ -117,7 +119,9 @@ export class ExportUtils {
     }
   }
 
-  private static generateShippingLabelsHTML(sales: (Sale & { id: number })[]): string {
+  private static generateShippingLabelsHTML(
+    sales: (Sale & { id: number })[]
+  ): string {
     const LABELS_PER_PAGE = 6;
     const totalSales = sales.length;
     const totalPages = Math.ceil(totalSales / LABELS_PER_PAGE);
@@ -228,7 +232,7 @@ export class ExportUtils {
                 sale.customer.contact || "No contact provided"
               }</div>
             </div>
-            <div class="total">Total: $${sale.total.toFixed(2)}</div>
+            <div class="total">Total: ${sale.total.toFixed(2)}</div>
             <div class="date">Order Date: ${saleDate}</div>
           </div>
         `;
