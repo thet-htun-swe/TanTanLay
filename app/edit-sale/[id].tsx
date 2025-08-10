@@ -1,3 +1,4 @@
+import { DateTimePicker } from "@/components/common/DateTimePicker";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -5,12 +6,13 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
-import { CustomerForm } from "@/components/sales/CustomerForm";
+import { CustomerSelector } from "@/components/sales/CustomerSelector";
 import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
@@ -23,9 +25,10 @@ export default function EditSaleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { products, fetchProducts, editSale } = useAppStore();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
-  const [customerName, setCustomerName] = useState("");
-  const [customerContact, setCustomerContact] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<
+    (Customer & { id?: number }) | null
+  >(null);
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [isUpdating, setIsUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [originalSale, setOriginalSale] = useState<(Sale & { id: number }) | null>(null);
@@ -45,9 +48,12 @@ export default function EditSaleScreen() {
       const sale = await getSaleById(parseInt(id, 10));
       if (sale) {
         setOriginalSale(sale);
-        setCustomerName(sale.customer.name);
-        setCustomerContact(sale.customer.contact || "");
-        setCustomerAddress(sale.customer.address || "");
+        setSelectedCustomer({
+          name: sale.customer.name,
+          contact: sale.customer.contact || "",
+          address: sale.customer.address || "",
+        });
+        setOrderDate(new Date(sale.orderDate || sale.date));
         setSelectedProducts(sale.items);
       }
     } catch (error) {
@@ -101,13 +107,17 @@ export default function EditSaleScreen() {
     setSelectedProducts(prev => prev.filter(item => item.productId !== productId));
   };
 
+  const onDateChange = (date: Date) => {
+    setOrderDate(date);
+  };
+
   const validateSale = (): { isValid: boolean; error?: string } => {
     if (selectedProducts.length === 0) {
       return { isValid: false, error: "Please add at least one product to the sale" };
     }
 
-    if (!customerName.trim()) {
-      return { isValid: false, error: "Please enter customer name" };
+    if (!selectedCustomer?.name?.trim()) {
+      return { isValid: false, error: "Please select a customer" };
     }
 
     // For edit, we need to consider original quantities when validating stock
@@ -160,13 +170,14 @@ export default function EditSaleScreen() {
 
     try {
       const customer: Customer = {
-        name: customerName.trim(),
-        contact: customerContact.trim(),
-        address: customerAddress.trim(),
+        name: selectedCustomer!.name.trim(),
+        contact: selectedCustomer!.contact?.trim() || "",
+        address: selectedCustomer!.address?.trim() || "",
       };
 
       const updatedSale: Sale & { id: number } = {
         ...originalSale,
+        orderDate: orderDate.toISOString(),
         customer,
         items: selectedProducts,
         subtotal,
@@ -215,14 +226,22 @@ export default function EditSaleScreen() {
         >
           <ScreenHeader title="Edit Sale" />
 
-          <CustomerForm
-            name={customerName}
-            contact={customerContact}
-            address={customerAddress}
-            onNameChange={setCustomerName}
-            onContactChange={setCustomerContact}
-            onAddressChange={setCustomerAddress}
-          />
+          <View style={styles.customerDateRow}>
+            <View style={styles.customerSelectorContainer}>
+              <CustomerSelector
+                selectedCustomer={selectedCustomer}
+                onCustomerSelect={setSelectedCustomer}
+              />
+            </View>
+
+            <View style={styles.datePickerContainer}>
+              <DateTimePicker
+                label="Order Date"
+                value={orderDate}
+                onChange={onDateChange}
+              />
+            </View>
+          </View>
 
           <SaleItemsList
             items={selectedProducts}
@@ -257,5 +276,20 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+  },
+  customerDateRow: {
+    flexDirection: "row",
+    marginBottom: 4,
+    gap: 12,
+    alignItems: "stretch",
+  },
+  customerSelectorContainer: {
+    flex: 2,
+  },
+  datePickerContainer: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 16,
   },
 });

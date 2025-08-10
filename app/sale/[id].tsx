@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
 import {
@@ -24,18 +25,27 @@ export default function SaleDetailsScreen() {
   const { products } = useAppStore();
   const { formatDate, isGeneratingPdf, sharePdfInvoice } = useInvoice();
 
-  useEffect(() => {
-    const loadSale = async () => {
-      if (id) {
-        setLoading(true);
-        const saleData = await getSaleById(parseInt(id, 10));
-        setSale(saleData);
-        setLoading(false);
-      }
-    };
+  const loadSale = async () => {
+    if (id) {
+      setLoading(true);
+      const saleData = await getSaleById(parseInt(id, 10));
+      setSale(saleData);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadSale();
   }, [id]);
+
+  // Refresh data when screen comes into focus (e.g., returning from edit)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (id) {
+        loadSale();
+      }
+    }, [id])
+  );
 
   const handleSharePdf = () => {
     if (sale) {
