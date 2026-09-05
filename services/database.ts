@@ -99,7 +99,7 @@ class DatabaseService {
 
     // Migration: Add order_date column if it doesn't exist
     await this.migrateOrderDateColumn();
-    
+
     // Migration: Add invoice_number column if it doesn't exist
     await this.migrateInvoiceNumberColumn();
   }
@@ -109,8 +109,10 @@ class DatabaseService {
 
     try {
       // Check if order_date column exists
-      const tableInfo = await this.db.getAllAsync('PRAGMA table_info(sales)');
-      const orderDateExists = tableInfo.some((column: any) => column.name === 'order_date');
+      const tableInfo = await this.db.getAllAsync("PRAGMA table_info(sales)");
+      const orderDateExists = tableInfo.some(
+        (column: any) => column.name === "order_date",
+      );
 
       if (!orderDateExists) {
         console.log("Adding order_date column to sales table");
@@ -133,9 +135,11 @@ class DatabaseService {
       const columns = await this.db.getAllAsync(`
         PRAGMA table_info(sales);
       `);
-      
-      const hasInvoiceNumber = columns.some((col: any) => col.name === 'invoice_number');
-      
+
+      const hasInvoiceNumber = columns.some(
+        (col: any) => col.name === "invoice_number",
+      );
+
       if (!hasInvoiceNumber) {
         await this.db.execAsync(`
           ALTER TABLE sales ADD COLUMN invoice_number TEXT;
@@ -154,12 +158,13 @@ class DatabaseService {
       // Extract date and format as YYMMDD
       const date = new Date(orderDate);
       const year = date.getFullYear().toString().slice(-2); // Last 2 digits of year
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
       const datePrefix = `${year}${month}${day}`;
-      
+
       // Find the highest invoice number for this date
-      const result = await this.db.getFirstAsync(`
+      const result = await this.db.getFirstAsync(
+        `
         SELECT invoice_number 
         FROM sales 
         WHERE DATE(order_date) = ? 
@@ -167,10 +172,12 @@ class DatabaseService {
           AND invoice_number LIKE ?
         ORDER BY CAST(SUBSTR(invoice_number, 7) AS INTEGER) DESC
         LIMIT 1
-      `, [date.toISOString().split('T')[0], `${datePrefix}%`]);
+      `,
+        [date.toISOString().split("T")[0], `${datePrefix}%`],
+      );
 
       let nextNumber = 1;
-      
+
       if (result && (result as any).invoice_number) {
         // Extract number from invoice format: 250910001
         const invoiceNumber = (result as any).invoice_number;
@@ -184,8 +191,8 @@ class DatabaseService {
       }
 
       // Format: YYMMDD001
-      const paddedNumber = nextNumber.toString().padStart(3, '0');
-      
+      const paddedNumber = nextNumber.toString().padStart(3, "0");
+
       return `${datePrefix}${paddedNumber}`;
     } catch (error) {
       console.error("Failed to generate invoice number:", error);
@@ -199,9 +206,9 @@ class DatabaseService {
 
     const result = await this.db.runAsync(
       "INSERT INTO products (name, price, stock_qty) VALUES (?, ?, ?)",
-      [product.name, product.price, product.stockQty]
+      [product.name, product.price, product.stockQty],
     );
-    
+
     return result.lastInsertRowId;
   }
 
@@ -209,40 +216,42 @@ class DatabaseService {
     if (!this.db) throw new Error("Database not initialized");
 
     const rows = await this.db.getAllAsync(
-      "SELECT id, name, price, stock_qty as stockQty FROM products ORDER BY name"
+      "SELECT id, name, price, stock_qty as stockQty FROM products ORDER BY name",
     );
 
     // Filter out any rows with null or invalid ids
     return rows.filter(
-      (row: any) => row.id != null && typeof row.id === "number"
+      (row: any) => row.id != null && typeof row.id === "number",
     ) as (Product & { id: number })[];
   }
 
-  async searchProducts(searchTerm: string): Promise<(Product & { id: number })[]> {
+  async searchProducts(
+    searchTerm: string,
+  ): Promise<(Product & { id: number })[]> {
     if (!this.db) throw new Error("Database not initialized");
-    
+
     if (!searchTerm.trim()) {
       return this.getProducts();
     }
 
     const rows = await this.db.getAllAsync(
       "SELECT id, name, price, stock_qty as stockQty FROM products WHERE name LIKE ? ORDER BY name",
-      [`%${searchTerm.trim()}%`]
+      [`%${searchTerm.trim()}%`],
     );
 
     return rows.filter(
-      (row: any) => row.id != null && typeof row.id === "number"
+      (row: any) => row.id != null && typeof row.id === "number",
     ) as (Product & { id: number })[];
   }
 
   async getProductById(
-    productId: number
+    productId: number,
   ): Promise<(Product & { id: number }) | null> {
     if (!this.db) throw new Error("Database not initialized");
 
     const row = await this.db.getFirstAsync(
       "SELECT id, name, price, stock_qty as stockQty FROM products WHERE id = ?",
-      [productId]
+      [productId],
     );
 
     return row as (Product & { id: number }) | null;
@@ -253,7 +262,7 @@ class DatabaseService {
 
     await this.db.runAsync(
       "UPDATE products SET name = ?, price = ?, stock_qty = ? WHERE id = ?",
-      [product.name, product.price, product.stockQty, product.id]
+      [product.name, product.price, product.stockQty, product.id],
     );
   }
 
@@ -269,7 +278,7 @@ class DatabaseService {
 
     const result = await this.db.runAsync(
       "INSERT INTO customers (name, contact, address) VALUES (?, ?, ?)",
-      [customer.name, customer.contact || null, customer.address || null]
+      [customer.name, customer.contact || null, customer.address || null],
     );
 
     return result.lastInsertRowId;
@@ -281,7 +290,7 @@ class DatabaseService {
     // Try to find existing customer by name and contact
     const existingCustomer = await this.db.getFirstAsync(
       "SELECT id FROM customers WHERE name = ? AND contact = ?",
-      [customer.name, customer.contact || ""]
+      [customer.name, customer.contact || ""],
     );
 
     if (existingCustomer) {
@@ -296,7 +305,24 @@ class DatabaseService {
     if (!this.db) throw new Error("Database not initialized");
 
     const rows = await this.db.getAllAsync(
-      "SELECT id, name, contact, address FROM customers ORDER BY name"
+      "SELECT id, name, contact, address FROM customers ORDER BY name",
+    );
+
+    return rows as (Customer & { id: number })[];
+  }
+
+  async searchCustomers(
+    searchTerm: string,
+    offset = 0,
+  ): Promise<(Customer & { id: number })[]> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const query = searchTerm.trim();
+    const rows = await this.db.getAllAsync(
+      query
+        ? "SELECT id, name, contact, address FROM customers WHERE name LIKE ? OR contact LIKE ? ORDER BY name LIMIT 50 OFFSET ?"
+        : "SELECT id, name, contact, address FROM customers ORDER BY name LIMIT 50 OFFSET ?",
+      query ? [`%${query}%`, `%${query}%`, offset] : [offset],
     );
 
     return rows as (Customer & { id: number })[];
@@ -307,7 +333,12 @@ class DatabaseService {
 
     await this.db.runAsync(
       "UPDATE customers SET name = ?, contact = ?, address = ? WHERE id = ?",
-      [customer.name, customer.contact || null, customer.address || null, customer.id]
+      [
+        customer.name,
+        customer.contact || null,
+        customer.address || null,
+        customer.id,
+      ],
     );
   }
 
@@ -327,7 +358,7 @@ class DatabaseService {
 
       // Find or create customer
       const customerId = await this.findOrCreateCustomer(sale.customer);
-      
+
       // Generate invoice number based on order date
       const invoiceNumber = await this.generateInvoiceNumber(sale.orderDate);
 
@@ -347,7 +378,7 @@ class DatabaseService {
           sale.date,
           sale.orderDate,
           invoiceNumber,
-        ]
+        ],
       );
 
       const saleId = saleResult.lastInsertRowId;
@@ -366,14 +397,14 @@ class DatabaseService {
             item.quantity,
             item.unitPrice,
             item.lineTotal,
-          ]
+          ],
         );
 
         // Update product stock for existing products (not custom products)
         if (typeof item.productId === "number") {
           await this.db.runAsync(
             "UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?",
-            [item.quantity, item.productId]
+            [item.quantity, item.productId],
           );
         }
       }
@@ -399,7 +430,7 @@ class DatabaseService {
 
     // Filter out any rows with null or invalid ids
     const validSalesRows = salesRows.filter(
-      (row: any) => row.id != null && typeof row.id === "number"
+      (row: any) => row.id != null && typeof row.id === "number",
     );
 
     const sales: (Sale & { id: number })[] = [];
@@ -425,7 +456,7 @@ class DatabaseService {
         WHERE sale_id = ?
         ORDER BY id
       `,
-        [sale.id]
+        [sale.id],
       );
 
       const items: SaleItem[] = itemsRows.map((item: any) => ({
@@ -464,22 +495,22 @@ class DatabaseService {
       FROM sales 
       WHERE id = ?
     `,
-      [saleId]
+      [saleId],
     );
 
     if (!saleRow) return null;
 
     const sale = saleRow as {
-        id: number;
-        invoice_number: string | null;
-        customer_name: string;
-        customer_contact: string | null;
-        customer_address: string | null;
-        subtotal: number;
-        total: number;
-        date: string;
-        order_date: string;
-      };
+      id: number;
+      invoice_number: string | null;
+      customer_name: string;
+      customer_contact: string | null;
+      customer_address: string | null;
+      subtotal: number;
+      total: number;
+      date: string;
+      order_date: string;
+    };
 
     // Get sale items
     const itemsRows = await this.db.getAllAsync(
@@ -489,7 +520,7 @@ class DatabaseService {
       WHERE sale_id = ?
       ORDER BY id
     `,
-      [saleId]
+      [saleId],
     );
 
     const items: SaleItem[] = itemsRows.map((item: any) => ({
@@ -526,16 +557,19 @@ class DatabaseService {
       // Get original sale items to restore stock quantities
       const originalItemsRows = await this.db.getAllAsync(
         "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
-        [sale.id]
+        [sale.id],
       );
 
       // Restore stock quantities for original items
       for (const originalItem of originalItemsRows) {
-        const originalItemData = originalItem as { product_id: number | string; quantity: number };
+        const originalItemData = originalItem as {
+          product_id: number | string;
+          quantity: number;
+        };
         if (typeof originalItemData.product_id === "number") {
           await this.db.runAsync(
             "UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?",
-            [originalItemData.quantity, originalItemData.product_id]
+            [originalItemData.quantity, originalItemData.product_id],
           );
         }
       }
@@ -559,11 +593,13 @@ class DatabaseService {
           sale.subtotal,
           sale.total,
           sale.id,
-        ]
+        ],
       );
 
       // Delete existing sale items
-      await this.db.runAsync("DELETE FROM sale_items WHERE sale_id = ?", [sale.id]);
+      await this.db.runAsync("DELETE FROM sale_items WHERE sale_id = ?", [
+        sale.id,
+      ]);
 
       // Insert new sale items
       for (const item of sale.items) {
@@ -579,14 +615,14 @@ class DatabaseService {
             item.quantity,
             item.unitPrice,
             item.lineTotal,
-          ]
+          ],
         );
 
         // Update product stock for existing products (not custom products)
         if (typeof item.productId === "number") {
           await this.db.runAsync(
             "UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?",
-            [item.quantity, item.productId]
+            [item.quantity, item.productId],
           );
         }
       }
@@ -610,22 +646,27 @@ class DatabaseService {
       // Get sale items to restore stock quantities
       const itemsRows = await this.db.getAllAsync(
         "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
-        [saleId]
+        [saleId],
       );
 
       // Restore stock quantities for products (not custom products)
       for (const item of itemsRows) {
-        const itemData = item as { product_id: number | string; quantity: number };
+        const itemData = item as {
+          product_id: number | string;
+          quantity: number;
+        };
         if (typeof itemData.product_id === "number") {
           await this.db.runAsync(
             "UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?",
-            [itemData.quantity, itemData.product_id]
+            [itemData.quantity, itemData.product_id],
           );
         }
       }
 
       // Delete sale items first (foreign key constraint)
-      await this.db.runAsync("DELETE FROM sale_items WHERE sale_id = ?", [saleId]);
+      await this.db.runAsync("DELETE FROM sale_items WHERE sale_id = ?", [
+        saleId,
+      ]);
 
       // Delete the sale
       await this.db.runAsync("DELETE FROM sales WHERE id = ?", [saleId]);
@@ -642,7 +683,7 @@ class DatabaseService {
   // Analytics and reporting methods
   async getSalesByDateRange(
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<(Sale & { id: number })[]> {
     if (!this.db) throw new Error("Database not initialized");
 
@@ -653,12 +694,12 @@ class DatabaseService {
       WHERE date >= ? AND date <= ?
       ORDER BY date DESC
     `,
-      [startDate, endDate]
+      [startDate, endDate],
     );
 
     // Filter out any rows with null or invalid ids
     const validSalesRows = salesRows.filter(
-      (row: any) => row.id != null && typeof row.id === "number"
+      (row: any) => row.id != null && typeof row.id === "number",
     );
 
     const sales: (Sale & { id: number })[] = [];
@@ -682,7 +723,7 @@ class DatabaseService {
         FROM sale_items 
         WHERE sale_id = ?
       `,
-        [sale.id]
+        [sale.id],
       );
 
       const items: SaleItem[] = itemsRows.map((item: any) => ({
@@ -716,19 +757,19 @@ class DatabaseService {
     if (!this.db) throw new Error("Database not initialized");
 
     const result = await this.db.getFirstAsync(
-      "SELECT SUM(total) as total FROM sales"
+      "SELECT SUM(total) as total FROM sales",
     );
     return (result as { total: number }).total || 0;
   }
 
   async getLowStockProducts(
-    threshold: number = 5
+    threshold: number = 5,
   ): Promise<(Product & { id: number })[]> {
     if (!this.db) throw new Error("Database not initialized");
 
     const rows = await this.db.getAllAsync(
       "SELECT id, name, price, stock_qty as stockQty FROM products WHERE stock_qty <= ? ORDER BY stock_qty ASC",
-      [threshold]
+      [threshold],
     );
 
     return rows as (Product & { id: number })[];
@@ -777,7 +818,8 @@ export const initializeDatabase = () => databaseService.initializeDatabase();
 export const saveProduct = (product: Omit<Product, "id">) =>
   databaseService.saveProduct(product);
 export const getProducts = () => databaseService.getProducts();
-export const searchProducts = (searchTerm: string) => databaseService.searchProducts(searchTerm);
+export const searchProducts = (searchTerm: string) =>
+  databaseService.searchProducts(searchTerm);
 export const getProductById = (id: number) =>
   databaseService.getProductById(id);
 export const updateProduct = (product: Product & { id: number }) =>
@@ -793,10 +835,14 @@ export const updateSale = (sale: Sale & { id: number }) =>
 export const deleteSale = (id: number) => databaseService.deleteSale(id);
 
 export const getCustomers = () => databaseService.getCustomers();
-export const saveCustomer = (customer: Customer) => databaseService.saveCustomer(customer);
+export const searchCustomers = (searchTerm: string, offset = 0) =>
+  databaseService.searchCustomers(searchTerm, offset);
+export const saveCustomer = (customer: Customer) =>
+  databaseService.saveCustomer(customer);
 export const updateCustomer = (customer: Customer & { id: number }) =>
   databaseService.updateCustomer(customer);
-export const deleteCustomer = (id: number) => databaseService.deleteCustomer(id);
+export const deleteCustomer = (id: number) =>
+  databaseService.deleteCustomer(id);
 
 export const getSalesByDateRange = (start: string, end: string) =>
   databaseService.getSalesByDateRange(start, end);
