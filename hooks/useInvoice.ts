@@ -81,7 +81,7 @@ export const useInvoice = () => {
         <body>
           <div class="invoice-header">
             <div class="invoice-title">INVOICE</div>
-            <div>TantanLay Invoicing</div>
+            <div>Clothing Sales</div>
           </div>
           
           <div class="invoice-details">

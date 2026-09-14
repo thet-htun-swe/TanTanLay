@@ -71,7 +71,7 @@ export class ExportUtils {
       const wbout = XLSXWrite(wb, { type: "base64", bookType: "xlsx" });
 
       // Define file path
-      const fileName = `TanTanLay_Sales_${
+      const fileName = `Clothing_Sales_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       const fileUri = FileSystem.documentDirectory + fileName;
@@ -222,7 +222,7 @@ export class ExportUtils {
 
         htmlContent += `
           <div class="shipping-label">
-            <div class="label-header">Tan Tan Lay</div>
+            <div class="label-header">Clothing Sales</div>
             <div class="customer-info">
               <div class="customer-name">${sale.customer.name}</div>
               <div class="customer-detail">${

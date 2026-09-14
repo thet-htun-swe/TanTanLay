@@ -1,7 +1,7 @@
 import { Customer, Product, Sale, SaleItem } from "@/types";
 import * as SQLite from "expo-sqlite";
 
-const DB_NAME = "tantanlay.db";
+const DB_NAME = "clothing-sales.db";
 
 class DatabaseService {
   private db: SQLite.SQLiteDatabase | null = null;
