@@ -39,7 +39,11 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
-    }
+      "router": {},
+      "eas": {
+        "projectId": "2907496a-d4e4-46c9-90bb-e4fc4989f47c"
+      }
+    },
+    "owner": "thethtun"
   }
 }

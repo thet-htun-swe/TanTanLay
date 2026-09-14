@@ -183,7 +183,7 @@ export default function CustomersScreen() {
         ]}
         onPress={handleCreateCustomer}
       >
-        <MaterialCommunityIcons name="plus" size={24} color="white" />
+        <MaterialCommunityIcons name="plus" size={24} color={Colors[colorScheme ?? "light"].onTint} />
       </TouchableOpacity>
 
       <CustomerDetailsBottomSheet
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,

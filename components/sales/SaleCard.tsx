@@ -3,6 +3,8 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Card } from "../ui/Card";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 interface SaleCardProps {
   sale: Sale & { id: number };
@@ -12,6 +14,7 @@ interface SaleCardProps {
 }
 
 export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress, selected, onToggle }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, '0');
@@ -37,12 +40,12 @@ export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress, selected, onT
           <ThemedText style={styles.total}>{sale.total.toFixed(2)}</ThemedText>
           <TouchableOpacity
             onPress={() => onToggle(sale.id)}
-            style={[styles.selectButton, selected && styles.selectButtonActive]}
+            style={[styles.selectButton, { borderColor: theme.border }, selected && { backgroundColor: theme.tint, borderColor: theme.tint }]}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: selected }}
             accessibilityLabel={`Select invoice ${sale.invoiceNumber ?? sale.id}`}
           >
-            <ThemedText style={[styles.selectButtonText, selected && styles.selectButtonTextActive]}>
+            <ThemedText style={[styles.selectButtonText, selected && { color: theme.onTint }]}>
               {selected ? "Selected" : "Select"}
             </ThemedText>
           </TouchableOpacity>
@@ -83,19 +86,11 @@ const styles = StyleSheet.create({
   },
   selectButton: {
     borderWidth: 1,
-    borderColor: "#888",
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  selectButtonActive: {
-    backgroundColor: "#4f46e5",
-    borderColor: "#4f46e5",
-  },
   selectButtonText: {
     fontSize: 12,
-  },
-  selectButtonTextActive: {
-    color: "#fff",
   },
 });

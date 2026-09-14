@@ -8,8 +8,11 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAppStore } from "@/store";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function HomeScreen() {
+  const theme = Colors[useColorScheme() ?? "light"];
   const { products, sales, fetchProducts, fetchSales } = useAppStore();
 
   useEffect(() => {
@@ -25,7 +28,7 @@ export default function HomeScreen() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      headerBackgroundColor={{ light: "#F6D2C2", dark: "#302C37" }}
       headerImage={<View />}
     >
       <ThemedView style={styles.titleContainer}>
@@ -36,7 +39,7 @@ export default function HomeScreen() {
         <ThemedText style={styles.sectionTitle}>Dashboard</ThemedText>
         <View style={styles.statsRow}>
           <TouchableOpacity
-            style={styles.statItem}
+            style={[styles.statItem, { backgroundColor: theme.surface }]}
             onPress={() => navigateTo("/products")}
           >
             <ThemedText style={styles.statValue}>{products.length}</ThemedText>
@@ -44,7 +47,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.statItem}
+            style={[styles.statItem, { backgroundColor: theme.surface }]}
             onPress={() => navigateTo("/sales")}
           >
             <ThemedText style={styles.statValue}>{sales.length}</ThemedText>
@@ -52,7 +55,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.statItem}
+            style={[styles.statItem, { backgroundColor: theme.surface }]}
             onPress={() => navigateTo("/sales")}
           >
             <ThemedText style={styles.statValue}>
@@ -90,7 +93,7 @@ export default function HomeScreen() {
           {sales.slice(0, 3).map((sale) => (
             <TouchableOpacity
               key={sale.id}
-              style={styles.recentItem}
+              style={[styles.recentItem, { borderBottomColor: theme.border }]}
               onPress={() => navigateTo(`/sale/${sale.id}`)}
             >
               <View>
@@ -150,8 +153,7 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: "center",
     padding: 12,
-    borderRadius: 8,
-    backgroundColor: "rgba(0,0,0,0.03)",
+    borderRadius: 14,
     flex: 1,
     marginHorizontal: 4,
   },
@@ -183,7 +185,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   recentTitle: {
     fontSize: 16,

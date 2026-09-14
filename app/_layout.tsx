@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 import { useAppStore } from "@/store";
 
 import * as Updates from "expo-updates";
@@ -16,6 +17,7 @@ import { useEffect } from "react";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
   const { initializeApp, isInitialized, error } = useAppStore();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -57,7 +59,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={{
+      ...(colorScheme === "dark" ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(colorScheme === "dark" ? DarkTheme : DefaultTheme).colors,
+        primary: theme.tint,
+        background: theme.background,
+        card: theme.cardBackground,
+        text: theme.text,
+        border: theme.border,
+        notification: theme.danger,
+      },
+    }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen

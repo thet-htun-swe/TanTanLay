@@ -17,8 +17,11 @@ import { printWifiSales } from "@/services/thermalPrinter";
 import { useAppStore } from "@/store";
 import { ExportUtils } from "@/utils/exportUtils";
 import { getReceiptPreviewText } from "@/utils/escPos";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function SalesScreen() {
+  const theme = Colors[useColorScheme() ?? "light"];
   const { sales, fetchSales } = useAppStore();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [isPreviewSheetOpen, setIsPreviewSheetOpen] = useState(false);
@@ -237,8 +240,8 @@ export default function SalesScreen() {
           58 mm receipt layout. Paper output may vary by printer font and paper width.
         </ThemedText>
         {selectedSales.map((sale) => (
-          <View key={sale.id} style={styles.receiptPreview}>
-            <Text style={styles.receiptText}>{getReceiptPreviewText(sale)}</Text>
+          <View key={sale.id} style={[styles.receiptPreview, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.receiptText, { color: theme.text }]}>{getReceiptPreviewText(sale)}</Text>
           </View>
         ))}
       </BottomSheet>
@@ -263,13 +266,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   receiptPreview: {
-    backgroundColor: "#fff",
     padding: 16,
     marginBottom: 16,
     borderRadius: 4,
   },
   receiptText: {
-    color: "#111",
     fontFamily: "monospace",
     fontSize: 13,
     lineHeight: 18,
