@@ -10,23 +10,19 @@ import { SalesList } from "@/components/sales/SalesList";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Input } from "@/components/ui/Input";
 import { useSalesFilter } from "@/hooks/useSalesFilter";
-import { getWifiPrinterSettings, saveWifiPrinterSettings } from "@/services/database";
-import { printSales, printTestReceipt } from "@/services/thermalPrinter";
+import { printBluetoothSales } from "@/services/bluetoothPrinter";
+import { getPrinterSettings } from "@/services/database";
+import { printWifiSales } from "@/services/thermalPrinter";
 import { useAppStore } from "@/store";
-import { WifiPrinterSettings } from "@/types";
 import { ExportUtils } from "@/utils/exportUtils";
 import { getReceiptPreviewText } from "@/utils/escPos";
 
 export default function SalesScreen() {
   const { sales, fetchSales } = useAppStore();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [isPrinterSheetOpen, setIsPrinterSheetOpen] = useState(false);
   const [isPreviewSheetOpen, setIsPreviewSheetOpen] = useState(false);
   const [selectedSaleIds, setSelectedSaleIds] = useState<number[]>([]);
-  const [printerHost, setPrinterHost] = useState("");
-  const [printerPort, setPrinterPort] = useState("9100");
   const [isPrinting, setIsPrinting] = useState(false);
 
   const {
@@ -52,16 +48,6 @@ export default function SalesScreen() {
   useEffect(() => {
     fetchSales();
   }, [fetchSales]);
-
-  useEffect(() => {
-    getWifiPrinterSettings()
-      .then((settings) => {
-        if (!settings) return;
-        setPrinterHost(settings.host);
-        setPrinterPort(String(settings.port));
-      })
-      .catch((error) => console.warn("Failed to load printer settings:", error));
-  }, []);
 
   const handleExportExcel = async () => {
     try {
@@ -105,55 +91,26 @@ export default function SalesScreen() {
     );
   };
 
-  const savePrinter = async (): Promise<WifiPrinterSettings | null> => {
-    const settings = { host: printerHost, port: Number(printerPort) };
-    try {
-      await saveWifiPrinterSettings(settings);
-      return { ...settings, host: settings.host.trim() };
-    } catch (error) {
-      Alert.alert("Printer setup", error instanceof Error ? error.message : "Could not save printer settings");
-      return null;
-    }
-  };
-
-  const handleSavePrinter = async () => {
-    const settings = await savePrinter();
-    if (settings) Alert.alert("Printer setup", "Wi-Fi printer saved");
-  };
-
-  const handleTestPrint = async () => {
-    const settings = await savePrinter();
-    if (!settings) return;
-
-    setIsPrinting(true);
-    try {
-      await printTestReceipt(settings);
-      Alert.alert("Printer test", "Test receipt sent");
-    } catch (error) {
-      Alert.alert("Printer test failed", error instanceof Error ? error.message : "Could not reach printer");
-    } finally {
-      setIsPrinting(false);
-    }
-  };
-
   const handlePrintSelected = async () => {
-    if (!printerHost.trim()) {
-      setIsPrinterSheetOpen(true);
-      return;
-    }
-
     const selectedSales = sales.filter((sale) => selectedSaleIds.includes(sale.id));
     if (!selectedSales.length) return;
 
-    const settings = await savePrinter();
+    const settings = await getPrinterSettings();
     if (!settings) {
-      setIsPrinterSheetOpen(true);
+      Alert.alert("Printer setup", "Choose a Wi-Fi or Bluetooth printer first.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Open settings", onPress: () => router.push("/printer-settings") },
+      ]);
       return;
     }
 
     setIsPrinting(true);
     try {
-      await printSales(selectedSales, settings);
+      if (settings.connectionType === "bluetooth") {
+        await printBluetoothSales(selectedSales, settings);
+      } else {
+        await printWifiSales(selectedSales, settings);
+      }
       setSelectedSaleIds([]);
       Alert.alert("Printed", `${selectedSales.length} receipt${selectedSales.length === 1 ? "" : "s"} sent to the printer`);
     } catch (error) {
@@ -191,7 +148,7 @@ export default function SalesScreen() {
     },
     {
       title: "Printer",
-      onPress: () => setIsPrinterSheetOpen(true),
+      onPress: () => router.push("/printer-settings"),
       variant: "secondary" as const,
       disabled: isPrinting,
     },
@@ -286,40 +243,6 @@ export default function SalesScreen() {
         ))}
       </BottomSheet>
 
-      <BottomSheet
-        isVisible={isPrinterSheetOpen}
-        onClose={() => setIsPrinterSheetOpen(false)}
-        height={Dimensions.get("window").height * 0.52}
-      >
-        <ThemedText style={styles.sheetTitle}>Wi-Fi thermal printer</ThemedText>
-        <ThemedText style={styles.sheetHint}>
-          Connect the phone and printer to the same Wi-Fi network. Most ESC/POS printers use port 9100.
-        </ThemedText>
-        <Input
-          label="Printer IP address"
-          value={printerHost}
-          onChangeText={setPrinterHost}
-          placeholder="192.168.1.100"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Input
-          label="Port"
-          value={printerPort}
-          onChangeText={setPrinterPort}
-          placeholder="9100"
-          keyboardType="number-pad"
-          containerStyle={styles.portInput}
-        />
-        <ActionButtons
-          buttons={[
-            { title: "Save", onPress: handleSavePrinter, variant: "secondary" },
-            { title: isPrinting ? "Printing..." : "Test print", onPress: handleTestPrint, disabled: isPrinting },
-          ]}
-          direction="row"
-          spacing={8}
-        />
-      </BottomSheet>
     </ThemedView>
   );
 }
@@ -338,9 +261,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
     marginBottom: 16,
-  },
-  portInput: {
-    marginTop: 12,
   },
   receiptPreview: {
     backgroundColor: "#fff",

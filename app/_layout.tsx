@@ -72,6 +72,7 @@ export default function RootLayout() {
           name="product/create/index"
           options={{ title: "Create Product", headerBackTitle: "Back" }}
         />
+        <Stack.Screen name="printer-settings" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

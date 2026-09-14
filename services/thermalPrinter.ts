@@ -30,7 +30,7 @@ const send = (data: Uint8Array, printer: WifiPrinterSettings) =>
     socket.on("error", (error) => finish(error));
   });
 
-export const printSales = async (
+export const printWifiSales = async (
   sales: (Sale & { id: number })[],
   printer: WifiPrinterSettings,
 ) => {
@@ -44,5 +44,5 @@ export const printSales = async (
   }
 };
 
-export const printTestReceipt = (printer: WifiPrinterSettings) =>
+export const printWifiTestReceipt = (printer: WifiPrinterSettings) =>
   send(buildTestReceipt(), printer);

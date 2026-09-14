@@ -1,4 +1,4 @@
-import { Customer, Product, Sale, SaleItem, WifiPrinterSettings } from "@/types";
+import { Customer, PrinterSettings, Product, Sale, SaleItem } from "@/types";
 import * as SQLite from "expo-sqlite";
 
 const DB_NAME = "clothing-sales.db";
@@ -78,8 +78,11 @@ class DatabaseService {
 
       CREATE TABLE IF NOT EXISTS printer_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        host TEXT NOT NULL,
-        port INTEGER NOT NULL DEFAULT 9100
+        host TEXT NOT NULL DEFAULT '',
+        port INTEGER NOT NULL DEFAULT 9100,
+        connection_type TEXT NOT NULL DEFAULT 'wifi',
+        bluetooth_address TEXT,
+        bluetooth_name TEXT
       );
 
       -- Indexes for better performance
@@ -108,6 +111,7 @@ class DatabaseService {
 
     // Migration: Add invoice_number column if it doesn't exist
     await this.migrateInvoiceNumberColumn();
+    await this.migratePrinterSettingsColumns();
   }
 
   private async migrateOrderDateColumn(): Promise<void> {
@@ -686,29 +690,89 @@ class DatabaseService {
     }
   }
 
-  async getWifiPrinterSettings(): Promise<WifiPrinterSettings | null> {
+  private async migratePrinterSettingsColumns(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const columns = await this.db.getAllAsync("PRAGMA table_info(printer_settings)");
+    const names = columns.map((column: any) => column.name);
+
+    if (!names.includes("connection_type")) {
+      await this.db.execAsync(
+        "ALTER TABLE printer_settings ADD COLUMN connection_type TEXT NOT NULL DEFAULT 'wifi'",
+      );
+    }
+    if (!names.includes("bluetooth_address")) {
+      await this.db.execAsync(
+        "ALTER TABLE printer_settings ADD COLUMN bluetooth_address TEXT",
+      );
+    }
+    if (!names.includes("bluetooth_name")) {
+      await this.db.execAsync(
+        "ALTER TABLE printer_settings ADD COLUMN bluetooth_name TEXT",
+      );
+    }
+  }
+
+  async getPrinterSettings(): Promise<PrinterSettings | null> {
     if (!this.db) throw new Error("Database not initialized");
 
     const settings = await this.db.getFirstAsync(
-      "SELECT host, port FROM printer_settings WHERE id = 1",
+      `SELECT host, port, connection_type, bluetooth_address, bluetooth_name
+       FROM printer_settings WHERE id = 1`,
     );
 
-    return settings as WifiPrinterSettings | null;
-  }
+    if (!settings) return null;
 
-  async saveWifiPrinterSettings(settings: WifiPrinterSettings): Promise<void> {
-    if (!this.db) throw new Error("Database not initialized");
+    const row = settings as {
+      host: string;
+      port: number;
+      connection_type: string;
+      bluetooth_address: string | null;
+      bluetooth_name: string | null;
+    };
 
-    const host = settings.host.trim();
-    if (!host) throw new Error("Enter the printer IP address");
-    if (!Number.isInteger(settings.port) || settings.port < 1 || settings.port > 65535) {
-      throw new Error("Printer port must be between 1 and 65535");
+    if (row.connection_type === "bluetooth" && row.bluetooth_address) {
+      return {
+        connectionType: "bluetooth",
+        address: row.bluetooth_address,
+        name: row.bluetooth_name || row.bluetooth_address,
+      };
     }
 
+    return row.host
+      ? { connectionType: "wifi", host: row.host, port: row.port }
+      : null;
+  }
+
+  async savePrinterSettings(settings: PrinterSettings): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    if (settings.connectionType === "wifi") {
+      const host = settings.host.trim();
+      if (!host) throw new Error("Enter the printer IP address");
+      if (!Number.isInteger(settings.port) || settings.port < 1 || settings.port > 65535) {
+        throw new Error("Printer port must be between 1 and 65535");
+      }
+
+      await this.db.runAsync(
+        `INSERT INTO printer_settings (id, host, port, connection_type, bluetooth_address, bluetooth_name)
+         VALUES (1, ?, ?, 'wifi', NULL, NULL)
+         ON CONFLICT(id) DO UPDATE SET host = excluded.host, port = excluded.port,
+           connection_type = excluded.connection_type, bluetooth_address = NULL, bluetooth_name = NULL`,
+        [host, settings.port],
+      );
+      return;
+    }
+
+    if (!settings.address) throw new Error("Select a Bluetooth printer");
     await this.db.runAsync(
-      `INSERT INTO printer_settings (id, host, port) VALUES (1, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET host = excluded.host, port = excluded.port`,
-      [host, settings.port],
+      `INSERT INTO printer_settings (id, host, port, connection_type, bluetooth_address, bluetooth_name)
+       VALUES (1, '', 0, 'bluetooth', ?, ?)
+       ON CONFLICT(id) DO UPDATE SET host = '', port = 0,
+         connection_type = excluded.connection_type,
+         bluetooth_address = excluded.bluetooth_address,
+         bluetooth_name = excluded.bluetooth_name`,
+      [settings.address, settings.name],
     );
   }
 
@@ -881,7 +945,6 @@ export const getSalesByDateRange = (start: string, end: string) =>
 export const getTotalSalesAmount = () => databaseService.getTotalSalesAmount();
 export const getLowStockProducts = (threshold?: number) =>
   databaseService.getLowStockProducts(threshold);
-export const getWifiPrinterSettings = () =>
-  databaseService.getWifiPrinterSettings();
-export const saveWifiPrinterSettings = (settings: WifiPrinterSettings) =>
-  databaseService.saveWifiPrinterSettings(settings);
+export const getPrinterSettings = () => databaseService.getPrinterSettings();
+export const savePrinterSettings = (settings: PrinterSettings) =>
+  databaseService.savePrinterSettings(settings);
