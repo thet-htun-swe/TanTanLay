@@ -1,9 +1,10 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
-  ScrollView,
+  FlatList,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -16,7 +17,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/ui/Card";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { getCustomers } from "@/services/database";
+import { searchCustomers } from "@/services/database";
 import { Customer } from "@/types";
 import { useRouter } from "expo-router";
 
@@ -25,21 +26,51 @@ export default function CustomersScreen() {
   const router = useRouter();
   const [customers, setCustomers] = useState<(Customer & { id: number })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loadRequest = useRef(0);
   const [selectedCustomer, setSelectedCustomer] = useState<
     (Customer & { id: number }) | null
   >(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   const loadCustomers = async () => {
+    const request = ++loadRequest.current;
     try {
       setIsLoading(true);
-      const customersData = await getCustomers();
+      const customersData = await searchCustomers("");
+      if (request !== loadRequest.current) return;
+
       setCustomers(customersData);
+      setHasMore(customersData.length === 50);
     } catch (error) {
-      console.error("Failed to load customers:", error);
-      Alert.alert("Error", "Failed to load customers");
+      if (request === loadRequest.current) {
+        console.error("Failed to load customers:", error);
+        Alert.alert("Error", "Failed to load customers");
+      }
     } finally {
-      setIsLoading(false);
+      if (request === loadRequest.current) setIsLoading(false);
+    }
+  };
+
+  const loadMoreCustomers = async () => {
+    if (isLoading || isLoadingMore || !hasMore) return;
+
+    const request = loadRequest.current;
+    setIsLoadingMore(true);
+    try {
+      const customersData = await searchCustomers("", customers.length);
+      if (request !== loadRequest.current) return;
+
+      setCustomers((current) => [...current, ...customersData]);
+      setHasMore(customersData.length === 50);
+    } catch (error) {
+      if (request === loadRequest.current) {
+        console.error("Failed to load more customers:", error);
+        Alert.alert("Error", "Failed to load more customers");
+      }
+    } finally {
+      if (request === loadRequest.current) setIsLoadingMore(false);
     }
   };
 
@@ -115,11 +146,17 @@ export default function CustomersScreen() {
           </ThemedText>
         </ThemedView>
       ) : (
-        <ScrollView style={styles.scrollView}>
-          {customers.map((customer) => (
-            <CustomerCard key={customer.id} customer={customer} />
-          ))}
-        </ScrollView>
+        <FlatList
+          data={customers}
+          renderItem={({ item }) => <CustomerCard customer={item} />}
+          keyExtractor={(customer) => customer.id.toString()}
+          contentContainerStyle={styles.scrollView}
+          onEndReached={loadMoreCustomers}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoadingMore ? <ActivityIndicator style={styles.loadMore} /> : null
+          }
+        />
       )}
 
       <TouchableOpacity
@@ -172,8 +209,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4.65,
   },
   scrollView: {
-    flex: 1,
     padding: 16,
+  },
+  loadMore: {
+    marginVertical: 16,
   },
   customerCard: {
     flexDirection: "row",
