@@ -105,10 +105,20 @@ export class ExportUtils {
       let htmlContent = this.generateShippingLabelsHTML(sales);
 
       // Generate PDF
-      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      const { base64 } = await Print.printToFileAsync({ html: htmlContent, base64: true });
+
+      if (!base64 || !FileSystem.documentDirectory) {
+        throw new Error("Could not create a shareable PDF");
+      }
+      const fileUri = `${FileSystem.documentDirectory}Shipping_Labels_${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
       // Share the PDF
-      await Sharing.shareAsync(uri, {
+      await Sharing.shareAsync(fileUri, {
         mimeType: "application/pdf",
         dialogTitle: "Shipping Labels",
         UTI: "com.adobe.pdf",
