@@ -1,23 +1,20 @@
 {
   "expo": {
-    "name": "tantanlay",
+    "name": "Clothing Sales",
     "slug": "tantanlay",
     "version": "1.0.1",
     "orientation": "default",
-    "icon": "./assets/images/tantanlay-app-icon-2.png",
+    "icon": "./assets/images/clothing-app-icon.png",
     "scheme": "tantanlay",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "package": "com.thethtun.tantanlay"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/tantanlay-app-icon-2.png",
+        "foregroundImage": "./assets/images/clothing-app-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.thethtun.tantanlay"
     },
     "web": {
