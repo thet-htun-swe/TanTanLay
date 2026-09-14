@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CustomerDetailsBottomSheet } from "@/components/CustomerDetailsBottomSheet";
 import { ThemedText } from "@/components/ThemedText";
@@ -77,7 +76,7 @@ export default function CustomersScreen() {
   useFocusEffect(
     useCallback(() => {
       loadCustomers();
-    }, [])
+    }, []),
   );
 
   const handleCreateCustomer = () => {
@@ -124,10 +123,10 @@ export default function CustomersScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Customers</ThemedText>
-      </ThemedView>
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <ThemedText style={styles.title}>Customers</ThemedText>
+      </View>
 
       {isLoading ? (
         <ThemedView style={styles.centerContainer}>
@@ -176,19 +175,25 @@ export default function CustomersScreen() {
         onEdit={handleEditCustomer}
         onDelete={handleDeleteCustomer}
       />
-    </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    marginTop: 32,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
   },
   fab: {
     position: "absolute",
@@ -209,7 +214,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4.65,
   },
   scrollView: {
-    padding: 16,
+    paddingBottom: 100,
   },
   loadMore: {
     marginVertical: 16,
