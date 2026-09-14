@@ -65,6 +65,14 @@ export default function PrinterSettingsScreen() {
     }
   };
 
+  const openBluetoothSettings = async () => {
+    try {
+      await openSystemBluetoothSettings();
+    } catch (error) {
+      Alert.alert("Bluetooth", error instanceof Error ? error.message : "Could not open Bluetooth settings");
+    }
+  };
+
   const selectBluetoothPrinter = async (device: BluetoothDeviceInfo) => {
     const settings: PrinterSettings = {
       connectionType: "bluetooth",
@@ -135,7 +143,7 @@ export default function PrinterSettingsScreen() {
           <>
             <ActionButtons
               buttons={[
-                { title: "Android Bluetooth settings", onPress: openSystemBluetoothSettings, variant: "secondary" },
+                { title: "Android Bluetooth settings", onPress: openBluetoothSettings, variant: "secondary" },
                 { title: isLoadingDevices ? "Refreshing..." : "Refresh paired devices", onPress: loadBluetoothDevices, disabled: isLoadingDevices },
               ]}
               direction="column"

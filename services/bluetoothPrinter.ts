@@ -1,5 +1,5 @@
 import RNBluetoothClassic from "react-native-bluetooth-classic";
-import { PermissionsAndroid, Platform } from "react-native";
+import { NativeModules, PermissionsAndroid, Platform } from "react-native";
 
 import { BluetoothPrinterSettings, Sale } from "@/types";
 import { buildSaleReceipt, buildTestReceipt } from "@/utils/escPos";
@@ -16,8 +16,15 @@ const requireAndroid = () => {
   }
 };
 
-const requestBluetoothAccess = async () => {
+const requireBluetoothModule = () => {
   requireAndroid();
+  if (!NativeModules.RNBluetoothClassic) {
+    throw new Error("Bluetooth printing requires the latest EAS preview build. Expo Go cannot load this native module.");
+  }
+};
+
+const requestBluetoothAccess = async () => {
+  requireBluetoothModule();
   if (Number(Platform.Version) < 31) return;
 
   const granted = await PermissionsAndroid.request(
@@ -49,13 +56,13 @@ export const getBondedBluetoothDevices = async (): Promise<BluetoothDeviceInfo[]
   }));
 };
 
-export const openSystemBluetoothSettings = () => {
-  requireAndroid();
+export const openSystemBluetoothSettings = async () => {
+  requireBluetoothModule();
   RNBluetoothClassic.openBluetoothSettings();
 };
 
 const send = async (data: Uint8Array, printer: BluetoothPrinterSettings) => {
-  requireAndroid();
+  requireBluetoothModule();
   const device = await RNBluetoothClassic.connectToDevice(printer.address);
   try {
     const binaryData = Array.from(data, (byte) => String.fromCharCode(byte)).join("");
