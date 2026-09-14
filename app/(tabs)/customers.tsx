@@ -14,6 +14,7 @@ import { CustomerDetailsBottomSheet } from "@/components/CustomerDetailsBottomSh
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { searchCustomers } from "@/services/database";
@@ -24,6 +25,7 @@ export default function CustomersScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const [customers, setCustomers] = useState<(Customer & { id: number })[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -33,11 +35,12 @@ export default function CustomersScreen() {
   >(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async (search: string) => {
     const request = ++loadRequest.current;
     try {
       setIsLoading(true);
-      const customersData = await searchCustomers("");
+      setIsLoadingMore(false);
+      const customersData = await searchCustomers(search);
       if (request !== loadRequest.current) return;
 
       setCustomers(customersData);
@@ -50,7 +53,7 @@ export default function CustomersScreen() {
     } finally {
       if (request === loadRequest.current) setIsLoading(false);
     }
-  };
+  }, []);
 
   const loadMoreCustomers = async () => {
     if (isLoading || isLoadingMore || !hasMore) return;
@@ -58,7 +61,7 @@ export default function CustomersScreen() {
     const request = loadRequest.current;
     setIsLoadingMore(true);
     try {
-      const customersData = await searchCustomers("", customers.length);
+      const customersData = await searchCustomers(searchTerm, customers.length);
       if (request !== loadRequest.current) return;
 
       setCustomers((current) => [...current, ...customersData]);
@@ -75,12 +78,17 @@ export default function CustomersScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadCustomers();
-    }, []),
+      loadCustomers("");
+    }, [loadCustomers]),
   );
 
   const handleCreateCustomer = () => {
     router.push("/customer/create");
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchTerm(text);
+    loadCustomers(text);
   };
 
   const handleViewCustomer = (customer: Customer & { id: number }) => {
@@ -98,7 +106,7 @@ export default function CustomersScreen() {
   };
 
   const handleDeleteCustomer = () => {
-    loadCustomers();
+    loadCustomers(searchTerm);
   };
 
   const CustomerCard = ({
@@ -128,6 +136,12 @@ export default function CustomersScreen() {
         <ThemedText style={styles.title}>Customers</ThemedText>
       </View>
 
+      <Input
+        placeholder="Search customers..."
+        value={searchTerm}
+        onChangeText={handleSearch}
+      />
+
       {isLoading ? (
         <ThemedView style={styles.centerContainer}>
           <ThemedText>Loading customers...</ThemedText>
@@ -139,7 +153,9 @@ export default function CustomersScreen() {
             size={64}
             color={Colors[colorScheme ?? "light"].icon}
           />
-          <ThemedText style={styles.emptyText}>No customers found</ThemedText>
+          <ThemedText style={styles.emptyText}>
+            {searchTerm ? "No customers found matching your search." : "No customers found"}
+          </ThemedText>
           <ThemedText style={styles.emptySubtext}>
             Tap the + button to add your first customer
           </ThemedText>
