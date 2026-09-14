@@ -23,6 +23,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function checkForUpdates() {
+      if (!Updates.isEnabled) return;
+
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
