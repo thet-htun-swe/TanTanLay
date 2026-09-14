@@ -1,4 +1,4 @@
-import { Customer, Product, Sale, SaleItem } from "@/types";
+import { Customer, Product, Sale, SaleItem, WifiPrinterSettings } from "@/types";
 import * as SQLite from "expo-sqlite";
 
 const DB_NAME = "clothing-sales.db";
@@ -74,6 +74,12 @@ class DatabaseService {
         line_total REAL NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sale_id) REFERENCES sales (id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS printer_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        host TEXT NOT NULL,
+        port INTEGER NOT NULL DEFAULT 9100
       );
 
       -- Indexes for better performance
@@ -680,6 +686,32 @@ class DatabaseService {
     }
   }
 
+  async getWifiPrinterSettings(): Promise<WifiPrinterSettings | null> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const settings = await this.db.getFirstAsync(
+      "SELECT host, port FROM printer_settings WHERE id = 1",
+    );
+
+    return settings as WifiPrinterSettings | null;
+  }
+
+  async saveWifiPrinterSettings(settings: WifiPrinterSettings): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const host = settings.host.trim();
+    if (!host) throw new Error("Enter the printer IP address");
+    if (!Number.isInteger(settings.port) || settings.port < 1 || settings.port > 65535) {
+      throw new Error("Printer port must be between 1 and 65535");
+    }
+
+    await this.db.runAsync(
+      `INSERT INTO printer_settings (id, host, port) VALUES (1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET host = excluded.host, port = excluded.port`,
+      [host, settings.port],
+    );
+  }
+
   // Analytics and reporting methods
   async getSalesByDateRange(
     startDate: string,
@@ -849,3 +881,7 @@ export const getSalesByDateRange = (start: string, end: string) =>
 export const getTotalSalesAmount = () => databaseService.getTotalSalesAmount();
 export const getLowStockProducts = (threshold?: number) =>
   databaseService.getLowStockProducts(threshold);
+export const getWifiPrinterSettings = () =>
+  databaseService.getWifiPrinterSettings();
+export const saveWifiPrinterSettings = (settings: WifiPrinterSettings) =>
+  databaseService.saveWifiPrinterSettings(settings);

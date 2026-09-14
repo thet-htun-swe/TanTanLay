@@ -32,3 +32,8 @@ export interface Sale {
   subtotal: number;
   total: number;
 }
+
+export interface WifiPrinterSettings {
+  host: string;
+  port: number;
+}

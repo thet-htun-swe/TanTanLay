@@ -7,16 +7,25 @@ import { Sale } from '@/types';
 interface SalesListProps {
   sales: (Sale & { id: number })[];
   onSalePress: (saleId: number) => void;
+  selectedSaleIds: number[];
+  onToggleSale: (saleId: number) => void;
   emptyMessage?: string;
 }
 
 export const SalesList: React.FC<SalesListProps> = ({
   sales,
   onSalePress,
+  selectedSaleIds,
+  onToggleSale,
   emptyMessage = "No sales found. Create your first sale!",
 }) => {
   const renderSaleItem = ({ item }: { item: Sale & { id: number } }) => (
-    <SaleCard sale={item} onPress={onSalePress} />
+    <SaleCard
+      sale={item}
+      onPress={onSalePress}
+      selected={selectedSaleIds.includes(item.id)}
+      onToggle={onToggleSale}
+    />
   );
 
   return (
