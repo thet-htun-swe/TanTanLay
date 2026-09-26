@@ -30,14 +30,14 @@ export function Input({ label, error, containerStyle, ...props }: InputProps) {
           props.multiline && styles.multilineInput,
           {
             color: theme.text,
-            borderColor: error ? "#ff6b6b" : theme.border,
-            backgroundColor: theme.background,
+            borderColor: error ? theme.danger : theme.border,
+            backgroundColor: theme.cardBackground,
           },
         ]}
         placeholderTextColor={theme.tabIconDefault}
         {...props}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>}
     </View>
   );
 }
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   input: {
     height: 48,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     lineHeight: 24,
@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   error: {
-    color: "#ff6b6b",
     fontSize: 14,
     marginTop: 4,
   },

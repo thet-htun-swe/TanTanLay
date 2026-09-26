@@ -6,6 +6,8 @@ import { ThemedText } from "../ThemedText";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { ProductSelectorModal } from "./ProductSelectorModal";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 interface SaleItemsListProps {
   items: SaleItem[];
@@ -22,6 +24,7 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
   onAddProduct,
   products,
 }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
@@ -40,17 +43,17 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
       {/* Items table */}
       <View style={styles.table}>
         {/* Table Header */}
-        <View style={styles.tableHeader}>
-          <ThemedText style={[styles.headerText, styles.productColumn]}>
+        <View style={[styles.tableHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+          <ThemedText style={[styles.headerText, styles.productColumn, { color: theme.muted }]}>
             Product
           </ThemedText>
-          <ThemedText style={[styles.headerText, styles.priceColumn]}>
+          <ThemedText style={[styles.headerText, styles.priceColumn, { color: theme.muted }]}>
             Price
           </ThemedText>
-          <ThemedText style={[styles.headerText, styles.quantityColumn]}>
+          <ThemedText style={[styles.headerText, styles.quantityColumn, { color: theme.muted }]}>
             Qty
           </ThemedText>
-          <ThemedText style={[styles.headerText, styles.totalColumn]}>
+          <ThemedText style={[styles.headerText, styles.totalColumn, { color: theme.muted }]}>
             Total
           </ThemedText>
           <View style={styles.actionColumn} />
@@ -62,7 +65,7 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
             {items.map((item) => (
               <View
                 key={item.productId?.toString() ?? `item-${item.productName}`}
-                style={styles.tableRow}
+                style={[styles.tableRow, { borderBottomColor: theme.border }]}
               >
                 <View style={styles.productColumn}>
                   <ThemedText style={styles.productName} numberOfLines={2}>
@@ -78,28 +81,28 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
 
                 <View style={[styles.quantityColumn, styles.quantityCell]}>
                   <TouchableOpacity
-                    style={styles.quantityButton}
+                    style={[styles.quantityButton, { backgroundColor: theme.tint }]}
                     onPress={() =>
                       onUpdateQuantity(item.productId, item.quantity - 1)
                     }
                   >
-                    <ThemedText style={styles.quantityButtonText}>-</ThemedText>
+                    <ThemedText style={[styles.quantityButtonText, { color: theme.onTint }]}>-</ThemedText>
                   </TouchableOpacity>
                   <ThemedText style={styles.quantityText}>
                     {item.quantity}
                   </ThemedText>
                   <TouchableOpacity
-                    style={styles.quantityButton}
+                    style={[styles.quantityButton, { backgroundColor: theme.tint }]}
                     onPress={() =>
                       onUpdateQuantity(item.productId, item.quantity + 1)
                     }
                   >
-                    <ThemedText style={styles.quantityButtonText}>+</ThemedText>
+                    <ThemedText style={[styles.quantityButtonText, { color: theme.onTint }]}>+</ThemedText>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.totalColumn}>
-                  <ThemedText style={styles.totalText}>
+                  <ThemedText style={[styles.totalText, { color: theme.tint }]}>
                     ${item.lineTotal.toFixed(2)}
                   </ThemedText>
                 </View>
@@ -111,7 +114,7 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
                     <MaterialCommunityIcons
                       name="delete"
                       size={16}
-                      color="#ff6b6b"
+                      color={theme.danger}
                     />
                   </TouchableOpacity>
                 </View>
@@ -158,11 +161,9 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#e9ecef",
     paddingVertical: 6,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
   tableBody: {
     maxHeight: 300,
@@ -172,14 +173,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
     alignItems: "center",
     minHeight: 36,
   },
   headerText: {
     fontWeight: "600",
     fontSize: 14,
-    color: "#666",
     textAlign: "left",
   },
   cellText: {
@@ -216,7 +215,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textAlign: "left",
-    color: "#007AFF",
   },
   quantityCell: {
     alignItems: "center",
@@ -229,7 +227,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   quantityButton: {
-    backgroundColor: "#007AFF",
     width: 22,
     height: 22,
     borderRadius: 11,
@@ -237,7 +234,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   quantityButtonText: {
-    color: "#fff",
     fontSize: 14,
     fontWeight: "bold",
   },

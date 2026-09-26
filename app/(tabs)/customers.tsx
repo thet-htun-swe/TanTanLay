@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router/react-navigation";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -154,7 +154,9 @@ export default function CustomersScreen() {
             color={Colors[colorScheme ?? "light"].icon}
           />
           <ThemedText style={styles.emptyText}>
-            {searchTerm ? "No customers found matching your search." : "No customers found"}
+            {searchTerm
+              ? "No customers found matching your search."
+              : "No customers found"}
           </ThemedText>
           <ThemedText style={styles.emptySubtext}>
             Tap the + button to add your first customer
@@ -181,7 +183,7 @@ export default function CustomersScreen() {
         ]}
         onPress={handleCreateCustomer}
       >
-        <MaterialCommunityIcons name="plus" size={24} color="white" />
+        <MaterialCommunityIcons name="plus" size={24} color={Colors[colorScheme ?? "light"].onTint} />
       </TouchableOpacity>
 
       <CustomerDetailsBottomSheet
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,

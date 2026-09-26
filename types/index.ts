@@ -32,3 +32,17 @@ export interface Sale {
   subtotal: number;
   total: number;
 }
+
+export interface WifiPrinterSettings {
+  host: string;
+  port: number;
+}
+
+export interface BluetoothPrinterSettings {
+  address: string;
+  name: string;
+}
+
+export type PrinterSettings =
+  | ({ connectionType: "wifi" } & WifiPrinterSettings)
+  | ({ connectionType: "bluetooth" } & BluetoothPrinterSettings);

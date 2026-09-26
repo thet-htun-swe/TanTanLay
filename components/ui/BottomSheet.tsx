@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import { ThemedView } from "../ThemedView";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 const { height } = Dimensions.get("window");
 
@@ -30,6 +32,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   expandable = false,
   scrollable = false,
 }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const translateY = useRef(new Animated.Value(sheetHeight)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -136,11 +139,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             {
               height: currentHeight,
               transform: [{ translateY }],
+              backgroundColor: theme.cardBackground,
+              borderColor: theme.border,
             },
           ]}
         >
           <View 
-            style={styles.handle} 
+            style={[styles.handle, { backgroundColor: theme.border }]}
             {...panResponder.panHandlers}
           />
           {expandable && (
@@ -150,7 +155,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               <View style={styles.expandButton}>
                 <View style={[
                   styles.expandIndicator,
-                  { transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }
+                  { borderTopColor: theme.muted, transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }
                 ]} />
               </View>
             </TouchableWithoutFeedback>
@@ -180,16 +185,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
   },
   sheet: {
-    backgroundColor: "#fff",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    borderWidth: 1,
     paddingTop: 8,
     paddingBottom: 0,
   },
   handle: {
     width: 40,
     height: 5,
-    backgroundColor: "#ddd",
     borderRadius: 3,
     alignSelf: "center",
     marginBottom: 10,
@@ -208,7 +212,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 8,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    borderTopColor: "#999",
   },
   contentContainer: {
     flex: 1,

@@ -3,6 +3,8 @@ import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Button } from "../ui/Button";
 import { DateTimePicker } from "./DateTimePicker";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export type SortOrder = "asc" | "desc";
 
@@ -48,6 +50,7 @@ export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
   onClearAllFilters,
   hasActiveFilters,
 }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const handleApplyFilters = () => {
     if (orderStartDate > orderEndDate) {
       Alert.alert(
@@ -81,7 +84,7 @@ export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
               onChange={onOrderStartDateChange}
             />
           </View>
-          <ThemedText style={styles.separator}>--</ThemedText>
+          <ThemedText style={[styles.separator, { color: theme.muted }]}>--</ThemedText>
           <View style={styles.datePickerHalf}>
             <DateTimePicker
               value={orderEndDate}
@@ -103,7 +106,7 @@ export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
               onChange={onCreatedStartDateChange}
             />
           </View>
-          <ThemedText style={styles.separator}>--</ThemedText>
+          <ThemedText style={[styles.separator, { color: theme.muted }]}>--</ThemedText>
           <View style={styles.datePickerHalf}>
             <DateTimePicker
               value={createdEndDate}
@@ -124,12 +127,9 @@ export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
             onPress={() => onSortOrderChange("desc")}
           >
             <View
-              style={[
-                styles.radioCircle,
-                sortOrder === "desc" && styles.radioCircleSelected,
-              ]}
+              style={[styles.radioCircle, { borderColor: sortOrder === "desc" ? theme.tint : theme.border, backgroundColor: theme.cardBackground }]}
             >
-              {sortOrder === "desc" && <View style={styles.radioDot} />}
+              {sortOrder === "desc" && <View style={[styles.radioDot, { backgroundColor: theme.tint }]} />}
             </View>
             <ThemedText style={styles.radioLabel}>Newest First</ThemedText>
           </TouchableOpacity>
@@ -139,12 +139,9 @@ export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
             onPress={() => onSortOrderChange("asc")}
           >
             <View
-              style={[
-                styles.radioCircle,
-                sortOrder === "asc" && styles.radioCircleSelected,
-              ]}
+              style={[styles.radioCircle, { borderColor: sortOrder === "asc" ? theme.tint : theme.border, backgroundColor: theme.cardBackground }]}
             >
-              {sortOrder === "asc" && <View style={styles.radioDot} />}
+              {sortOrder === "asc" && <View style={[styles.radioDot, { backgroundColor: theme.tint }]} />}
             </View>
             <ThemedText style={styles.radioLabel}>Oldest First</ThemedText>
           </TouchableOpacity>
@@ -152,7 +149,7 @@ export const SalesHistoryFilter: React.FC<SalesHistoryFilterProps> = ({
       </View>
 
       {/* Single Apply/Clear Buttons */}
-      <View style={styles.actionButtonsSection}>
+      <View style={[styles.actionButtonsSection, { borderTopColor: theme.border }]}>
         <View style={styles.buttonRow}>
           {hasActiveFilters && (
             <Button
@@ -208,14 +205,12 @@ const styles = StyleSheet.create({
   separator: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#666",
     paddingHorizontal: 4,
   },
   actionButtonsSection: {
     marginTop: 6,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#E5E5E5",
   },
   buttonRow: {
     flexDirection: "row",
@@ -239,23 +234,16 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  radioCircleSelected: {
-    borderColor: "#007AFF",
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#007AFF",
   },
   radioLabel: {
     fontSize: 16,
-    color: "#374151",
     fontWeight: "400",
   },
 });

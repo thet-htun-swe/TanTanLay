@@ -3,13 +3,18 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Card } from "../ui/Card";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 interface SaleCardProps {
   sale: Sale & { id: number };
   onPress: (saleId: number) => void;
+  selected: boolean;
+  onToggle: (saleId: number) => void;
 }
 
-export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
+export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress, selected, onToggle }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, '0');
@@ -20,22 +25,33 @@ export const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
   };
 
   return (
-    <TouchableOpacity onPress={() => onPress(sale.id)}>
-      <Card style={styles.card}>
-        <View style={styles.header}>
-          <View style={styles.leftContent}>
-            <ThemedText style={styles.invoiceNumber}>
-              Invoice #{sale.invoiceNumber}
-            </ThemedText>
-            <ThemedText style={styles.customerName}>
-              {sale.customer.name}/ {sale.customer.contact}/{" "}
-              {formatDate(sale.orderDate)}
-            </ThemedText>
-          </View>
+    <Card style={styles.card}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.leftContent} onPress={() => onPress(sale.id)}>
+          <ThemedText style={styles.invoiceNumber}>
+            Invoice #{sale.invoiceNumber}
+          </ThemedText>
+          <ThemedText style={styles.customerName}>
+            {sale.customer.name}/ {sale.customer.contact}/{" "}
+            {formatDate(sale.orderDate)}
+          </ThemedText>
+        </TouchableOpacity>
+        <View style={styles.rightContent}>
           <ThemedText style={styles.total}>{sale.total.toFixed(2)}</ThemedText>
+          <TouchableOpacity
+            onPress={() => onToggle(sale.id)}
+            style={[styles.selectButton, { borderColor: theme.border }, selected && { backgroundColor: theme.tint, borderColor: theme.tint }]}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: selected }}
+            accessibilityLabel={`Select invoice ${sale.invoiceNumber ?? sale.id}`}
+          >
+            <ThemedText style={[styles.selectButtonText, selected && { color: theme.onTint }]}>
+              {selected ? "Selected" : "Select"}
+            </ThemedText>
+          </TouchableOpacity>
         </View>
-      </Card>
-    </TouchableOpacity>
+      </View>
+    </Card>
   );
 };
 
@@ -63,5 +79,18 @@ const styles = StyleSheet.create({
   total: {
     fontSize: 18,
     fontWeight: "600",
+  },
+  rightContent: {
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  selectButton: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  selectButtonText: {
+    fontSize: 12,
   },
 });

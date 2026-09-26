@@ -13,6 +13,8 @@ import { ThemedText } from "../ThemedText";
 import { ThemedView } from "../ThemedView";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 interface ProductSelectorModalProps {
   visible: boolean;
@@ -27,6 +29,7 @@ export const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
   products,
   onAddItem,
 }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const [filteredProducts, setFilteredProducts] = useState<
     (Product & { id: number })[]
   >([]);
@@ -126,7 +129,7 @@ export const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled={true}
         >
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
             <ThemedText style={styles.modalTitle}>Select Product</ThemedText>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <ThemedText style={styles.closeButtonText}>✕</ThemedText>
@@ -185,7 +188,7 @@ export const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
                   filteredProducts.map((product) => (
                     <TouchableOpacity
                       key={product.id}
-                      style={styles.productItem}
+                      style={[styles.productItem, { borderBottomColor: theme.border }]}
                       onPress={() => handleSelectProduct(product)}
                     >
                       <View style={styles.productInfo}>
@@ -193,7 +196,7 @@ export const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
                           <ThemedText style={styles.productName}>
                             {product.name}
                           </ThemedText>
-                          <ThemedText style={styles.productPrice}>
+                          <ThemedText style={[styles.productPrice, { color: theme.tint }]}>
                             ${product.price.toFixed(2)}
                           </ThemedText>
                         </View>
@@ -231,7 +234,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
   modalTitle: {
     fontSize: 20,
@@ -258,7 +260,6 @@ const styles = StyleSheet.create({
   productItem: {
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
   productInfo: {
     flex: 1,
@@ -277,7 +278,6 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#007AFF",
   },
   productStock: {
     fontSize: 14,

@@ -2,13 +2,14 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router/react-navigation";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 import { useAppStore } from "@/store";
 
 import * as Updates from "expo-updates";
@@ -16,6 +17,7 @@ import { useEffect } from "react";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
   const { initializeApp, isInitialized, error } = useAppStore();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -23,6 +25,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function checkForUpdates() {
+      if (!Updates.isEnabled) return;
+
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
@@ -55,7 +59,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={{
+      ...(colorScheme === "dark" ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(colorScheme === "dark" ? DarkTheme : DefaultTheme).colors,
+        primary: theme.tint,
+        background: theme.background,
+        card: theme.cardBackground,
+        text: theme.text,
+        border: theme.border,
+        notification: theme.danger,
+      },
+    }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
@@ -70,6 +85,7 @@ export default function RootLayout() {
           name="product/create/index"
           options={{ title: "Create Product", headerBackTitle: "Back" }}
         />
+        <Stack.Screen name="printer-settings" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
