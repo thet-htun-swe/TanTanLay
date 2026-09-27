@@ -1,5 +1,5 @@
 import { DateTimePicker } from "@/components/common/DateTimePicker";
-import { useFocusEffect } from "expo-router/react-navigation";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -20,11 +20,8 @@ import { SaleSummary } from "@/components/sales/SaleSummary";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
 import { useAppStore } from "@/store";
 import { Customer, Sale, SaleItem } from "@/types";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function NewSaleScreen() {
-  const theme = Colors[useColorScheme() ?? "light"];
   const { products, fetchProducts, addSale } = useAppStore();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<
@@ -211,7 +208,7 @@ export default function NewSaleScreen() {
               />
             </View>
 
-            <View style={[styles.datePickerContainer, { backgroundColor: theme.surface }]}>
+            <View style={styles.datePickerContainer}>
               <DateTimePicker
                 label="Order Date"
                 value={orderDate}
@@ -266,7 +263,8 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     flex: 1,
-    borderRadius: 16,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
     padding: 16,
   },
 

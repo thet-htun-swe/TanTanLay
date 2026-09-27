@@ -2,8 +2,6 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../ui/Input';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface SearchBarProps {
   value: string;
@@ -22,7 +20,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onFilterPress,
   filterActive = false,
 }) => {
-  const theme = Colors[useColorScheme() ?? 'light'];
   return (
     <View style={styles.container}>
       <Input
@@ -34,15 +31,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       
       {showFilterButton && (
         <TouchableOpacity
-          style={[styles.filterButton, { backgroundColor: theme.surface }]}
+          style={styles.filterButton}
           onPress={onFilterPress}
         >
           <Ionicons
             name={filterActive ? "filter" : "filter-outline"}
             size={24}
-            color={filterActive ? theme.tint : theme.muted}
+            color={filterActive ? "#007bff" : "#666"}
           />
-          {filterActive && <View style={[styles.filterActiveDot, { backgroundColor: theme.tint }]} />}
+          {filterActive && <View style={styles.filterActiveDot} />}
         </TouchableOpacity>
       )}
     </View>
@@ -60,7 +57,8 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 8,
-    borderRadius: 12,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -72,5 +70,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: '#007bff',
   },
 });

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router/react-navigation";
+import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,11 +19,8 @@ import { searchProducts } from "@/services/database";
 import { useAppStore } from "@/store";
 import { Product } from "@/types";
 import { router } from "expo-router";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function ProductsScreen() {
-  const theme = Colors[useColorScheme() ?? "light"];
   const { removeProduct } = useAppStore();
   const [products, setProducts] = useState<(Product & { id: number })[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -175,11 +172,11 @@ export default function ProductsScreen() {
 
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
-        style={[styles.fab, { backgroundColor: theme.tint }]}
+        style={styles.fab}
         onPress={() => router.push("/product/create")}
         // onPress={() => setIsBottomSheetVisible(true)}
       >
-        <Ionicons name="add" size={24} color={theme.onTint} />
+        <Ionicons name="add" size={24} color="white" />
       </TouchableOpacity>
     </ThemedView>
   );
@@ -277,7 +274,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     right: 20,
     bottom: 20,
-    borderRadius: 20,
+    backgroundColor: "#0066cc",
+    borderRadius: 28,
     elevation: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },

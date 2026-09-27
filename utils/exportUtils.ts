@@ -1,5 +1,5 @@
 import { Sale } from "@/types";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { utils as XLSXUtils, write as XLSXWrite } from "xlsx";
@@ -71,7 +71,7 @@ export class ExportUtils {
       const wbout = XLSXWrite(wb, { type: "base64", bookType: "xlsx" });
 
       // Define file path
-      const fileName = `Clothing_Sales_${
+      const fileName = `TanTanLay_Sales_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       const fileUri = FileSystem.documentDirectory + fileName;
@@ -105,20 +105,10 @@ export class ExportUtils {
       let htmlContent = this.generateShippingLabelsHTML(sales);
 
       // Generate PDF
-      const { base64 } = await Print.printToFileAsync({ html: htmlContent, base64: true });
-
-      if (!base64 || !FileSystem.documentDirectory) {
-        throw new Error("Could not create a shareable PDF");
-      }
-      const fileUri = `${FileSystem.documentDirectory}Shipping_Labels_${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      await FileSystem.writeAsStringAsync(fileUri, base64, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
 
       // Share the PDF
-      await Sharing.shareAsync(fileUri, {
+      await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
         dialogTitle: "Shipping Labels",
         UTI: "com.adobe.pdf",
@@ -232,7 +222,7 @@ export class ExportUtils {
 
         htmlContent += `
           <div class="shipping-label">
-            <div class="label-header">Clothing Sales</div>
+            <div class="label-header">Tan Tan Lay</div>
             <div class="customer-info">
               <div class="customer-name">${sale.customer.name}</div>
               <div class="customer-detail">${
