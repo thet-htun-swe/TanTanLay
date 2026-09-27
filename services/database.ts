@@ -1,7 +1,7 @@
 import { Customer, Product, Sale, SaleItem } from "@/types";
 import * as SQLite from "expo-sqlite";
 
-const DB_NAME = "tantanlay.db";
+const DB_NAME = "clothing-sales.db";
 
 class DatabaseService {
   private db: SQLite.SQLiteDatabase | null = null;
@@ -227,16 +227,16 @@ class DatabaseService {
 
   async searchProducts(
     searchTerm: string,
-    offset = 0,
   ): Promise<(Product & { id: number })[]> {
     if (!this.db) throw new Error("Database not initialized");
 
-    const query = searchTerm.trim();
+    if (!searchTerm.trim()) {
+      return this.getProducts();
+    }
+
     const rows = await this.db.getAllAsync(
-      query
-        ? "SELECT id, name, price, stock_qty as stockQty FROM products WHERE name LIKE ? ORDER BY name LIMIT 50 OFFSET ?"
-        : "SELECT id, name, price, stock_qty as stockQty FROM products ORDER BY name LIMIT 50 OFFSET ?",
-      query ? [`%${query}%`, offset] : [offset],
+      "SELECT id, name, price, stock_qty as stockQty FROM products WHERE name LIKE ? ORDER BY name",
+      [`%${searchTerm.trim()}%`],
     );
 
     return rows.filter(
@@ -818,8 +818,8 @@ export const initializeDatabase = () => databaseService.initializeDatabase();
 export const saveProduct = (product: Omit<Product, "id">) =>
   databaseService.saveProduct(product);
 export const getProducts = () => databaseService.getProducts();
-export const searchProducts = (searchTerm: string, offset = 0) =>
-  databaseService.searchProducts(searchTerm, offset);
+export const searchProducts = (searchTerm: string) =>
+  databaseService.searchProducts(searchTerm);
 export const getProductById = (id: number) =>
   databaseService.getProductById(id);
 export const updateProduct = (product: Product & { id: number }) =>
