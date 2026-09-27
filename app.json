@@ -1,22 +1,24 @@
 {
   "expo": {
-    "name": "Clothing Sales",
-    "slug": "clothing-sales",
-    "version": "1.0.0",
+    "name": "tantanlay",
+    "slug": "tantanlay",
+    "version": "1.0.1",
     "orientation": "default",
-    "icon": "./assets/images/clothing-app-icon.png",
-    "scheme": "clothing-sales",
+    "icon": "./assets/images/tantanlay-app-icon-2.png",
+    "scheme": "tantanlay",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.thethtun.clothingsales"
+      "package": "com.thethtun.tantanlay"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/clothing-app-icon.png",
+        "foregroundImage": "./assets/images/tantanlay-app-icon-2.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.thethtun.clothingsales"
+      "edgeToEdgeEnabled": true,
+      "package": "com.thethtun.tantanlay"
     },
     "web": {
       "bundler": "metro",
@@ -41,9 +43,16 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "2907496a-d4e4-46c9-90bb-e4fc4989f47c"
+        "projectId": "97de7e25-0dd1-47ca-9b16-0f5606c21ee7"
       }
     },
-    "owner": "thethtun"
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/97de7e25-0dd1-47ca-9b16-0f5606c21ee7"
+    }
   }
 }

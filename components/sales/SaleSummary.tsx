@@ -3,8 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface SaleSummaryProps {
   subtotal: number;
@@ -21,7 +19,6 @@ export const SaleSummary: React.FC<SaleSummaryProps> = ({
   loading = false,
   buttonText = "Create Sale",
 }) => {
-  const theme = Colors[useColorScheme() ?? 'light'];
   return (
     <Card style={styles.card}>
       <ThemedText style={styles.title}>Summary</ThemedText>
@@ -31,7 +28,7 @@ export const SaleSummary: React.FC<SaleSummaryProps> = ({
         <ThemedText>{subtotal.toFixed(2)}</ThemedText>
       </View>
 
-      <View style={[styles.summaryItem, styles.totalItem, { borderTopColor: theme.border }]}>
+      <View style={[styles.summaryItem, styles.totalItem]}>
         <ThemedText style={styles.totalText}>Total:</ThemedText>
         <ThemedText style={styles.totalText}>
           {total.toFixed(2)}
@@ -64,6 +61,7 @@ const styles = StyleSheet.create({
   },
   totalItem: {
     borderTopWidth: 1,
+    borderTopColor: '#eee',
     paddingTop: 8,
     marginTop: 8,
   },

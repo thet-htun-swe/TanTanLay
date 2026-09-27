@@ -1,5 +1,5 @@
 import { Sale } from "@/types";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { useState } from "react";
@@ -81,7 +81,7 @@ export const useInvoice = () => {
         <body>
           <div class="invoice-header">
             <div class="invoice-title">INVOICE</div>
-            <div>Clothing Sales</div>
+            <div>TantanLay Invoicing</div>
           </div>
           
           <div class="invoice-details">

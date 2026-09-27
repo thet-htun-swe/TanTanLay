@@ -37,7 +37,7 @@ export function Button({
         };
       case 'danger':
         return {
-          backgroundColor: disabled ? `${theme.danger}80` : theme.danger,
+          backgroundColor: disabled ? '#ff6b6b80' : '#ff6b6b',
         };
       default:
         return {
@@ -54,7 +54,7 @@ export function Button({
         };
       default:
         return {
-          color: theme.onTint,
+          color: '#fff',
         };
     }
   };
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
