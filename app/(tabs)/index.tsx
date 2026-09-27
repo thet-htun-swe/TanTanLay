@@ -29,7 +29,7 @@ export default function HomeScreen() {
       headerImage={<View />}
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Clothing Sales</ThemedText>
+        <ThemedText type="title">TantanLay Invoicing</ThemedText>
       </ThemedView>
 
       <Card style={styles.statsCard}>

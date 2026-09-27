@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useFocusEffect } from "expo-router/react-navigation";
+import { useFocusEffect } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Alert } from "react-native";
 

@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   StyleSheet,
@@ -13,26 +15,76 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { searchProducts } from "@/services/database";
 import { useAppStore } from "@/store";
 import { Product } from "@/types";
 import { router } from "expo-router";
 
 export default function ProductsScreen() {
-  const { products, fetchProducts, searchProducts, removeProduct } =
-    useAppStore();
+  const { removeProduct } = useAppStore();
+  const [products, setProducts] = useState<(Product & { id: number })[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loadRequest = useRef(0);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const loadProducts = useCallback(async (search: string) => {
+    const request = ++loadRequest.current;
+    try {
+      setIsLoading(true);
+      setIsLoadingMore(false);
+      const productsData = await searchProducts(search);
+      if (request !== loadRequest.current) return;
+
+      setProducts(productsData);
+      setHasMore(productsData.length === 50);
+    } catch (error) {
+      if (request === loadRequest.current) {
+        console.error("Failed to load products:", error);
+        Alert.alert("Error", "Failed to load products");
+      }
+    } finally {
+      if (request === loadRequest.current) setIsLoading(false);
+    }
+  }, []);
+
+  const loadMoreProducts = async () => {
+    if (isLoading || isLoadingMore || !hasMore) return;
+
+    const request = loadRequest.current;
+    setIsLoadingMore(true);
+    try {
+      const productsData = await searchProducts(searchTerm, products.length);
+      if (request !== loadRequest.current) return;
+
+      setProducts((current) => [...current, ...productsData]);
+      setHasMore(productsData.length === 50);
+    } catch (error) {
+      if (request === loadRequest.current) {
+        console.error("Failed to load more products:", error);
+        Alert.alert("Error", "Failed to load more products");
+      }
+    } finally {
+      if (request === loadRequest.current) setIsLoadingMore(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      setSearchTerm("");
+      loadProducts("");
+    }, [loadProducts]),
+  );
 
   const handleSearch = (text: string) => {
     setSearchTerm(text);
-    if (text.trim()) {
-      searchProducts(text);
-    } else {
-      fetchProducts();
-    }
+    loadProducts(text);
+  };
+
+  const handleDeleteProduct = async (productId: number) => {
+    await removeProduct(productId);
+    loadProducts(searchTerm);
   };
 
   const confirmDeleteProduct = (productId: number) => {
@@ -46,7 +98,7 @@ export default function ProductsScreen() {
         },
         {
           text: "Delete",
-          onPress: () => removeProduct(productId),
+          onPress: () => handleDeleteProduct(productId),
           style: "destructive",
         },
       ]
@@ -93,19 +145,30 @@ export default function ProductsScreen() {
         onChangeText={handleSearch}
       />
 
-      <FlatList
-        data={products}
-        renderItem={renderProductItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.productList}
-        ListEmptyComponent={
-          <ThemedText style={styles.emptyText}>
-            {searchTerm
-              ? "No products found matching your search."
-              : "No products found. Add your first product!"}
-          </ThemedText>
-        }
-      />
+      {isLoading ? (
+        <ThemedView style={styles.centerContainer}>
+          <ThemedText>Loading products...</ThemedText>
+        </ThemedView>
+      ) : (
+        <FlatList
+          data={products}
+          renderItem={renderProductItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.productList}
+          onEndReached={loadMoreProducts}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoadingMore ? <ActivityIndicator style={styles.loadMore} /> : null
+          }
+          ListEmptyComponent={
+            <ThemedText style={styles.emptyText}>
+              {searchTerm
+                ? "No products found matching your search."
+                : "No products found. Add your first product!"}
+            </ThemedText>
+          }
+        />
+      )}
 
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
@@ -137,6 +200,14 @@ const styles = StyleSheet.create({
   },
   productList: {
     paddingBottom: 100,
+  },
+  loadMore: {
+    marginVertical: 16,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   productCard: {
     marginBottom: 12,

@@ -123,7 +123,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
         if (request !== searchRequest.current) return;
 
         setFilteredCustomers(customers);
-        setHasMore(customers.length > 0);
+        setHasMore(customers.length === 50);
         setShowCreateForm(Boolean(searchQuery.trim()) && customers.length === 0);
         if (searchQuery.trim() && customers.length === 0) {
           setNewCustomer((prev) => ({ ...prev, name: searchQuery }));
@@ -154,7 +154,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
       if (request !== searchRequest.current) return;
 
       setFilteredCustomers((current) => [...current, ...customers]);
-      setHasMore(customers.length > 0);
+      setHasMore(customers.length === 50);
     } catch (error) {
       if (request === searchRequest.current) {
         console.error("Failed to load more customers:", error);

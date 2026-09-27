@@ -1,5 +1,5 @@
 import { DateTimePicker } from "@/components/common/DateTimePicker";
-import { useFocusEffect } from "expo-router/react-navigation";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
