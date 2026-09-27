@@ -2,7 +2,7 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-} from "@react-navigation/native";
+} from "expo-router/react-navigation";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -23,6 +23,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function checkForUpdates() {
+      if (!Updates.isEnabled) return;
+
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
