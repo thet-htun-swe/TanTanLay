@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,15 +11,14 @@ import {
   View,
 } from "react-native";
 
-import { CustomerDetailsBottomSheet } from "@/components/CustomerDetailsBottomSheet";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Input } from "@/components/ui/Input";
-import { ListRow, ListSeparator } from "@/components/ui/ListRow";
+import { ListRow, ListSeparator, RowIconButton } from "@/components/ui/ListRow";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { getErrorMessage, searchCustomers } from "@/services/api";
-import { useAppStore } from "@/store";
+import { deleteCustomer, getErrorMessage, searchCustomers } from "@/services/api";
+import { useAppStore, useIsAdmin } from "@/store";
 import { Customer } from "@/types";
 import { useRouter } from "expo-router";
 
@@ -31,10 +31,7 @@ export default function CustomersScreen() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const loadRequest = useRef(0);
-  const [selectedCustomer, setSelectedCustomer] = useState<
-    (Customer & { id: number }) | null
-  >(null);
-  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const isAdmin = useIsAdmin();
 
   // silent: live update from another phone (no spinner, no error pop-up)
   const loadCustomers = useCallback(async (search: string, silent = false) => {
@@ -105,22 +102,27 @@ export default function CustomersScreen() {
     loadCustomers(text);
   };
 
-  const handleViewCustomer = (customer: Customer & { id: number }) => {
-    setSelectedCustomer(customer);
-    setIsBottomSheetVisible(true);
-  };
-
   const handleEditCustomer = (customer: Customer & { id: number }) => {
     router.push(`/customer/${customer.id}/edit`);
   };
 
-  const handleCloseBottomSheet = () => {
-    setIsBottomSheetVisible(false);
-    setSelectedCustomer(null);
-  };
-
-  const handleDeleteCustomer = () => {
-    loadCustomers(searchTerm);
+  // Same flow as deleting a product (admin only)
+  const confirmDeleteCustomer = (customer: Customer & { id: number }) => {
+    Alert.alert("Delete Customer", `Are you sure you want to delete ${customer.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteCustomer(customer.id);
+          } catch (error) {
+            Alert.alert("Error", getErrorMessage(error, "Failed to delete customer"));
+          }
+          loadCustomers(searchTerm);
+        },
+      },
+    ]);
   };
 
   const theme = Colors[colorScheme ?? "light"];
@@ -129,7 +131,8 @@ export default function CustomersScreen() {
     <ListRow
       title={customer.name}
       subtitle={[customer.contact, customer.address].filter(Boolean).join(" · ")}
-      onPress={() => handleViewCustomer(customer)}
+      // Tap the row to edit (same as products)
+      onPress={() => handleEditCustomer(customer)}
       leading={
         <View style={[styles.avatar, { backgroundColor: theme.surface }]}>
           <ThemedText style={[styles.avatarText, { color: theme.tint }]}>
@@ -137,7 +140,25 @@ export default function CustomersScreen() {
           </ThemedText>
         </View>
       }
-      trailing={<MaterialCommunityIcons name="chevron-right" size={22} color={theme.icon} />}
+      trailing={
+        <View style={styles.trailing}>
+          <RowIconButton
+            onPress={() => handleEditCustomer(customer)}
+            accessibilityLabel={`Edit ${customer.name}`}
+          >
+            <Ionicons name="create-outline" size={20} color={theme.tint} />
+          </RowIconButton>
+          {/* Only admin can delete customers */}
+          {isAdmin && (
+            <RowIconButton
+              onPress={() => confirmDeleteCustomer(customer)}
+              accessibilityLabel={`Delete ${customer.name}`}
+            >
+              <Ionicons name="trash-outline" size={20} color={theme.danger} />
+            </RowIconButton>
+          )}
+        </View>
+      }
     />
   );
 
@@ -195,16 +216,8 @@ export default function CustomersScreen() {
         ]}
         onPress={handleCreateCustomer}
       >
-        <MaterialCommunityIcons name="plus" size={24} color={Colors[colorScheme ?? "light"].onTint} />
+        <Ionicons name="add" size={24} color={theme.onTint} />
       </TouchableOpacity>
-
-      <CustomerDetailsBottomSheet
-        customer={selectedCustomer}
-        isVisible={isBottomSheetVisible}
-        onClose={handleCloseBottomSheet}
-        onEdit={handleEditCustomer}
-        onDelete={handleDeleteCustomer}
-      />
     </ThemedView>
   );
 }
@@ -227,21 +240,18 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    right: 16,
-    bottom: 16,
     width: 56,
     height: 56,
-    borderRadius: 20,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    right: 20,
+    bottom: 20,
+    borderRadius: 20,
     elevation: 8,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   scrollView: {
     paddingTop: 8,
@@ -249,6 +259,11 @@ const styles = StyleSheet.create({
   },
   loadMore: {
     marginVertical: 16,
+  },
+  trailing: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
   },
   avatar: {
     width: 38,

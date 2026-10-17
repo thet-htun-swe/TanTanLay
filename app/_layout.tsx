@@ -94,9 +94,14 @@ export default function RootLayout() {
             name="settings/printer"
             options={{ title: "Printer & receipt", headerBackTitle: "Back" }}
           />
-          {/* Listed only so they are protected too (no option changes) */}
-          <Stack.Screen name="customer/create/index" />
-          <Stack.Screen name="customer/[id]/edit" />
+          <Stack.Screen
+            name="customer/create/index"
+            options={{ title: "Create Customer", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="customer/[id]/edit"
+            options={{ title: "Edit Customer", headerBackTitle: "Back" }}
+          />
           {/* Admin only: change products, edit sales */}
           <Stack.Protected guard={isAdmin}>
             <Stack.Screen

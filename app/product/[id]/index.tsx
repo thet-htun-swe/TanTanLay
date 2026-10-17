@@ -133,7 +133,7 @@ export default function EditProductScreen() {
             placeholder="Enter product name"
             autoCapitalize="words"
             autoCorrect={false}
-            style={styles.input}
+            containerStyle={styles.field}
             existingProducts={products}
             excludeId={id ? parseInt(id, 10) : undefined}
             onValidationChange={handleValidationChange}
@@ -149,7 +149,7 @@ export default function EditProductScreen() {
             }}
             placeholder="0.00"
             keyboardType="decimal-pad"
-            style={styles.input}
+            containerStyle={styles.field}
           />
           <Input
             label="Stock Quantity"
@@ -162,7 +162,7 @@ export default function EditProductScreen() {
             }}
             placeholder="0"
             keyboardType="number-pad"
-            style={styles.input}
+            containerStyle={styles.field}
           />
           <View style={styles.buttonContainer}>
             <Button
@@ -173,7 +173,7 @@ export default function EditProductScreen() {
               disabled={isSubmitting}
             />
             <Button
-              title={isSubmitting ? "Updating..." : "Update Product"}
+              title={isSubmitting ? "Saving..." : "Save"}
               onPress={handleUpdateProduct}
               style={styles.button}
               disabled={
@@ -204,29 +204,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 24,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  input: {
+  field: {
     marginBottom: 16,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
-    lineHeight: 20,
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 20,
+    gap: 12,
     marginTop: 24,
   },
   button: {
-    flex: 0,
-    minWidth: 150,
+    flex: 1,
   },
 });

@@ -103,8 +103,7 @@ export default function CreateProductScreen() {
             placeholder="Enter product name"
             autoCapitalize="words"
             autoCorrect={false}
-            style={[styles.input, { marginBottom: 4 }]}
-            containerStyle={{ marginBottom: 16 }}
+            containerStyle={styles.field}
             existingProducts={products}
             onValidationChange={handleValidationChange}
           />
@@ -119,7 +118,7 @@ export default function CreateProductScreen() {
             }}
             placeholder="0.00"
             keyboardType="decimal-pad"
-            style={styles.input}
+            containerStyle={styles.field}
           />
           <Input
             label="Stock Quantity"
@@ -132,7 +131,7 @@ export default function CreateProductScreen() {
             }}
             placeholder="0"
             keyboardType="number-pad"
-            style={styles.input}
+            containerStyle={styles.field}
           />
           <View style={styles.buttonContainer}>
             <Button
@@ -143,7 +142,7 @@ export default function CreateProductScreen() {
               disabled={isSubmitting}
             />
             <Button
-              title={isSubmitting ? "Creating..." : "Create Product"}
+              title={isSubmitting ? "Creating..." : "Create"}
               onPress={handleCreateProduct}
               style={styles.button}
               disabled={
@@ -169,29 +168,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 24,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  input: {
+  field: {
     marginBottom: 16,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
-    lineHeight: 20,
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 20,
+    gap: 12,
     marginTop: 24,
   },
   button: {
-    flex: 0,
-    minWidth: 150,
+    flex: 1,
   },
 });
