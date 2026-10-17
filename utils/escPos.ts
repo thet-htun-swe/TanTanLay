@@ -8,6 +8,9 @@ export const SHOP_NAME = "KHA";
 
 // Paper sizes. Printer font A is 12 dots wide at 203 dpi:
 // 58 mm paper prints 384 dots (32 characters), 80 mm prints 576 dots (48).
+// The 58 mm layout is the default because it works on every printer: each row
+// is exactly 32 characters and printed centred, so on 80 mm paper it becomes a
+// neat column in the middle. 80 mm is an optional full-width layout.
 export type PaperWidth = 58 | 80;
 export const DEFAULT_PAPER_WIDTH: PaperWidth = 58;
 const PAPER = {
@@ -122,8 +125,31 @@ export const getReceiptPreviewText = (
     .map((receiptLine) => lineText(receiptLine, PAPER[paperWidth].characters))
     .join("\n");
 
+// Split text into rows of at most `characters`, breaking at spaces when possible
+const wrapRows = (text: string, characters: number) => {
+  const rows: string[] = [];
+  let rest = text.trimEnd();
+  while (rest.length > characters) {
+    const space = rest.lastIndexOf(" ", characters);
+    const cut = space > 0 ? space : characters;
+    rows.push(rest.slice(0, cut).trimEnd());
+    rest = rest.slice(cut).trimStart();
+  }
+  rows.push(rest);
+  return rows;
+};
+
+// Pad a row to exactly the layout width, so every row is the same width and
+// the printer's centring keeps them lined up on wider paper
+const padRow = (row: string, characters: number, center: boolean) => {
+  const free = Math.max(0, characters - row.length);
+  const left = center ? Math.floor(free / 2) : 0;
+  return " ".repeat(left) + row + " ".repeat(free - left);
+};
+
 // Lines the printer font can show are sent as text; others (e.g. Myanmar
-// names) are drawn as pictures with `rasterize`.
+// names) are drawn as pictures with `rasterize`. Everything is printed centred
+// (see PaperWidth above).
 export const buildSaleReceipt = async (
   sale: Sale,
   rasterize: LineRasterizer,
@@ -138,18 +164,18 @@ export const buildSaleReceipt = async (
     const center = receiptLine.type === "text" && !!receiptLine.center;
     const large = receiptLine.type === "text" && !!receiptLine.large;
 
-    if (isPrinterText(text)) {
-      receipt.push(
-        ESC, 0x61, center ? 1 : 0,
-        ESC, 0x45, bold ? 1 : 0,
-        // Double width + height for the shop name
-        GS, 0x21, large ? 0x11 : 0x00,
-        ...line(text),
-      );
+    if (large && isPrinterText(text)) {
+      // Shop name: double width + height, centred by the printer
+      receipt.push(ESC, 0x61, 1, ESC, 0x45, 1, GS, 0x21, 0x11, ...line(text));
+    } else if (isPrinterText(text)) {
+      receipt.push(ESC, 0x61, 1, ESC, 0x45, bold ? 1 : 0, GS, 0x21, 0x00);
+      for (const row of wrapRows(text, paper.characters)) {
+        receipt.push(...line(padRow(row, paper.characters, center)));
+      }
     } else {
+      // The picture is exactly the layout width (any centring is drawn into it)
       const image = await rasterize(text, { bold, center, width: paper.dots });
-      // The picture is already full width (centering is drawn into it)
-      receipt.push(ESC, 0x61, 0, ...rasterImageBytes(image));
+      receipt.push(ESC, 0x61, 1, ...rasterImageBytes(image));
     }
   }
 
@@ -165,7 +191,8 @@ export const buildSaleReceipt = async (
   return new Uint8Array(receipt);
 };
 
-// The full-width dashed line shows whether the paper size is set right
+// The dashed line shows the receipt width: on 58 mm paper both layouts
+// should fit; with "80 mm" on 58 mm paper the line wraps (wrong setting)
 export const buildTestReceipt = (paperWidth: PaperWidth = DEFAULT_PAPER_WIDTH) =>
   new Uint8Array([
     ESC, 0x40,
@@ -176,10 +203,8 @@ export const buildTestReceipt = (paperWidth: PaperWidth = DEFAULT_PAPER_WIDTH) =
     GS, 0x21, 0x00,
     ESC, 0x45, 0,
     ...line("Printer test successful"),
-    ...line(`Paper: ${paperWidth} mm`),
-    ESC, 0x61, 0,
+    ...line(paperWidth === 58 ? "Layout: 58 mm (all printers)" : "Layout: 80 mm (full width)"),
     ...line("-".repeat(PAPER[paperWidth].characters)),
-    ESC, 0x61, 1,
     ...line(),
     ...line(),
     GS, 0x56, 0,

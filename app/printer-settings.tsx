@@ -55,7 +55,7 @@ export default function PrinterSettingsScreen() {
       await savePaperWidth(width);
       setPaperWidth(width);
     } catch (error) {
-      Alert.alert("Paper size", error instanceof Error ? error.message : "Could not save paper size");
+      Alert.alert("Receipt width", error instanceof Error ? error.message : "Could not save receipt width");
     }
   };
 
@@ -186,19 +186,22 @@ export default function PrinterSettingsScreen() {
           <ThemedText style={styles.currentValue}>{currentPrinter}</ThemedText>
         </Card>
 
-        <ThemedText style={styles.sectionTitle}>Paper size</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Receipt width</ThemedText>
         <ThemedText style={styles.hint}>
-          Check the label under your printer (e.g. &quot;Paper Width: 79.5 mm&quot; means 80 mm). Use
-          &quot;Test selected printer&quot; below: its dashed line should reach across the paper.
+          Standard works on every printer (58 mm and 80 mm paper). On 80 mm paper it prints
+          centred with margins. Choose 80 mm full width only for an 80 mm printer (the label
+          under it says e.g. &quot;Paper Width: 79.5 mm&quot;).
         </ThemedText>
         <ActionButtons
-          buttons={([58, 80] as const).map((width) => ({
-            title: paperWidth === width ? `${width} mm  ✓` : `${width} mm`,
-            onPress: () => choosePaperWidth(width),
-            variant: paperWidth === width ? ("primary" as const) : ("secondary" as const),
+          buttons={[
+            { width: 58 as const, title: "Standard (all printers)" },
+            { width: 80 as const, title: "80 mm full width" },
+          ].map((option) => ({
+            title: paperWidth === option.width ? `${option.title} ✓` : option.title,
+            onPress: () => choosePaperWidth(option.width),
+            variant: paperWidth === option.width ? ("primary" as const) : ("secondary" as const),
           }))}
-          direction="row"
-          spacing={8}
+          direction="column"
         />
 
         <ThemedText style={styles.sectionTitle}>Bluetooth printer</ThemedText>

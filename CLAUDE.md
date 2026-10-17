@@ -80,7 +80,9 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 - **Receipts**: one source of rows, `receiptLines()` in `utils/escPos.ts` (shop name `SHOP_NAME` = "KHA"), used by the printer, the on-screen receipt (`components/sales/ReceiptView.tsx`, shown on Sale Details and the print preview) and the text preview. There is no PDF invoice.
 - **Share receipt as image**: `services/receiptImage.ts` captures `ReceiptView` with `react-native-view-shot` and opens the share sheet (`expo-sharing`)
 - **Receipt Printing**: Wi-Fi (`services/thermalPrinter.ts`) and Bluetooth (`services/bluetoothPrinter.ts`) ESC/POS printers; printer chosen per phone in `app/printer-settings.tsx`, which also shows the signed-in user and the **Log out** button
-- **Myanmar text on paper**: the printer font is ASCII only, so non-ASCII lines are drawn as pictures (GS v 0) by a hidden WebView (`components/ReceiptTextRenderer.tsx`, `services/textRaster.ts`) using the phone's fonts; 58 mm = 384 dots. Check with `scripts/verify-esc-pos.ts`.
+- **Myanmar text on paper**: the printer font is ASCII only, so non-ASCII lines are drawn as pictures (GS v 0) by a hidden WebView (`components/ReceiptTextRenderer.tsx`, `services/textRaster.ts`) using the phone's fonts. Check with `scripts/verify-esc-pos.ts`.
+- **Receipt width** (per phone, Printer settings): "Standard" (default, 32 characters / 384 dots) works on every printer: each row is padded to exactly 32 characters and printed centred, so on 80 mm paper it is a centred column. "80 mm full width" (48 characters / 576 dots) is optional and must not be used on 58 mm printers.
+- **Bluetooth printing** sends data in small chunks and waits before disconnecting; cheap printers (e.g. BRINT BP06) otherwise lose the end of the receipt.
 - **Excel Export / Shipping Labels**: `utils/exportUtils.ts` (Excel export is admin only)
 
 ### File Organization

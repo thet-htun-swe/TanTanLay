@@ -74,6 +74,34 @@ const main = async () => {
     throw new Error("80 mm receipt is missing a 72-byte-wide picture");
   }
 
+  // Standard (58 mm) layout: every text row is exactly 32 characters and the
+  // printer centres it, so it lines up on any paper width
+  const asciiRows = (bytes: Uint8Array) =>
+    String.fromCharCode(...bytes)
+      .split("\n")
+      .map((row) => row.replace(/^.*[\x00-\x1f]/, ""))
+      .filter((row) => row.length > 0);
+  const standardRows = asciiRows(await buildSaleReceipt(sale, fakeRasterizer, 58));
+  const rowsOtherThanShopName = standardRows.filter((row) => row !== "KHA");
+  if (rowsOtherThanShopName.some((row) => row.length !== 32)) {
+    throw new Error("Standard rows should all be 32 characters wide");
+  }
+  if (!standardRows.includes(`${" ".repeat(11)}Thank you!${" ".repeat(11)}`)) {
+    throw new Error("Centred rows should be padded on both sides");
+  }
+  if (!String.fromCharCode(...(await buildSaleReceipt(sale, fakeRasterizer))).includes("\x1ba\x01")) {
+    throw new Error("Receipt should use centre alignment");
+  }
+
+  // Long English names wrap into full-width rows instead of overflowing
+  const longName = "Ma Khin Hnin Aung from Mandalay Road Shop";
+  const longRows = asciiRows(
+    await buildSaleReceipt({ ...sale, customer: { ...sale.customer, name: longName } }, fakeRasterizer),
+  );
+  if (longRows.some((row) => row.length !== 32 && row !== "KHA")) {
+    throw new Error("Wrapped rows should also be 32 characters wide");
+  }
+
   console.log("ESC/POS receipt check passed");
 };
 

@@ -246,7 +246,7 @@ export default function SalesScreen() {
       >
         <ThemedText style={styles.sheetTitle}>Receipt preview</ThemedText>
         <ThemedText style={styles.sheetHint}>
-          Printed receipts use the paper size set in Printer settings (58 mm or 80 mm).
+          Printed receipts use the receipt width set in Printer settings.
         </ThemedText>
         {selectedSales.map((sale) => (
           <View key={sale.id} style={[styles.receiptPreview, { backgroundColor: theme.surface }]}>
