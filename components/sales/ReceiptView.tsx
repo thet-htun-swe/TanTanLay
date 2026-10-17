@@ -28,10 +28,25 @@ export function ReceiptView({ sale, ref }: ReceiptViewProps) {
         if (line.type === "pair") {
           return (
             <View key={index} style={styles.pair}>
+              {/* Invisible spacer as wide as the item number, so prices line up under names */}
+              {!!line.indent && (
+                <Text style={[styles.text, styles.spacer]}>{"0".repeat(line.indent)}</Text>
+              )}
               <Text style={[styles.text, styles.pairLeft, line.bold && styles.bold]}>
                 {line.left}
               </Text>
               <Text style={[styles.text, line.bold && styles.bold]}>{line.right}</Text>
+            </View>
+          );
+        }
+
+        if (line.prefix) {
+          return (
+            <View key={index} style={styles.numbered}>
+              <Text style={styles.text}>{line.prefix}</Text>
+              <Text style={[styles.text, styles.numberedText, line.bold && styles.bold]}>
+                {line.text}
+              </Text>
             </View>
           );
         }
@@ -87,10 +102,19 @@ const styles = StyleSheet.create({
   },
   pair: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 12,
   },
   pairLeft: {
-    flexShrink: 1,
+    flex: 1,
+  },
+  spacer: {
+    color: "transparent",
+    marginRight: -12, // cancel the row gap so the indent is exactly the number width
+  },
+  numbered: {
+    flexDirection: "row",
+  },
+  numberedText: {
+    flex: 1,
   },
 });

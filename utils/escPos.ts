@@ -28,14 +28,24 @@ export interface RasterImage {
 // Draws text the printer font cannot show (e.g. Myanmar) as a picture
 export type LineRasterizer = (
   text: string,
-  options: { bold?: boolean; center?: boolean; width: number },
+  // prefix: item number drawn before the text; wrapped rows are indented by it
+  options: { bold?: boolean; center?: boolean; width: number; prefix?: string },
 ) => Promise<RasterImage>;
 
 // One receipt row. Used by the printer, the text preview and the on-screen
 // receipt (components/sales/ReceiptView.tsx), so all three always match.
+// `prefix` is the item number ("1. "); wrapped rows and the item's price row
+// are indented by its length (`indent`) so names and prices line up.
 export type ReceiptLine =
-  | { type: "text"; text: string; bold?: boolean; center?: boolean; large?: boolean }
-  | { type: "pair"; left: string; right: string; bold?: boolean }
+  | {
+      type: "text";
+      text: string;
+      prefix?: string;
+      bold?: boolean;
+      center?: boolean;
+      large?: boolean;
+    }
+  | { type: "pair"; left: string; right: string; indent?: number; bold?: boolean }
   | { type: "divider" };
 
 // toLocaleString() puts special spaces in dates (e.g. before "PM"):
@@ -70,16 +80,20 @@ export const receiptLines = (sale: Sale): ReceiptLine[] => {
     divider,
   ];
 
-  for (const item of sale.items) {
+  // Numbers are right-aligned so names line up: " 9. " and "10. "
+  const numberWidth = String(sale.items.length).length;
+  sale.items.forEach((item, index) => {
+    const prefix = `${String(index + 1).padStart(numberWidth)}. `;
     lines.push(
-      { type: "text", text: item.productName },
+      { type: "text", text: item.productName, prefix },
       {
         type: "pair",
         left: `${item.quantity} x ${money(item.unitPrice)}`,
         right: money(item.lineTotal),
+        indent: prefix.length,
       },
     );
-  }
+  });
 
   lines.push(
     divider,
@@ -93,9 +107,10 @@ export const receiptLines = (sale: Sale): ReceiptLine[] => {
 const lineText = (receiptLine: ReceiptLine, characters: number) => {
   if (receiptLine.type === "divider") return "-".repeat(characters);
   if (receiptLine.type === "pair") {
-    return pairText(receiptLine.left, receiptLine.right, characters);
+    const indent = " ".repeat(receiptLine.indent ?? 0);
+    return pairText(indent + receiptLine.left, receiptLine.right, characters);
   }
-  return receiptLine.text;
+  return (receiptLine.prefix ?? "") + receiptLine.text;
 };
 
 // ESC/POS "print raster image" (GS v 0), sent in strips printers can buffer
@@ -169,12 +184,22 @@ export const buildSaleReceipt = async (
       receipt.push(ESC, 0x61, 1, ESC, 0x45, 1, GS, 0x21, 0x11, ...line(text));
     } else if (isPrinterText(text)) {
       receipt.push(ESC, 0x61, 1, ESC, 0x45, bold ? 1 : 0, GS, 0x21, 0x00);
-      for (const row of wrapRows(text, paper.characters)) {
-        receipt.push(...line(padRow(row, paper.characters, center)));
-      }
+      // Numbered item: wrap the name only, keep continuation rows under it
+      const prefix = receiptLine.type === "text" ? (receiptLine.prefix ?? "") : "";
+      const body = prefix ? text.slice(prefix.length) : text;
+      wrapRows(body, paper.characters - prefix.length).forEach((row, index) => {
+        const lead = index === 0 ? prefix : " ".repeat(prefix.length);
+        receipt.push(...line(padRow(lead + row, paper.characters, center)));
+      });
     } else {
       // The picture is exactly the layout width (any centring is drawn into it)
-      const image = await rasterize(text, { bold, center, width: paper.dots });
+      const prefix = receiptLine.type === "text" ? receiptLine.prefix : undefined;
+      const image = await rasterize(prefix ? text.slice(prefix.length) : text, {
+        bold,
+        center,
+        width: paper.dots,
+        prefix,
+      });
       receipt.push(ESC, 0x61, 1, ...rasterImageBytes(image));
     }
   }

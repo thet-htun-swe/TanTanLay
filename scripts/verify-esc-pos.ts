@@ -102,6 +102,39 @@ const main = async () => {
     throw new Error("Wrapped rows should also be 32 characters wide");
   }
 
+  // Item numbers: "1. " before the name, price row indented under the name;
+  // with 10+ items numbers are right-aligned (" 9. ", "10. ")
+  const manyItems = Array.from({ length: 10 }, (_, i) => ({
+    ...sale.items[0],
+    productId: i + 1,
+    productName: i === 9 ? "Long English product name that needs wrapping" : `Item ${i + 1}`,
+  }));
+  const numberedRows = asciiRows(await buildSaleReceipt({ ...sale, items: manyItems }, fakeRasterizer));
+  const expectRow = (row: string) => {
+    if (!numberedRows.includes(row.padEnd(32))) {
+      throw new Error(`Missing numbered row: "${row}"\n${numberedRows.join("\n")}`);
+    }
+  };
+  expectRow(" 1. Item 1");
+  expectRow("    2 x 12.50              25.00");
+  expectRow("10. Long English product name");
+  expectRow("    that needs wrapping");
+
+  const numberedPreview = getReceiptPreviewText({ ...sale, items: manyItems.slice(0, 2) });
+  if (!numberedPreview.includes("1. T-shirt") && !numberedPreview.includes("1. Item 1")) {
+    throw new Error("Preview should number the items");
+  }
+
+  // Myanmar names get the number drawn into the picture
+  const prefixes: (string | undefined)[] = [];
+  await buildSaleReceipt(myanmarSale, async (_text, options) => {
+    prefixes.push(options.prefix);
+    return { width: 384, height: 2, data: new Uint8Array(96) };
+  });
+  if (!prefixes.includes("1. ")) {
+    throw new Error("Myanmar item picture should get its number");
+  }
+
   console.log("ESC/POS receipt check passed");
 };
 

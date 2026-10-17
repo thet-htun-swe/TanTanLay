@@ -113,6 +113,7 @@ export const rasterizeLine: LineRasterizer = async (text, options) => {
       width: options.width,
       bold: !!options.bold,
       center: !!options.center,
+      prefix: options.prefix ?? "",
     });
     inject?.(`window.renderReceiptLine(${args}); true;`);
   });
@@ -124,6 +125,9 @@ export const TEXT_RENDERER_HTML = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head><body>
 <script>
   var FONT_SIZE = 24;
+  // Printer font A is 12 dots per character; indenting by the same amount
+  // keeps Myanmar names lined up with the printed (English) price rows
+  var PRINTER_CHAR_DOTS = 12;
 
   function post(message) {
     window.ReactNativeWebView.postMessage(JSON.stringify(message));
@@ -168,7 +172,8 @@ export const TEXT_RENDERER_HTML = `<!DOCTYPE html>
       var ctx = canvas.getContext("2d");
       ctx.font = font;
 
-      var lines = wrap(ctx, args.text, width);
+      var indent = args.prefix ? args.prefix.length * PRINTER_CHAR_DOTS : 0;
+      var lines = wrap(ctx, args.text, width - indent);
       var ascent = FONT_SIZE * 0.9, descent = FONT_SIZE * 0.4;
       lines.forEach(function (line) {
         var m = ctx.measureText(line);
@@ -185,8 +190,11 @@ export const TEXT_RENDERER_HTML = `<!DOCTYPE html>
       ctx.fillStyle = "#000";
       ctx.font = font;
       ctx.textBaseline = "alphabetic";
+      if (args.prefix) ctx.fillText(args.prefix, 0, 3 + ascent);
       lines.forEach(function (line, index) {
-        var x = args.center ? Math.max(0, (width - ctx.measureText(line).width) / 2) : 0;
+        var x = args.center
+          ? Math.max(0, (width - ctx.measureText(line).width) / 2)
+          : indent;
         ctx.fillText(line, x, index * lineHeight + 3 + ascent);
       });
 
