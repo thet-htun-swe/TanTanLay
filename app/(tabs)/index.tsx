@@ -37,7 +37,9 @@ export default function HomeScreen() {
       headerImage={<View />}
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title" style={styles.title}>Clothing Sales</ThemedText>
+        <ThemedText type="title" style={styles.title} numberOfLines={1}>
+          KHA Clothing
+        </ThemedText>
         <TouchableOpacity
           onPress={() => router.push("/settings")}
           hitSlop={10}

@@ -79,7 +79,7 @@ export class ExportUtils {
       const wbout = XLSXWrite(wb, { type: "base64", bookType: "xlsx" });
 
       // Define file path
-      const fileName = `Clothing_Sales_${
+      const fileName = `KHA_Sales_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       const fileUri = FileSystem.documentDirectory + fileName;

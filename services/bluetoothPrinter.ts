@@ -33,7 +33,7 @@ const requestBluetoothAccess = async () => {
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
     {
       title: "Bluetooth printer access",
-      message: "Allow Clothing Sales to access paired Bluetooth printers.",
+      message: "Allow KHA Clothing to access paired Bluetooth printers.",
       buttonPositive: "Allow",
       buttonNegative: "Cancel",
     },
