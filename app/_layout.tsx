@@ -10,7 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
-import { useAppStore } from "@/store";
+import { useAppStore, useIsAdmin } from "@/store";
 
 import * as Updates from "expo-updates";
 import { useEffect } from "react";
@@ -18,9 +18,10 @@ import { useEffect } from "react";
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
-  const { initializeApp, isInitialized, error, initAuth, authReady, session } =
+  const { initializeApp, isInitialized, initAuth, authReady, session } =
     useAppStore();
   const isSignedIn = !!session;
+  const isAdmin = useIsAdmin();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -60,12 +61,6 @@ export default function RootLayout() {
     return null;
   }
 
-  if (error) {
-    // Handle database initialization error
-    console.error("Database initialization error:", error);
-    // You could show an error screen here
-  }
-
   return (
     <ThemeProvider value={{
       ...(colorScheme === "dark" ? DarkTheme : DefaultTheme),
@@ -90,19 +85,22 @@ export default function RootLayout() {
             name="sale/[id]"
             options={{ title: "Sale Details", headerBackTitle: "Back" }}
           />
-          <Stack.Screen
-            name="product/[id]/index"
-            options={{ title: "Edit Product", headerBackTitle: "Back" }}
-          />
-          <Stack.Screen
-            name="product/create/index"
-            options={{ title: "Create Product", headerBackTitle: "Back" }}
-          />
           <Stack.Screen name="printer-settings" options={{ headerShown: false }} />
           {/* Listed only so they are protected too (no option changes) */}
-          <Stack.Screen name="edit-sale/[id]" />
           <Stack.Screen name="customer/create/index" />
           <Stack.Screen name="customer/[id]/edit" />
+          {/* Admin only: change products, edit sales */}
+          <Stack.Protected guard={isAdmin}>
+            <Stack.Screen
+              name="product/[id]/index"
+              options={{ title: "Edit Product", headerBackTitle: "Back" }}
+            />
+            <Stack.Screen
+              name="product/create/index"
+              options={{ title: "Create Product", headerBackTitle: "Back" }}
+            />
+            <Stack.Screen name="edit-sale/[id]" />
+          </Stack.Protected>
         </Stack.Protected>
         <Stack.Screen name="+not-found" />
       </Stack>

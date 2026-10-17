@@ -2,4 +2,4 @@
 export { SearchBar } from './SearchBar';
 export { DatePicker } from './DatePicker';
 export { ActionButtons } from './ActionButtons';
-export { ScreenHeader } from './ScreenHeader';
+export { ScreenHeader } from './ScreenHeader';export { ErrorBanner } from './ErrorBanner';

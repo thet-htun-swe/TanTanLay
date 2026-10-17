@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { databaseService } from "@/services/database";
+import { getErrorMessage, saveCustomer } from "@/services/api";
 import { Customer } from "@/types";
 
 export default function CreateCustomerScreen() {
@@ -48,13 +48,13 @@ export default function CreateCustomerScreen() {
 
     try {
       setIsLoading(true);
-      await databaseService.saveCustomer(formData);
+      await saveCustomer(formData);
       Alert.alert("Success", "Customer created successfully", [
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {
       console.error("Failed to create customer:", error);
-      Alert.alert("Error", "Failed to create customer");
+      Alert.alert("Error", getErrorMessage(error, "Failed to create customer"));
     } finally {
       setIsLoading(false);
     }

@@ -14,23 +14,32 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { useInvoice } from "@/hooks/useInvoice";
-import { getSaleById } from "@/services/database";
-import { useAppStore } from "@/store";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { getErrorMessage, getSaleById } from "@/services/api";
+import { useAppStore, useIsAdmin } from "@/store";
 import { Sale } from "@/types";
 
 export default function SaleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [sale, setSale] = useState<(Sale & { id: number }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { products, removeSale } = useAppStore();
+  const isAdmin = useIsAdmin();
   const { formatDate, isGeneratingPdf, sharePdfInvoice } = useInvoice();
 
   const loadSale = async () => {
     if (id) {
       setLoading(true);
-      const saleData = await getSaleById(parseInt(id, 10));
-      setSale(saleData);
-      setLoading(false);
+      try {
+        const saleData = await getSaleById(parseInt(id, 10));
+        setSale(saleData);
+        setLoadError(null);
+      } catch (error) {
+        setLoadError(getErrorMessage(error, "Failed to load sale"));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -77,7 +86,7 @@ export default function SaleDetailsScreen() {
                 await removeSale(sale.id);
                 router.back();
               } catch (error) {
-                Alert.alert("Error", "Failed to delete sale. Please try again.");
+                Alert.alert("Error", getErrorMessage(error, "Failed to delete sale. Please try again."));
               }
             },
           },
@@ -97,7 +106,11 @@ export default function SaleDetailsScreen() {
   if (!sale) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText>Sale not found</ThemedText>
+        {loadError ? (
+          <ErrorBanner message={loadError} onRetry={loadSale} />
+        ) : (
+          <ThemedText>Sale not found</ThemedText>
+        )}
         <Button
           title="Go Back"
           onPress={() => router.back()}
@@ -121,8 +134,9 @@ export default function SaleDetailsScreen() {
         <InvoiceActions
           onSharePdf={handleSharePdf}
           isGeneratingPdf={isGeneratingPdf}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          // Only admin can edit or delete a sale
+          onEdit={isAdmin ? handleEdit : undefined}
+          onDelete={isAdmin ? handleDelete : undefined}
         />
       </ScrollView>
     </ThemedView>

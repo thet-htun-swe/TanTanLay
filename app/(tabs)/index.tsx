@@ -7,13 +7,14 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAppStore } from "@/store";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function HomeScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
-  const { products, sales, fetchProducts, fetchSales } = useAppStore();
+  const { products, sales, fetchProducts, fetchSales, error } = useAppStore();
 
   useEffect(() => {
     fetchProducts();
@@ -34,6 +35,14 @@ export default function HomeScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Clothing Sales</ThemedText>
       </ThemedView>
+
+      <ErrorBanner
+        message={error}
+        onRetry={() => {
+          fetchProducts();
+          fetchSales();
+        }}
+      />
 
       <Card style={styles.statsCard}>
         <ThemedText style={styles.sectionTitle}>Dashboard</ThemedText>

@@ -3,6 +3,7 @@ import {
   deleteProduct,
   deleteSale,
   getProducts,
+  getErrorMessage,
   getSales,
   NO_CONNECTION_MESSAGE,
   saveProduct,
@@ -11,17 +12,12 @@ import {
   updateProduct,
   updateSale,
 } from "@/services/api";
-// SQLite is still opened for screens not yet moved to Supabase (removed in Phase 4/7)
-import { databaseService, initializeDatabase } from "@/services/database";
 import { Product, Profile, Sale } from "@/types";
 import { isAuthRetryableFetchError, Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 
 let authListenerStarted = false;
 
-// Use the API's friendly message when there is one
-const messageOf = (error: unknown, fallback: string) =>
-  error instanceof Error && error.message ? error.message : fallback;
 
 // Turn Supabase login errors into short messages for the user
 const toSignInMessage = (error: unknown): string => {
@@ -73,10 +69,8 @@ interface AppState {
   addSale: (sale: Omit<Sale, "id">, clientId?: string) => Promise<number>;
   editSale: (sale: Sale & { id: number }) => Promise<void>;
   removeSale: (saleId: number) => Promise<void>;
+  refreshData: () => Promise<void>;
 
-  // Utility actions
-  clearAllData: () => Promise<void>;
-  recreateTables: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -170,19 +164,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      await initializeDatabase();
-    } catch (error) {
-      console.error("Failed to open local database:", error);
-    }
-
-    try {
       const [products, sales] = await Promise.all([getProducts(), getSales()]);
       set({ products, sales, loading: false, isInitialized: true });
     } catch (error) {
       console.error("Failed to load data:", error);
       // Still open the app; screens load again when they come into focus
       set({
-        error: messageOf(error, "Failed to load data"),
+        error: getErrorMessage(error, "Failed to load data"),
         loading: false,
         isInitialized: true,
       });
@@ -196,7 +184,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const products = await getProducts();
       set({ products, loading: false });
     } catch (error) {
-      set({ error: messageOf(error, "Failed to fetch products"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to fetch products"), loading: false });
     }
   },
 
@@ -206,7 +194,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const products = await searchProducts(searchTerm);
       set({ products, loading: false });
     } catch (error) {
-      set({ error: messageOf(error, "Failed to search products"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to search products"), loading: false });
     }
   },
 
@@ -214,10 +202,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await saveProduct(product);
-      const products = await getProducts();
-      set({ products, loading: false });
+      // Saved; a failed refresh must not look like a failed save
+      await get().refreshData();
     } catch (error) {
-      set({ error: messageOf(error, "Failed to add product"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to add product"), loading: false });
       throw error;
     }
   },
@@ -226,10 +214,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await updateProduct(product);
-      const products = await getProducts();
-      set({ products, loading: false });
+      // Saved; a failed refresh must not look like a failed save
+      await get().refreshData();
     } catch (error) {
-      set({ error: messageOf(error, "Failed to update product"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to update product"), loading: false });
       throw error;
     }
   },
@@ -238,10 +226,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await deleteProduct(productId);
-      const products = await getProducts();
-      set({ products, loading: false });
+      // Saved; a failed refresh must not look like a failed save
+      await get().refreshData();
     } catch (error) {
-      set({ error: messageOf(error, "Failed to delete product"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to delete product"), loading: false });
+      throw error;
     }
   },
 
@@ -252,7 +241,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const sales = await getSales();
       set({ sales, loading: false });
     } catch (error) {
-      set({ error: messageOf(error, "Failed to fetch sales"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to fetch sales"), loading: false });
     }
   },
 
@@ -261,13 +250,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       // Save the sale (the server checks and updates stock in one transaction)
       const saleId = await saveSale(sale, clientId);
-
-      // Refresh sales and products data to reflect the changes
-      const [sales, products] = await Promise.all([getSales(), getProducts()]);
-      set({ sales, products, loading: false });
+      // The sale is saved; a failed refresh must not look like a failed sale
+      await get().refreshData();
       return saleId;
     } catch (error) {
-      set({ error: messageOf(error, "Failed to add sale"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to add sale"), loading: false });
       throw error;
     }
   },
@@ -277,13 +264,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       // Update the sale (the server adjusts stock in one transaction)
       await updateSale(sale);
+      await get().refreshData();
+    } catch (error) {
+      set({ error: getErrorMessage(error, "Failed to update sale"), loading: false });
+      throw error;
+    }
+  },
 
-      // Refresh sales and products data to reflect the changes
+  // Reload sales and stock after a change; never throws
+  refreshData: async () => {
+    try {
       const [sales, products] = await Promise.all([getSales(), getProducts()]);
       set({ sales, products, loading: false });
     } catch (error) {
-      set({ error: messageOf(error, "Failed to update sale"), loading: false });
-      throw error;
+      console.warn("Saved, but failed to refresh data:", error);
+      set({ loading: false });
     }
   },
 
@@ -292,45 +287,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       // Delete the sale (the server puts the stock back in one transaction)
       await deleteSale(saleId);
-
-      // Refresh sales and products data to reflect the changes
-      const [sales, products] = await Promise.all([getSales(), getProducts()]);
-      set({ sales, products, loading: false });
+      await get().refreshData();
     } catch (error) {
-      set({ error: messageOf(error, "Failed to delete sale"), loading: false });
+      set({ error: getErrorMessage(error, "Failed to delete sale"), loading: false });
       throw error;
     }
   },
-
-  // Clear all data (local SQLite only; removed with ClearDataButton in Phase 4)
-  clearAllData: async () => {
-    set({ loading: true, error: null });
-    try {
-      await databaseService.clearAllData();
-      set({
-        products: [],
-        sales: [],
-        loading: false,
-      });
-    } catch (error) {
-      set({ error: "Failed to clear data", loading: false });
-    }
-  },
-
-  // Recreate tables with correct schema
-  recreateTables: async () => {
-    set({ loading: true, error: null });
-    try {
-      await databaseService.recreateTables();
-      // Reload data after recreating tables
-      const [products, sales] = await Promise.all([getProducts(), getSales()]);
-      set({
-        products,
-        sales,
-        loading: false,
-      });
-    } catch (error) {
-      set({ error: "Failed to recreate tables", loading: false });
-    }
-  },
 }));
+
+// True when the signed-in user is an admin (staff cannot edit/delete/export)
+export const useIsAdmin = () =>
+  useAppStore((state) => state.profile?.role === "admin");

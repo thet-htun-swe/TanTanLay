@@ -17,7 +17,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { searchCustomers } from "@/services/database";
+import { getErrorMessage, searchCustomers } from "@/services/api";
 import { Customer } from "@/types";
 import { useRouter } from "expo-router";
 
@@ -48,7 +48,7 @@ export default function CustomersScreen() {
     } catch (error) {
       if (request === loadRequest.current) {
         console.error("Failed to load customers:", error);
-        Alert.alert("Error", "Failed to load customers");
+        Alert.alert("Error", getErrorMessage(error, "Failed to load customers"));
       }
     } finally {
       if (request === loadRequest.current) setIsLoading(false);
@@ -69,7 +69,7 @@ export default function CustomersScreen() {
     } catch (error) {
       if (request === loadRequest.current) {
         console.error("Failed to load more customers:", error);
-        Alert.alert("Error", "Failed to load more customers");
+        Alert.alert("Error", getErrorMessage(error, "Failed to load more customers"));
       }
     } finally {
       if (request === loadRequest.current) setIsLoadingMore(false);

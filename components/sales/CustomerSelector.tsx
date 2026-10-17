@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { saveCustomer } from "../../services/database";
+import { Alert, StyleSheet, View } from "react-native";
+import { getErrorMessage, saveCustomer } from "../../services/api";
 import { Customer } from "../../types";
 import { ThemedText } from "../ThemedText";
 import { Button } from "../ui/Button";
@@ -30,6 +30,7 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
       onCustomerSelect(newCustomerWithId);
     } catch (error) {
       console.error("Failed to create customer:", error);
+      Alert.alert("Error", getErrorMessage(error, "Failed to create customer"));
     }
   };
 

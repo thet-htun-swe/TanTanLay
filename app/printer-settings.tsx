@@ -14,11 +14,13 @@ import {
   printBluetoothTestReceipt,
   type BluetoothDeviceInfo,
 } from "@/services/bluetoothPrinter";
-import { getPrinterSettings, savePrinterSettings } from "@/services/database";
+import { getPrinterSettings, savePrinterSettings } from "@/services/localSettings";
+import { useAppStore } from "@/store";
 import { printWifiTestReceipt } from "@/services/thermalPrinter";
 import { PrinterSettings } from "@/types";
 
 export default function PrinterSettingsScreen() {
+  const { profile, session, signOut } = useAppStore();
   const [savedPrinter, setSavedPrinter] = useState<PrinterSettings | null>(null);
   const [wifiHost, setWifiHost] = useState("");
   const [wifiPort, setWifiPort] = useState("9100");
@@ -110,6 +112,26 @@ export default function PrinterSettingsScreen() {
     }
   };
 
+  const confirmSignOut = () => {
+    Alert.alert("Log out", "Do you want to log out of this phone?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            Alert.alert("Log out", error instanceof Error ? error.message : "Could not log out");
+          }
+        },
+      },
+    ]);
+  };
+
+  const signedInName = profile?.fullName || session?.user.email || "Unknown user";
+  const roleLabel = profile?.role === "admin" ? "Admin" : "Staff";
+
   const currentPrinter = savedPrinter
     ? savedPrinter.connectionType === "bluetooth"
       ? `${savedPrinter.name} (${savedPrinter.address})`
@@ -130,6 +152,16 @@ export default function PrinterSettingsScreen() {
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <Card style={styles.currentCard}>
+          <ThemedText style={styles.currentLabel}>Signed in as</ThemedText>
+          <ThemedText style={styles.currentValue}>{signedInName}</ThemedText>
+          <ThemedText style={styles.hint}>{roleLabel}</ThemedText>
+          <ActionButtons
+            buttons={[{ title: "Log out", onPress: confirmSignOut, variant: "danger" }]}
+            direction="column"
+          />
+        </Card>
+
         <Card style={styles.currentCard}>
           <ThemedText style={styles.currentLabel}>Current printer</ThemedText>
           <ThemedText style={styles.currentValue}>{currentPrinter}</ThemedText>

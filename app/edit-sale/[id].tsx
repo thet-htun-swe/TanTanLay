@@ -19,7 +19,7 @@ import { SaleSummary } from "@/components/sales/SaleSummary";
 import { useAppStore } from "@/store";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
 import { Customer, Sale, SaleItem } from "@/types";
-import { getSaleById } from "@/services/database";
+import { getErrorMessage, getSaleById } from "@/services/api";
 
 export default function EditSaleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,7 +57,7 @@ export default function EditSaleScreen() {
         setSelectedProducts(sale.items);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to load sale data");
+      Alert.alert("Error", getErrorMessage(error, "Failed to load sale data"));
       router.back();
     } finally {
       setLoading(false);
@@ -190,7 +190,7 @@ export default function EditSaleScreen() {
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {
-      Alert.alert("Error", "Failed to update sale. Please try again.");
+      Alert.alert("Error", getErrorMessage(error, "Failed to update sale. Please try again."));
     } finally {
       setIsUpdating(false);
     }

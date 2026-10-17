@@ -23,6 +23,10 @@ export class NoConnectionError extends Error {
 export const isNoConnectionError = (error: unknown) =>
   error instanceof Error && error.name === "NoConnectionError";
 
+// Message to show the user for any error from this file (or a fallback)
+export const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error && error.message ? error.message : fallback;
+
 type ApiError = { message?: string; code?: string } | null | undefined;
 
 const isNetworkFailure = (error: ApiError | unknown) => {
@@ -338,6 +342,16 @@ export const searchCustomers = async (
     "Failed to search customers",
   );
   return (rows ?? []).map(toCustomer);
+};
+
+export const getCustomerById = async (
+  id: number,
+): Promise<(Customer & { id: number }) | null> => {
+  const row = await run(
+    supabase.from("customers").select(CUSTOMER_COLUMNS).eq("id", id).maybeSingle(),
+    "Failed to load customer",
+  );
+  return row ? toCustomer(row) : null;
 };
 
 export const saveCustomer = async (customer: Customer): Promise<number> => {

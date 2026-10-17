@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { deleteCustomer } from "@/services/database";
+import { deleteCustomer, getErrorMessage } from "@/services/api";
+import { useIsAdmin } from "@/store";
 import { Customer } from "@/types";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
@@ -22,6 +23,7 @@ export const CustomerDetailsBottomSheet: React.FC<
   CustomerDetailsBottomSheetProps
 > = ({ customer, isVisible, onClose, onEdit, onDelete }) => {
   const colorScheme = useColorScheme();
+  const isAdmin = useIsAdmin();
 
   if (!customer) return null;
 
@@ -47,7 +49,7 @@ export const CustomerDetailsBottomSheet: React.FC<
               Alert.alert("Success", "Customer deleted successfully");
             } catch (error) {
               console.error("Failed to delete customer:", error);
-              Alert.alert("Error", "Failed to delete customer");
+              Alert.alert("Error", getErrorMessage(error, "Failed to delete customer"));
             }
           },
         },
@@ -103,15 +105,18 @@ export const CustomerDetailsBottomSheet: React.FC<
               backgroundColor: Colors[colorScheme ?? "light"].tint,
             }}
           />
-          <Button
-            title="Delete Customer"
-            onPress={handleDelete}
-            style={{
-              ...styles.actionButton,
-              ...styles.deleteButton,
-            }}
-            textStyle={{ color: "white" }}
-          />
+          {/* Only admin can delete customers */}
+          {isAdmin && (
+            <Button
+              title="Delete Customer"
+              onPress={handleDelete}
+              style={{
+                ...styles.actionButton,
+                ...styles.deleteButton,
+              }}
+              textStyle={{ color: "white" }}
+            />
+          )}
         </View>
       </View>
     </BottomSheet>

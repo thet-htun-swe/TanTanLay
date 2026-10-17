@@ -1,7 +1,7 @@
 import { DateTimePicker } from "@/components/common/DateTimePicker";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -18,8 +18,10 @@ import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
+import { getErrorMessage, isNoConnectionError } from "@/services/api";
 import { useAppStore } from "@/store";
 import { Customer, Sale, SaleItem } from "@/types";
+import { generateUUID } from "@/utils/uuid";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -33,6 +35,9 @@ export default function NewSaleScreen() {
   const [orderDate, setOrderDate] = useState<Date>(new Date());
 
   const [isCreating, setIsCreating] = useState(false);
+  // One id per sale form: tapping Create again after a failure reuses it,
+  // so the server never saves the same sale twice
+  const clientIdRef = useRef(generateUUID());
 
   const { subtotal, total } = useSaleCalculations(selectedProducts);
 
@@ -47,6 +52,7 @@ export default function NewSaleScreen() {
         setSelectedProducts([]);
         setSelectedCustomer(null);
         setOrderDate(new Date());
+        clientIdRef.current = generateUUID();
       };
       resetForm();
     }, [])
@@ -177,13 +183,21 @@ export default function NewSaleScreen() {
         total,
       };
 
-      const saleId = await addSale(newSale);
+      const saleId = await addSale(newSale, clientIdRef.current);
+      clientIdRef.current = generateUUID();
 
       Alert.alert("Success", "Sale created successfully", [
         { text: "OK", onPress: () => router.push(`/sale/${saleId}`) },
       ]);
-    } catch {
-      Alert.alert("Error", "Failed to create sale. Please try again.");
+    } catch (error) {
+      Alert.alert(
+        "Sale not saved",
+        isNoConnectionError(error)
+          ? `${getErrorMessage(error, "")}
+
+Tap Create Sale again when you are back online. It will not be saved twice.`
+          : getErrorMessage(error, "Failed to create sale. Please try again."),
+      );
     } finally {
       setIsCreating(false);
     }

@@ -15,8 +15,8 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { searchProducts } from "@/services/database";
-import { useAppStore } from "@/store";
+import { getErrorMessage, searchProducts } from "@/services/api";
+import { useAppStore, useIsAdmin } from "@/store";
 import { Product } from "@/types";
 import { router } from "expo-router";
 import { Colors } from "@/constants/Colors";
@@ -25,6 +25,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 export default function ProductsScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
   const { removeProduct } = useAppStore();
+  const isAdmin = useIsAdmin();
   const [products, setProducts] = useState<(Product & { id: number })[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +46,7 @@ export default function ProductsScreen() {
     } catch (error) {
       if (request === loadRequest.current) {
         console.error("Failed to load products:", error);
-        Alert.alert("Error", "Failed to load products");
+        Alert.alert("Error", getErrorMessage(error, "Failed to load products"));
       }
     } finally {
       if (request === loadRequest.current) setIsLoading(false);
@@ -66,7 +67,7 @@ export default function ProductsScreen() {
     } catch (error) {
       if (request === loadRequest.current) {
         console.error("Failed to load more products:", error);
-        Alert.alert("Error", "Failed to load more products");
+        Alert.alert("Error", getErrorMessage(error, "Failed to load more products"));
       }
     } finally {
       if (request === loadRequest.current) setIsLoadingMore(false);
@@ -86,7 +87,11 @@ export default function ProductsScreen() {
   };
 
   const handleDeleteProduct = async (productId: number) => {
-    await removeProduct(productId);
+    try {
+      await removeProduct(productId);
+    } catch (error) {
+      Alert.alert("Error", getErrorMessage(error, "Failed to delete product"));
+    }
     loadProducts(searchTerm);
   };
 
@@ -119,20 +124,23 @@ export default function ProductsScreen() {
       <View style={styles.productDetails}>
         <ThemedText>Stock: {item.stockQty}</ThemedText>
       </View>
-      <View style={styles.productActions}>
-        <Button
-          title="Edit"
-          variant="secondary"
-          onPress={() => router.push(`/product/${item.id}`)}
-          style={styles.actionButton}
-        />
-        <Button
-          title="Delete"
-          variant="danger"
-          onPress={() => confirmDeleteProduct(item.id)}
-          style={styles.actionButton}
-        />
-      </View>
+      {/* Only admin can change products */}
+      {isAdmin && (
+        <View style={styles.productActions}>
+          <Button
+            title="Edit"
+            variant="secondary"
+            onPress={() => router.push(`/product/${item.id}`)}
+            style={styles.actionButton}
+          />
+          <Button
+            title="Delete"
+            variant="danger"
+            onPress={() => confirmDeleteProduct(item.id)}
+            style={styles.actionButton}
+          />
+        </View>
+      )}
     </Card>
   );
 
@@ -173,14 +181,16 @@ export default function ProductsScreen() {
         />
       )}
 
-      {/* Floating Action Button (FAB) */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: theme.tint }]}
-        onPress={() => router.push("/product/create")}
-        // onPress={() => setIsBottomSheetVisible(true)}
-      >
-        <Ionicons name="add" size={24} color={theme.onTint} />
-      </TouchableOpacity>
+      {/* Floating Action Button (FAB), admin only */}
+      {isAdmin && (
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: theme.tint }]}
+          onPress={() => router.push("/product/create")}
+          // onPress={() => setIsBottomSheetVisible(true)}
+        >
+          <Ionicons name="add" size={24} color={theme.onTint} />
+        </TouchableOpacity>
+      )}
     </ThemedView>
   );
 }

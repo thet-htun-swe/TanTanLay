@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { databaseService, updateCustomer } from "@/services/database";
+import { getCustomerById, getErrorMessage, updateCustomer } from "@/services/api";
 import { Customer } from "@/types";
 
 export default function EditCustomerScreen() {
@@ -66,10 +66,7 @@ export default function EditCustomerScreen() {
   const loadCustomer = async () => {
     try {
       setIsLoading(true);
-      const customers = await databaseService.getCustomers();
-      const foundCustomer = customers.find(
-        (c) => c.id === parseInt(id as string)
-      );
+      const foundCustomer = await getCustomerById(parseInt(id as string));
 
       if (foundCustomer) {
         setCustomer(foundCustomer);
@@ -85,7 +82,7 @@ export default function EditCustomerScreen() {
       }
     } catch (error) {
       console.error("Failed to load customer:", error);
-      Alert.alert("Error", "Failed to load customer details");
+      Alert.alert("Error", getErrorMessage(error, "Failed to load customer details"));
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +107,7 @@ export default function EditCustomerScreen() {
       ]);
     } catch (error) {
       console.error("Failed to update customer:", error);
-      Alert.alert("Error", "Failed to update customer");
+      Alert.alert("Error", getErrorMessage(error, "Failed to update customer"));
     } finally {
       setIsSaving(false);
     }

@@ -12,9 +12,10 @@ import { ThemedView } from "@/components/ThemedView";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { useSalesFilter } from "@/hooks/useSalesFilter";
 import { printBluetoothSales } from "@/services/bluetoothPrinter";
-import { getPrinterSettings } from "@/services/database";
+import { getPrinterSettings } from "@/services/localSettings";
 import { printWifiSales } from "@/services/thermalPrinter";
-import { useAppStore } from "@/store";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { useAppStore, useIsAdmin } from "@/store";
 import { ExportUtils } from "@/utils/exportUtils";
 import { getReceiptPreviewText } from "@/utils/escPos";
 import { Colors } from "@/constants/Colors";
@@ -22,7 +23,8 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function SalesScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
-  const { sales, fetchSales } = useAppStore();
+  const { sales, fetchSales, error } = useAppStore();
+  const isAdmin = useIsAdmin();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [isPreviewSheetOpen, setIsPreviewSheetOpen] = useState(false);
   const [selectedSaleIds, setSelectedSaleIds] = useState<number[]>([]);
@@ -124,11 +126,16 @@ export default function SalesScreen() {
   };
 
   const exportButtons = [
-    {
-      title: "Export",
-      onPress: handleExportExcel,
-      variant: "secondary" as const,
-    },
+    // Excel export is admin only
+    ...(isAdmin
+      ? [
+          {
+            title: "Export",
+            onPress: handleExportExcel,
+            variant: "secondary" as const,
+          },
+        ]
+      : []),
     {
       title: "Print Labels",
       onPress: handleExportLabels,
@@ -170,6 +177,8 @@ export default function SalesScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScreenHeader title="Sales History" />
+
+      <ErrorBanner message={error} onRetry={fetchSales} />
 
       <SearchBar
         value={searchQuery}

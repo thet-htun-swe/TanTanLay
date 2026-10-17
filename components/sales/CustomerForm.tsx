@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { searchCustomers } from "../../services/database";
+import { getErrorMessage, searchCustomers } from "../../services/api";
 import { Customer } from "../../types";
 import { ThemedText } from "../ThemedText";
 import { ThemedView } from "../ThemedView";
@@ -131,7 +131,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
       } catch (error) {
         if (request === searchRequest.current) {
           console.error("Failed to load customers:", error);
-          Alert.alert("Error", "Failed to load customers");
+          Alert.alert("Error", getErrorMessage(error, "Failed to load customers"));
         }
       } finally {
         if (request === searchRequest.current) setIsLoading(false);
@@ -158,7 +158,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     } catch (error) {
       if (request === searchRequest.current) {
         console.error("Failed to load more customers:", error);
-        Alert.alert("Error", "Failed to load more customers");
+        Alert.alert("Error", getErrorMessage(error, "Failed to load more customers"));
       }
     } finally {
       if (request === searchRequest.current) setIsLoadingMore(false);
