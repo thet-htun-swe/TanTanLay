@@ -1,4 +1,6 @@
 import { Sale } from "@/types";
+// Relative path: scripts/verify-esc-pos.ts runs this file in plain Node
+import { lineGross } from "./saleMath";
 
 const ESC = 0x1b;
 const GS = 0x1d;
@@ -89,14 +91,30 @@ export const receiptLines = (sale: Sale): ReceiptLine[] => {
       {
         type: "pair",
         left: `${item.quantity} x ${money(item.unitPrice)}`,
-        right: money(item.lineTotal),
+        right: money(lineGross(item)),
         indent: prefix.length,
       },
     );
+    if (item.discount && item.discount > 0) {
+      lines.push({
+        type: "pair",
+        left: item.discountType === "percent" ? `Discount ${item.discountValue}%` : "Discount",
+        right: `-${money(item.discount)}`,
+        indent: prefix.length,
+      });
+    }
   });
 
+  lines.push(divider);
+  // Only when something was discounted (subtotal = before, total = after)
+  const discountTotal = Math.round((sale.subtotal - sale.total) * 100) / 100;
+  if (discountTotal > 0) {
+    lines.push(
+      { type: "pair", left: "Subtotal", right: money(sale.subtotal) },
+      { type: "pair", left: "Discount", right: `-${money(discountTotal)}` },
+    );
+  }
   lines.push(
-    divider,
     { type: "pair", left: "TOTAL", right: money(sale.total), bold: true },
     { type: "text", text: "Thank you!", center: true },
   );

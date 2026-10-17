@@ -111,6 +111,10 @@ type SaleItemRow = {
   quantity: number;
   unit_price: number;
   line_total: number;
+  // added by migration 003
+  discount?: number | null;
+  discount_type?: "amount" | "percent" | null;
+  discount_value?: number | null;
 };
 type SaleRow = {
   id: number;
@@ -131,7 +135,7 @@ const CUSTOMER_COLUMNS = "id, name, contact, address";
 // One string literal (not joined) so supabase-js can read its type.
 // "*" (all sale columns) also works before migration 002 adds created_by_name.
 const SALE_COLUMNS =
-  "*, sale_items(id, product_id, custom_key, product_name, quantity, unit_price, line_total)";
+  "*, sale_items(*)";
 
 // Also used for live updates (realtime rows have the same columns)
 export const toProduct = (row: ProductRow): Product & { id: number } => ({
@@ -156,6 +160,9 @@ const toSaleItem = (row: SaleItemRow): SaleItem => ({
   quantity: row.quantity,
   unitPrice: Number(row.unit_price),
   lineTotal: Number(row.line_total),
+  discount: Number(row.discount ?? 0),
+  discountType: row.discount_type ?? undefined,
+  discountValue: row.discount_value == null ? undefined : Number(row.discount_value),
 });
 
 const toSale = (row: SaleRow): Sale & { id: number } => ({
@@ -184,6 +191,16 @@ const localDay = (iso: string) => {
   return `${date.getFullYear()}-${month}-${day}`;
 };
 
+// Discount columns for create_sale / update_sale (migration 003)
+const discountFields = (item: SaleItem) =>
+  item.discount && item.discount > 0
+    ? {
+        discount: item.discount,
+        discount_type: item.discountType ?? "amount",
+        discount_value: item.discountValue ?? item.discount,
+      }
+    : { discount: 0, discount_type: null, discount_value: null };
+
 const toSalePayload = (sale: Omit<Sale, "id">) => ({
   customer: {
     name: sale.customer.name,
@@ -199,6 +216,7 @@ const toSalePayload = (sale: Omit<Sale, "id">) => ({
           quantity: item.quantity,
           unit_price: item.unitPrice,
           line_total: item.lineTotal,
+          ...discountFields(item),
         }
       : {
           product_id: null,
@@ -207,6 +225,7 @@ const toSalePayload = (sale: Omit<Sale, "id">) => ({
           quantity: item.quantity,
           unit_price: item.unitPrice,
           line_total: item.lineTotal,
+          ...discountFields(item),
         },
   ),
   subtotal: sale.subtotal,

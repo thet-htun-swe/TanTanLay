@@ -1,4 +1,6 @@
-import { Product, SaleItem } from "@/types";
+import { DiscountType, Product, SaleItem } from "@/types";
+import { lineGross } from "@/utils/saleMath";
+import { DiscountModal } from "./DiscountModal";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -13,6 +15,8 @@ interface SaleItemsListProps {
   items: SaleItem[];
   onUpdateQuantity: (productId: number | string, quantity: number) => void;
   onRemoveItem: (productId: number | string) => void;
+  // type null removes the discount
+  onUpdateDiscount: (productId: number | string, type: DiscountType | null, value: number) => void;
   onAddProduct: (item: SaleItem) => void;
   products: (Product & { id: number })[];
 }
@@ -97,11 +101,14 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
   items,
   onUpdateQuantity,
   onRemoveItem,
+  onUpdateDiscount,
   onAddProduct,
   products,
 }) => {
   const theme = Colors[useColorScheme() ?? "light"];
   const [isModalVisible, setIsModalVisible] = useState(false);
+  // Item whose discount is being edited (null = dialog closed)
+  const [discountItem, setDiscountItem] = useState<SaleItem | null>(null);
   const totalPieces = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -148,6 +155,22 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
                 <ThemedText style={[styles.unitPrice, { color: theme.muted }]}>
                   {money(item.unitPrice)} each
                 </ThemedText>
+                <TouchableOpacity
+                  onPress={() => setDiscountItem(item)}
+                  hitSlop={6}
+                  style={styles.discountButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Discount for ${item.productName}`}
+                >
+                  <MaterialCommunityIcons name="tag-outline" size={15} color={item.discount ? theme.success : theme.tint} />
+                  <ThemedText style={[styles.discountText, { color: item.discount ? theme.success : theme.tint }]}>
+                    {!item.discount
+                      ? "Add discount"
+                      : item.discountType === "percent"
+                        ? `Discount ${item.discountValue}% · -${money(item.discount)}`
+                        : `Discount · -${money(item.discount)}`}
+                  </ThemedText>
+                </TouchableOpacity>
               </View>
               <TouchableOpacity
                 onPress={() => onRemoveItem(item.productId)}
@@ -164,13 +187,26 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
                 quantity={item.quantity}
                 onChange={(quantity) => onUpdateQuantity(item.productId, quantity)}
               />
-              <ThemedText style={[styles.lineTotal, { color: theme.tint }]} numberOfLines={1}>
-                {money(item.lineTotal)}
-              </ThemedText>
+              <View style={styles.lineTotalBox}>
+                {!!item.discount && (
+                  <ThemedText style={[styles.lineGross, { color: theme.muted }]} numberOfLines={1}>
+                    {money(lineGross(item))}
+                  </ThemedText>
+                )}
+                <ThemedText style={[styles.lineTotal, { color: theme.tint }]} numberOfLines={1}>
+                  {money(item.lineTotal)}
+                </ThemedText>
+              </View>
             </View>
           </View>
         ))
       )}
+
+      <DiscountModal
+        item={discountItem}
+        onClose={() => setDiscountItem(null)}
+        onApply={(type, value) => discountItem && onUpdateDiscount(discountItem.productId, type, value)}
+      />
 
       <ProductSelectorModal
         visible={isModalVisible}
@@ -269,8 +305,26 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     paddingVertical: 0,
   },
-  lineTotal: {
+  discountButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  discountText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  lineTotalBox: {
     flex: 1,
+    alignItems: "flex-end",
+  },
+  lineGross: {
+    fontSize: 12,
+    textDecorationLine: "line-through",
+  },
+  lineTotal: {
     textAlign: "right",
     fontSize: 15,
     fontWeight: "700",

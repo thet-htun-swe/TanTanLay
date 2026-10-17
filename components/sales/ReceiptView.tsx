@@ -38,17 +38,21 @@ export function ReceiptView({ sale, ref }: ReceiptViewProps) {
     } else if (line.type === "pair") {
       rows.push(<PairRow key={index} line={line} />);
     } else if (line.prefix) {
-      // Numbered item: the number in its own column, the name and its price
-      // row stacked in a second column, so both start at the same place
-      const next = lines[index + 1];
-      const priceRow = next?.type === "pair" && next.indent ? next : null;
-      if (priceRow) index++;
+      // Numbered item: the number in its own column, the name and its rows
+      // (price, discount) stacked in a second column, so all start at the same place
+      const itemRows: PairLine[] = [];
+      for (let next = lines[index + 1]; next?.type === "pair" && next.indent; next = lines[index + 1]) {
+        itemRows.push(next);
+        index++;
+      }
       rows.push(
         <View key={index} style={styles.item}>
           <Text style={styles.text}>{line.prefix}</Text>
           <View style={styles.itemBody}>
             <Text style={[styles.text, line.bold && styles.bold]}>{line.text}</Text>
-            {priceRow && <PairRow line={priceRow} />}
+            {itemRows.map((row, rowIndex) => (
+              <PairRow key={rowIndex} line={row} />
+            ))}
           </View>
         </View>,
       );

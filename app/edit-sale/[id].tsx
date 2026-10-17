@@ -18,6 +18,7 @@ import { SaleSummary } from "@/components/sales/SaleSummary";
 
 import { useAppStore } from "@/store";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
+import { setItemDiscount, setItemQuantity } from "@/utils/saleMath";
 import { Customer, Sale, SaleItem } from "@/types";
 import { getErrorMessage, getSaleById } from "@/services/api";
 
@@ -33,7 +34,7 @@ export default function EditSaleScreen() {
   const [loading, setLoading] = useState(true);
   const [originalSale, setOriginalSale] = useState<(Sale & { id: number }) | null>(null);
 
-  const { subtotal, total } = useSaleCalculations(selectedProducts);
+  const { subtotal, total, discountTotal } = useSaleCalculations(selectedProducts);
 
   useEffect(() => {
     fetchProducts();
@@ -71,11 +72,10 @@ export default function EditSaleScreen() {
       if (existingIndex >= 0) {
         // Update existing item
         const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + 1,
-          lineTotal: (updated[existingIndex].quantity + 1) * updated[existingIndex].unitPrice,
-        };
+        updated[existingIndex] = setItemQuantity(
+          updated[existingIndex],
+          updated[existingIndex].quantity + 1,
+        );
         return updated;
       } else {
         // Add new item
@@ -93,11 +93,7 @@ export default function EditSaleScreen() {
     setSelectedProducts(prev =>
       prev.map(item =>
         item.productId === productId
-          ? {
-              ...item,
-              quantity,
-              lineTotal: quantity * item.unitPrice,
-            }
+          ? setItemQuantity(item, quantity)
           : item
       )
     );
@@ -247,6 +243,13 @@ export default function EditSaleScreen() {
             items={selectedProducts}
             onUpdateQuantity={updateItemQuantity}
             onRemoveItem={removeItem}
+            onUpdateDiscount={(productId, type, value) =>
+              setSelectedProducts((prev) =>
+                prev.map((item) =>
+                  item.productId === productId ? setItemDiscount(item, type, value) : item,
+                ),
+              )
+            }
             onAddProduct={addProductToSale}
             products={products}
           />
@@ -255,6 +258,7 @@ export default function EditSaleScreen() {
             <SaleSummary
               subtotal={subtotal}
               total={total}
+              discountTotal={discountTotal}
               onCreateSale={handleUpdateSale}
               loading={isUpdating}
               buttonText="Update Sale"

@@ -102,17 +102,29 @@ export function SaleDetailsView({ sale }: { sale: Sale & { id: number } }) {
               <ThemedText style={[styles.subValue, { color: theme.muted }]}>
                 {item.quantity} × {money(item.unitPrice)}
               </ThemedText>
+              {!!item.discount && (
+                <ThemedText style={[styles.subValue, { color: theme.success }]}>
+                  Discount {item.discountType === "percent" ? `${item.discountValue}% ` : ""}· -
+                  {money(item.discount)}
+                </ThemedText>
+              )}
             </View>
             <ThemedText style={styles.itemTotal}>{money(item.lineTotal)}</ThemedText>
           </View>
         ))}
 
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
-        {sale.subtotal !== sale.total && (
-          <View style={styles.totalRow}>
-            <ThemedText style={{ color: theme.muted }}>Subtotal</ThemedText>
-            <ThemedText>{money(sale.subtotal)}</ThemedText>
-          </View>
+        {sale.subtotal > sale.total && (
+          <>
+            <View style={styles.totalRow}>
+              <ThemedText style={{ color: theme.muted }}>Subtotal</ThemedText>
+              <ThemedText>{money(sale.subtotal)}</ThemedText>
+            </View>
+            <View style={styles.totalRow}>
+              <ThemedText style={{ color: theme.muted }}>Discount</ThemedText>
+              <ThemedText style={{ color: theme.success }}>-{money(sale.subtotal - sale.total)}</ThemedText>
+            </View>
+          </>
         )}
         <View style={styles.totalRow}>
           <ThemedText style={styles.totalLabel}>Total</ThemedText>

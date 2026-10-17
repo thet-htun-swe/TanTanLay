@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 interface SaleSummaryProps {
   subtotal: number;
   total: number;
+  discountTotal?: number;
   onCreateSale: () => void;
   loading?: boolean;
   buttonText?: string;
@@ -17,6 +18,7 @@ interface SaleSummaryProps {
 export const SaleSummary: React.FC<SaleSummaryProps> = ({
   subtotal,
   total,
+  discountTotal = 0,
   onCreateSale,
   loading = false,
   buttonText = "Create Sale",
@@ -30,6 +32,13 @@ export const SaleSummary: React.FC<SaleSummaryProps> = ({
         <ThemedText>Subtotal:</ThemedText>
         <ThemedText>{subtotal.toFixed(2)}</ThemedText>
       </View>
+
+      {discountTotal > 0 && (
+        <View style={styles.summaryItem}>
+          <ThemedText>Discount:</ThemedText>
+          <ThemedText style={{ color: theme.success }}>-{discountTotal.toFixed(2)}</ThemedText>
+        </View>
+      )}
 
       <View style={[styles.summaryItem, styles.totalItem, { borderTopColor: theme.border }]}>
         <ThemedText style={styles.totalText}>Total:</ThemedText>

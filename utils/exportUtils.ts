@@ -19,7 +19,7 @@ export class ExportUtils {
     try {
       // Create worksheet data
       const wsData = [
-        ["Sale ID", "Date", "Customer", "Contact", "Items", "Total", "Created By"],
+        ["Sale ID", "Date", "Customer", "Contact", "Items", "Subtotal", "Discount", "Total", "Created By"],
       ];
 
       sales.forEach((sale) => {
@@ -29,6 +29,8 @@ export class ExportUtils {
           sale.customer.name,
           sale.customer.contact,
           sale.items.length.toString(),
+          sale.subtotal.toFixed(2),
+          (sale.subtotal - sale.total).toFixed(2),
           sale.total.toFixed(2),
           sale.createdByName ?? "",
         ]);
@@ -43,6 +45,7 @@ export class ExportUtils {
           "Product",
           "Quantity",
           "Unit Price",
+          "Discount",
           "Line Total",
           "Created By",
         ],
@@ -57,6 +60,7 @@ export class ExportUtils {
             item.productName,
             item.quantity.toString(),
             item.unitPrice.toFixed(2),
+            (item.discount ?? 0).toFixed(2),
             item.lineTotal.toFixed(2),
             sale.createdByName ?? "",
           ]);

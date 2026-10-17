@@ -42,7 +42,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 - **products**: `id`, `name`, `price numeric(12,2)`, `stock_qty int >= 0`, timestamps, `updated_by`
 - **customers**: `id`, `name`, `contact`, `address`, timestamps
 - **sales**: `id`, `client_id uuid unique`, `invoice_number unique`, `customer_id` (set null on customer delete), customer snapshot, `subtotal`, `total`, `date`, `order_date`, `created_by`, `created_by_name` (seller's profile name copied at sale time by `create_sale`, migration `002`; staff cannot read other profiles, so the name lives on the sale)
-- **sale_items**: `sale_id` (cascade), `product_id` (null for custom items or deleted products), `custom_key` (`custom-<uuid>`), product name snapshot, `quantity`, `unit_price`, `line_total`
+- **sale_items**: `sale_id` (cascade), `product_id` (null for custom items or deleted products), `custom_key` (`custom-<uuid>`), product name snapshot, `quantity`, `unit_price`, `line_total`, `discount`, `discount_type` (`amount`/`percent`), `discount_value` (migration `003`)
 - **invoice_counters**: per-day counter for invoice numbers
 - **Row Level Security** on every table. Helper `is_admin()`.
 
@@ -53,6 +53,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 - **Custom products**: `custom-<uuid>` items never change stock.
 - **Customers**: `create_sale` finds or creates a customer by name + contact.
 - **Updating a sale** changes customer, totals and items, not the dates or invoice number.
+- **Discounts** (admin and staff): per item, on the whole line, as an amount or a percentage. `lineTotal = quantity * unitPrice - discount`; sale `subtotal` = before discounts, `total` = after. All maths in `utils/saleMath.ts` (checked by `scripts/verify-sale-math.ts`); the server rejects a discount above the line price. Receipt shows each discount and Subtotal/Discount/TOTAL.
 
 ### Roles (enforced in the database AND hidden in the UI)
 - **Staff**: view everything, create sales (incl. custom items), add/edit customers, print.

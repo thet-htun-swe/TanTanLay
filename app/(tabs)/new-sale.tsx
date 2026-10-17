@@ -18,6 +18,7 @@ import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
+import { setItemDiscount, setItemQuantity } from "@/utils/saleMath";
 import { getErrorMessage, isNoConnectionError } from "@/services/api";
 import { useAppStore } from "@/store";
 import { Customer, Sale, SaleItem } from "@/types";
@@ -39,7 +40,7 @@ export default function NewSaleScreen() {
   // so the server never saves the same sale twice
   const clientIdRef = useRef(generateUUID());
 
-  const { subtotal, total } = useSaleCalculations(selectedProducts);
+  const { subtotal, total, discountTotal } = useSaleCalculations(selectedProducts);
 
   useEffect(() => {
     fetchProducts();
@@ -67,13 +68,10 @@ export default function NewSaleScreen() {
       if (existingIndex >= 0) {
         // Update existing item
         const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + 1,
-          lineTotal:
-            (updated[existingIndex].quantity + 1) *
-            updated[existingIndex].unitPrice,
-        };
+        updated[existingIndex] = setItemQuantity(
+          updated[existingIndex],
+          updated[existingIndex].quantity + 1,
+        );
         return updated;
       } else {
         // Add new item
@@ -93,11 +91,7 @@ export default function NewSaleScreen() {
     setSelectedProducts((prev) =>
       prev.map((item) =>
         item.productId === productId
-          ? {
-              ...item,
-              quantity,
-              lineTotal: quantity * item.unitPrice,
-            }
+          ? setItemQuantity(item, quantity)
           : item
       )
     );
@@ -240,6 +234,13 @@ Tap Create Sale again when you are back online. It will not be saved twice.`
             items={selectedProducts}
             onUpdateQuantity={updateItemQuantity}
             onRemoveItem={removeItem}
+            onUpdateDiscount={(productId, type, value) =>
+              setSelectedProducts((prev) =>
+                prev.map((item) =>
+                  item.productId === productId ? setItemDiscount(item, type, value) : item,
+                ),
+              )
+            }
             onAddProduct={addProductToSale}
             products={products}
           />
@@ -248,6 +249,7 @@ Tap Create Sale again when you are back online. It will not be saved twice.`
             <SaleSummary
               subtotal={subtotal}
               total={total}
+              discountTotal={discountTotal}
               onCreateSale={handleCreateSale}
               loading={isCreating}
             />

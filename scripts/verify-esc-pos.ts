@@ -135,6 +135,34 @@ const main = async () => {
     throw new Error("Myanmar item picture should get its number");
   }
 
+  // Discounts: item shows full price + discount row; totals show Subtotal/Discount/TOTAL
+  const discountedSale = {
+    ...sale,
+    items: [
+      { productId: 1, productName: "Shirt", quantity: 3, unitPrice: 24500, lineTotal: 66150, discount: 7350, discountType: "percent" as const, discountValue: 10 },
+      { productId: 2, productName: "Pants", quantity: 1, unitPrice: 36500, lineTotal: 34500, discount: 2000, discountType: "amount" as const, discountValue: 2000 },
+    ],
+    subtotal: 110000,
+    total: 100650,
+  };
+  const discountRows = asciiRows(await buildSaleReceipt(discountedSale, fakeRasterizer));
+  const expectDiscountRow = (row: string) => {
+    if (!discountRows.includes(row.padEnd(32))) {
+      throw new Error(`Missing discount row: "${row}"\n${discountRows.join("\n")}`);
+    }
+  };
+  expectDiscountRow("1. Shirt");
+  expectDiscountRow("   3 x 24500.00         73500.00");
+  expectDiscountRow("   Discount 10%         -7350.00");
+  expectDiscountRow("   Discount             -2000.00");
+  expectDiscountRow("Subtotal               110000.00");
+  expectDiscountRow("Discount                -9350.00");
+  expectDiscountRow("TOTAL                  100650.00");
+  // No discount: no Subtotal/Discount rows
+  if (standardRows.some((row) => row.startsWith("Subtotal") || row.includes("Discount"))) {
+    throw new Error("Receipt without discounts should not show discount rows");
+  }
+
   console.log("ESC/POS receipt check passed");
 };
 

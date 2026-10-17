@@ -12,13 +12,20 @@ export interface Customer {
   address: string;
 }
 
+// Discount on a sale item line: an amount (2000 off) or a percentage (10%)
+export type DiscountType = "amount" | "percent";
+
 // Line item in a sale
 export interface SaleItem {
   productId: number | string; // number for products, string for custom products
   productName: string; // Added product name to store directly with the sale item
   quantity: number;
   unitPrice: number;
+  // quantity * unitPrice - discount (see utils/saleMath.ts)
   lineTotal: number;
+  discount?: number; // money taken off the whole line
+  discountType?: DiscountType;
+  discountValue?: number; // what the user typed: 2000, or 10 for 10%
 }
 
 // Sale/Invoice model
