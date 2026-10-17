@@ -98,6 +98,28 @@ export default function SettingsScreen() {
           />
         </Card>
 
+        {isAdmin && (
+          <>
+            <ThemedText style={styles.sectionLabel}>SHOP</ThemedText>
+            <Card style={styles.listCard}>
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => router.push("/settings/users")}
+                accessibilityRole="button"
+              >
+                <Ionicons name="people-outline" size={24} color={theme.tint} />
+                <View style={styles.rowText}>
+                  <ThemedText style={styles.rowTitle}>Staff accounts</ThemedText>
+                  <ThemedText style={styles.muted} numberOfLines={1}>
+                    Add people, change roles, reset passwords
+                  </ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+              </TouchableOpacity>
+            </Card>
+          </>
+        )}
+
         <ThemedText style={styles.sectionLabel}>PRINTING</ThemedText>
         <Card style={styles.listCard}>
           <TouchableOpacity

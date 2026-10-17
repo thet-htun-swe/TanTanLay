@@ -113,6 +113,19 @@ export default function RootLayout() {
               options={{ title: "Create Product", headerBackTitle: "Back" }}
             />
             <Stack.Screen name="edit-sale/[id]" />
+            {/* Staff accounts (the server function also checks admin) */}
+            <Stack.Screen
+              name="settings/users/index"
+              options={{ title: "Staff accounts", headerBackTitle: "Back" }}
+            />
+            <Stack.Screen
+              name="settings/users/new"
+              options={{ title: "Add account", headerBackTitle: "Back" }}
+            />
+            <Stack.Screen
+              name="settings/users/[id]"
+              options={{ title: "Edit account", headerBackTitle: "Back" }}
+            />
           </Stack.Protected>
         </Stack.Protected>
         <Stack.Screen name="+not-found" />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
 import { ActionButtons } from "@/components/common/ActionButtons";
 import { ThemedText } from "@/components/ThemedText";
@@ -201,7 +201,7 @@ export default function PrinterSettingsScreen() {
           </>
         ) : (
           <ThemedText style={styles.emptyText}>
-            Bluetooth printer selection is supported on Android. iOS requires the printer's MFi protocol.
+            Bluetooth printer selection is supported on Android. iOS requires the printer&apos;s MFi protocol.
           </ThemedText>
         )}
 

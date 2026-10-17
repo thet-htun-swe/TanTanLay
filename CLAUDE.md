@@ -58,7 +58,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 ### Roles (enforced in the database AND hidden in the UI)
 - **Staff**: view everything, create sales (incl. custom items), add/edit customers, print.
 - **Admin only**: add/edit/delete products, edit/delete sales, delete customers, Excel export. Use `useIsAdmin()` from the store to hide these actions; admin-only routes are wrapped in `Stack.Protected guard={isAdmin}` in `app/_layout.tsx`.
-- Accounts are created in the Supabase dashboard (no in-app screen); set `profiles.role = 'admin'` there.
+- **Staff accounts** (admin only): Settings > Staff accounts (`app/settings/users/`) lists, adds, renames, changes role, sets a new password and disables/enables accounts (no delete; disabled = banned, sales history kept). It calls the Edge Function `supabase/functions/manage-users` (`services/users.ts`), which uses the service_role key that Supabase provides to the function and checks the caller is an admin. You cannot disable yourself or remove your own admin role. The function is deployed from the Supabase dashboard (Edge Functions), not built with the app; `supabase/functions` is excluded from the app's tsconfig and eslint.
 
 ### Live Updates
 - After login the store subscribes to Realtime changes on `products`, `sales` and `customers` (`startRealtime`), and unsubscribes on logout (`stopRealtime`).
