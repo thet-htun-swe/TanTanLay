@@ -1,11 +1,12 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Dimensions, StyleSheet, Text, View } from "react-native";
+import { Alert, Dimensions, StyleSheet, View } from "react-native";
 
 import { ActionButtons } from "@/components/common/ActionButtons";
 import { SalesHistoryFilter } from "@/components/common/SalesHistoryFilter";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { SearchBar } from "@/components/common/SearchBar";
+import { ReceiptView } from "@/components/sales/ReceiptView";
 import { SalesList } from "@/components/sales/SalesList";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -17,7 +18,6 @@ import { printWifiSales } from "@/services/thermalPrinter";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAppStore, useIsAdmin } from "@/store";
 import { ExportUtils } from "@/utils/exportUtils";
-import { getReceiptPreviewText } from "@/utils/escPos";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -250,7 +250,7 @@ export default function SalesScreen() {
         </ThemedText>
         {selectedSales.map((sale) => (
           <View key={sale.id} style={[styles.receiptPreview, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.receiptText, { color: theme.text }]}>{getReceiptPreviewText(sale)}</Text>
+            <ReceiptView sale={sale} />
           </View>
         ))}
       </BottomSheet>
@@ -275,13 +275,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   receiptPreview: {
-    padding: 16,
+    padding: 12,
     marginBottom: 16,
-    borderRadius: 4,
-  },
-  receiptText: {
-    fontFamily: "monospace",
-    fontSize: 13,
-    lineHeight: 18,
+    borderRadius: 8,
   },
 });

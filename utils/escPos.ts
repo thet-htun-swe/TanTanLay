@@ -5,6 +5,8 @@ const GS = 0x1d;
 const LF = 0x0a;
 const RECEIPT_WIDTH = 32;
 
+export const SHOP_NAME = "KHA";
+
 // A picture of one text line: 1 bit per dot, rows of width/8 bytes, 1 = black
 export interface RasterImage {
   width: number;
@@ -18,11 +20,12 @@ export type LineRasterizer = (
   options: { bold?: boolean; center?: boolean },
 ) => Promise<RasterImage>;
 
-interface ReceiptLine {
-  text: string;
-  bold?: boolean;
-  center?: boolean;
-}
+// One receipt row. Used by the printer, the text preview and the on-screen
+// receipt (components/sales/ReceiptView.tsx), so all three always match.
+export type ReceiptLine =
+  | { type: "text"; text: string; bold?: boolean; center?: boolean; large?: boolean }
+  | { type: "pair"; left: string; right: string; bold?: boolean }
+  | { type: "divider" };
 
 // toLocaleString() puts special spaces in dates (e.g. before "PM")
 const normalizeSpaces = (value: string) =>
@@ -44,34 +47,41 @@ const pairText = (left: string, right: string) => {
   return space > 0 ? `${left}${" ".repeat(space)}${right}` : `${left} ${right}`;
 };
 
-// Same lines for the on-screen preview and the printer
-const receiptLines = (sale: Sale): ReceiptLine[] => {
-  const divider = { text: "-".repeat(RECEIPT_WIDTH) };
+export const receiptLines = (sale: Sale): ReceiptLine[] => {
+  const divider: ReceiptLine = { type: "divider" };
   const lines: ReceiptLine[] = [
-    { text: "CLOTHING SALES", bold: true, center: true },
-    { text: `Invoice #${sale.invoiceNumber ?? sale.id ?? ""}`, center: true },
+    { type: "text", text: SHOP_NAME, bold: true, center: true, large: true },
+    { type: "text", text: `Invoice #${sale.invoiceNumber ?? sale.id ?? ""}`, center: true },
     divider,
-    { text: `Customer: ${sale.customer.name}` },
-    { text: `Date: ${new Date(sale.orderDate).toLocaleString()}` },
+    { type: "text", text: `Customer: ${sale.customer.name}` },
+    { type: "text", text: `Date: ${normalizeSpaces(new Date(sale.orderDate).toLocaleString())}` },
     divider,
   ];
 
   for (const item of sale.items) {
     lines.push(
-      { text: item.productName },
-      { text: pairText(`${item.quantity} x ${money(item.unitPrice)}`, money(item.lineTotal)) },
+      { type: "text", text: item.productName },
+      {
+        type: "pair",
+        left: `${item.quantity} x ${money(item.unitPrice)}`,
+        right: money(item.lineTotal),
+      },
     );
   }
 
   lines.push(
     divider,
-    { text: pairText("TOTAL", money(sale.total)), bold: true },
-    { text: "Thank you!", center: true },
+    { type: "pair", left: "TOTAL", right: money(sale.total), bold: true },
+    { type: "text", text: "Thank you!", center: true },
   );
-  return lines.map((receiptLine) => ({
-    ...receiptLine,
-    text: normalizeSpaces(receiptLine.text),
-  }));
+  return lines;
+};
+
+// A row as plain text on the 32-character paper (printer and text preview)
+const lineText = (receiptLine: ReceiptLine) => {
+  if (receiptLine.type === "divider") return "-".repeat(RECEIPT_WIDTH);
+  if (receiptLine.type === "pair") return pairText(receiptLine.left, receiptLine.right);
+  return receiptLine.text;
 };
 
 // ESC/POS "print raster image" (GS v 0), sent in strips printers can buffer
@@ -94,9 +104,7 @@ const rasterImageBytes = (image: RasterImage) => {
 };
 
 export const getReceiptPreviewText = (sale: Sale) =>
-  receiptLines(sale)
-    .map((receiptLine) => receiptLine.text)
-    .join("\n");
+  receiptLines(sale).map(lineText).join("\n");
 
 // Lines the printer font can show are sent as text; others (e.g. Myanmar
 // names) are drawn as pictures with `rasterize`.
@@ -104,17 +112,21 @@ export const buildSaleReceipt = async (sale: Sale, rasterize: LineRasterizer) =>
   const receipt: number[] = [ESC, 0x40];
 
   for (const receiptLine of receiptLines(sale)) {
-    if (isPrinterText(receiptLine.text)) {
+    const text = lineText(receiptLine);
+    const bold = receiptLine.type !== "divider" && !!receiptLine.bold;
+    const center = receiptLine.type === "text" && !!receiptLine.center;
+    const large = receiptLine.type === "text" && !!receiptLine.large;
+
+    if (isPrinterText(text)) {
       receipt.push(
-        ESC, 0x61, receiptLine.center ? 1 : 0,
-        ESC, 0x45, receiptLine.bold ? 1 : 0,
-        ...line(receiptLine.text),
+        ESC, 0x61, center ? 1 : 0,
+        ESC, 0x45, bold ? 1 : 0,
+        // Double width + height for the shop name
+        GS, 0x21, large ? 0x11 : 0x00,
+        ...line(text),
       );
     } else {
-      const image = await rasterize(receiptLine.text, {
-        bold: receiptLine.bold,
-        center: receiptLine.center,
-      });
+      const image = await rasterize(text, { bold, center });
       // The picture is already full width (centering is drawn into it)
       receipt.push(ESC, 0x61, 0, ...rasterImageBytes(image));
     }
@@ -122,6 +134,7 @@ export const buildSaleReceipt = async (sale: Sale, rasterize: LineRasterizer) =>
 
   receipt.push(
     ESC, 0x45, 0,
+    GS, 0x21, 0x00,
     ESC, 0x61, 1,
     ...line(),
     ...line(),
@@ -136,7 +149,9 @@ export const buildTestReceipt = () =>
     ESC, 0x40,
     ESC, 0x61, 1,
     ESC, 0x45, 1,
-    ...line("CLOTHING SALES"),
+    GS, 0x21, 0x11,
+    ...line(SHOP_NAME),
+    GS, 0x21, 0x00,
     ESC, 0x45, 0,
     ...line("Printer test successful"),
     ...line(),

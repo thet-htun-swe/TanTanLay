@@ -1,21 +1,15 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
-import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Alert } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { ScrollView, StyleSheet, Alert, View } from "react-native";
 
-import {
-  InvoiceActions,
-  InvoiceDetails,
-  InvoiceHeader,
-  InvoiceItemsTable,
-  InvoiceSummary,
-} from "@/components/sales";
+import { ReceiptActions, ReceiptView } from "@/components/sales";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
-import { useInvoice } from "@/hooks/useInvoice";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { getErrorMessage, getSaleById } from "@/services/api";
+import { shareReceiptImage } from "@/services/receiptImage";
 import { useAppStore, useIsAdmin } from "@/store";
 import { Sale } from "@/types";
 
@@ -26,7 +20,8 @@ export default function SaleDetailsScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const { products, removeSale } = useAppStore();
   const isAdmin = useIsAdmin();
-  const { formatDate, isGeneratingPdf, sharePdfInvoice } = useInvoice();
+  const receiptRef = useRef<View>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   const loadSale = async () => {
     if (id) {
@@ -56,9 +51,15 @@ export default function SaleDetailsScreen() {
     }, [id])
   );
 
-  const handleSharePdf = () => {
-    if (sale) {
-      sharePdfInvoice(sale);
+  const handleShareImage = async () => {
+    if (!sale) return;
+    setIsSharing(true);
+    try {
+      await shareReceiptImage(receiptRef, sale);
+    } catch (error) {
+      Alert.alert("Share receipt", getErrorMessage(error, "Could not share the receipt image"));
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -123,17 +124,11 @@ export default function SaleDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <InvoiceHeader invoiceId={sale.invoiceNumber ?? "N/A"} />
+        <ReceiptView sale={sale} ref={receiptRef} />
 
-        <InvoiceDetails sale={sale} formatDate={formatDate} />
-
-        <InvoiceItemsTable items={sale.items} />
-
-        <InvoiceSummary subtotal={sale.subtotal} total={sale.total} />
-
-        <InvoiceActions
-          onSharePdf={handleSharePdf}
-          isGeneratingPdf={isGeneratingPdf}
+        <ReceiptActions
+          onShareImage={handleShareImage}
+          isSharing={isSharing}
           // Only admin can edit or delete a sale
           onEdit={isAdmin ? handleEdit : undefined}
           onDelete={isAdmin ? handleDelete : undefined}

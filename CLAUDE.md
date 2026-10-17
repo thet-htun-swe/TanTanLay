@@ -77,8 +77,10 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 
 ### Key Features & Implementation
 - **New Sale Flow**: Customer info → Product selection (with search/create) → Quantity adjustment → Sale creation via `create_sale`
-- **PDF Invoice Generation**: `expo-print` HTML invoices (`hooks/useInvoice`)
+- **Receipts**: one source of rows, `receiptLines()` in `utils/escPos.ts` (shop name `SHOP_NAME` = "KHA"), used by the printer, the on-screen receipt (`components/sales/ReceiptView.tsx`, shown on Sale Details and the print preview) and the text preview. There is no PDF invoice.
+- **Share receipt as image**: `services/receiptImage.ts` captures `ReceiptView` with `react-native-view-shot` and opens the share sheet (`expo-sharing`)
 - **Receipt Printing**: Wi-Fi (`services/thermalPrinter.ts`) and Bluetooth (`services/bluetoothPrinter.ts`) ESC/POS printers; printer chosen per phone in `app/printer-settings.tsx`, which also shows the signed-in user and the **Log out** button
+- **Myanmar text on paper**: the printer font is ASCII only, so non-ASCII lines are drawn as pictures (GS v 0) by a hidden WebView (`components/ReceiptTextRenderer.tsx`, `services/textRaster.ts`) using the phone's fonts; 58 mm = 384 dots. Check with `scripts/verify-esc-pos.ts`.
 - **Excel Export / Shipping Labels**: `utils/exportUtils.ts` (Excel export is admin only)
 
 ### File Organization

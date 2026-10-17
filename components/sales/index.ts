@@ -7,9 +7,6 @@ export { ProductSelectorModal } from './ProductSelectorModal';
 export { SaleItemsList } from './SaleItemsList';
 export { SaleSummary } from './SaleSummary';
 
-// Invoice-related Components
-export { InvoiceHeader } from './InvoiceHeader';
-export { InvoiceDetails } from './InvoiceDetails';
-export { InvoiceItemsTable } from './InvoiceItemsTable';
-export { InvoiceSummary } from './InvoiceSummary';
-export { InvoiceActions } from './InvoiceActions';
+// Receipt Components
+export { ReceiptView } from './ReceiptView';
+export { ReceiptActions } from './ReceiptActions';

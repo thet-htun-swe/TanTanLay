@@ -8,16 +8,16 @@ import {
 } from "react-native";
 import { ThemedText } from "../ThemedText";
 
-interface InvoiceActionsProps {
-  onSharePdf: () => void;
-  isGeneratingPdf: boolean;
+interface ReceiptActionsProps {
+  onShareImage: () => void;
+  isSharing: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export const InvoiceActions: React.FC<InvoiceActionsProps> = ({
-  onSharePdf,
-  isGeneratingPdf,
+export const ReceiptActions: React.FC<ReceiptActionsProps> = ({
+  onShareImage,
+  isSharing,
   onEdit,
   onDelete,
 }) => {
@@ -38,17 +38,17 @@ export const InvoiceActions: React.FC<InvoiceActionsProps> = ({
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          onPress={onSharePdf}
-          disabled={isGeneratingPdf}
-          style={[styles.actionButton, isGeneratingPdf && { opacity: 0.5 }]}
+          onPress={onShareImage}
+          disabled={isSharing}
+          style={[styles.actionButton, isSharing && { opacity: 0.5 }]}
         >
           <Ionicons name="share-outline" size={24} color="#0066cc" />
         </TouchableOpacity>
       </View>
-      {isGeneratingPdf && (
+      {isSharing && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#0066cc" />
-          <ThemedText style={styles.loadingText}>Generating PDF...</ThemedText>
+          <ThemedText style={styles.loadingText}>Preparing image...</ThemedText>
         </View>
       )}
     </View>
