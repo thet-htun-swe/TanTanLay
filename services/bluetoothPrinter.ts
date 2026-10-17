@@ -62,14 +62,33 @@ export const openSystemBluetoothSettings = async () => {
   RNBluetoothClassic.openBluetoothSettings();
 };
 
+// Cheap Bluetooth printers have small buffers and slow radios. write() only
+// hands data to the phone's Bluetooth stack, so sending everything at once and
+// disconnecting straight away can cut off the end of the receipt (e.g. TOTAL).
+// Send small pieces with short pauses, then give the printer time to receive
+// the rest before closing the connection.
+const CHUNK_SIZE = 256;
+const CHUNK_PAUSE_MS = 25;
+const MIN_FINISH_WAIT_MS = 1500;
+const BYTES_PER_SECOND = 5000; // slow printers; keeps the wait on the safe side
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const toBinaryString = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+
 const send = async (data: Uint8Array, printer: BluetoothPrinterSettings) => {
   requireBluetoothModule();
   const device = await RNBluetoothClassic.connectToDevice(printer.address);
   try {
-    const binaryData = Array.from(data, (byte) => String.fromCharCode(byte)).join("");
-    if (!(await device.write(binaryData, "binary"))) {
-      throw new Error("Printer did not accept the receipt");
+    for (let offset = 0; offset < data.length; offset += CHUNK_SIZE) {
+      const chunk = data.subarray(offset, offset + CHUNK_SIZE);
+      if (!(await device.write(toBinaryString(chunk), "binary"))) {
+        throw new Error("Printer did not accept the receipt");
+      }
+      await wait(CHUNK_PAUSE_MS);
     }
+    await wait(Math.max(MIN_FINISH_WAIT_MS, (data.length / BYTES_PER_SECOND) * 1000));
   } finally {
     if (await device.isConnected()) await device.disconnect();
   }
