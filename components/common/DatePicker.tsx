@@ -1,6 +1,8 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { ThemedText } from "../ThemedText";
 
 interface DatePickerProps {
@@ -20,6 +22,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   maximumDate,
   minimumDate,
 }) => {
+  const theme = Colors[useColorScheme() ?? "light"];
   const [show, setShow] = useState(false);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -42,7 +45,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   return (
     <View style={styles.container}>
       {label && <ThemedText style={styles.label}>{label}</ThemedText>}
-      <TouchableOpacity style={styles.dateButton} onPress={() => setShow(true)}>
+      <TouchableOpacity
+        style={[styles.dateButton, { borderColor: theme.border, backgroundColor: theme.cardBackground }]}
+        onPress={() => setShow(true)}
+      >
         <ThemedText>{formatDate(value)}</ThemedText>
       </TouchableOpacity>
 
@@ -68,9 +74,7 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 6,
-    backgroundColor: "#fff",
   },
 });

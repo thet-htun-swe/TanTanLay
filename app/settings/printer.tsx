@@ -19,11 +19,14 @@ import {
   savePrinterSettings,
 } from "@/services/localSettings";
 import { printWifiTestReceipt } from "@/services/thermalPrinter";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { PrinterSettings } from "@/types";
 import { DEFAULT_PAPER_WIDTH, PaperWidth } from "@/utils/escPos";
 
 // Printer and receipt setup for this phone (Settings > Printer & receipt)
 export default function PrinterSettingsScreen() {
+  const theme = Colors[useColorScheme() ?? "light"];
   const [savedPrinter, setSavedPrinter] = useState<PrinterSettings | null>(null);
   const [wifiHost, setWifiHost] = useState("");
   const [wifiPort, setWifiPort] = useState("9100");
@@ -184,11 +187,17 @@ export default function PrinterSettingsScreen() {
               return (
                 <TouchableOpacity key={device.address} onPress={() => selectBluetoothPrinter(device)}>
                   <Card
-                    style={selected ? { ...styles.deviceCard, ...styles.selectedDevice } : styles.deviceCard}
+                    style={
+                      selected
+                        ? { ...styles.deviceCard, ...styles.selectedDevice, borderColor: theme.tint }
+                        : styles.deviceCard
+                    }
                   >
                     <ThemedText style={styles.deviceName}>{device.name}</ThemedText>
                     <ThemedText style={styles.deviceAddress}>{device.address}</ThemedText>
-                    {selected && <ThemedText style={styles.selectedText}>Selected printer</ThemedText>}
+                    {selected && (
+                      <ThemedText style={[styles.selectedText, { color: theme.tint }]}>Selected printer</ThemedText>
+                    )}
                   </Card>
                 </TouchableOpacity>
               );
@@ -278,7 +287,6 @@ const styles = StyleSheet.create({
   },
   selectedDevice: {
     borderWidth: 1,
-    borderColor: "#0a7ea4",
   },
   deviceName: {
     fontSize: 16,
@@ -290,7 +298,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   selectedText: {
-    color: "#0a7ea4",
     fontSize: 13,
     fontWeight: "600",
     marginTop: 6,

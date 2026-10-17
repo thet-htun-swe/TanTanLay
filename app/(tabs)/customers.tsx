@@ -134,8 +134,9 @@ export default function CustomersScreen() {
       // Tap the row to edit (same as products)
       onPress={() => handleEditCustomer(customer)}
       leading={
-        <View style={[styles.avatar, { backgroundColor: theme.surface }]}>
-          <ThemedText style={[styles.avatarText, { color: theme.tint }]}>
+        // People use the secondary (mint) colour
+        <View style={[styles.avatar, { backgroundColor: theme.secondarySurface }]}>
+          <ThemedText style={[styles.avatarText, { color: theme.secondary }]}>
             {customer.name.trim().charAt(0).toUpperCase() || "?"}
           </ThemedText>
         </View>

@@ -29,7 +29,11 @@ export default function HomeScreen() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: "#F6D2C2", dark: "#302C37" }}
+      // Mint (secondary) band at the top of Home
+      headerBackgroundColor={{
+        light: Colors.light.secondarySurface,
+        dark: Colors.dark.secondarySurface,
+      }}
       headerImage={<View />}
     >
       <ThemedView style={styles.titleContainer}>

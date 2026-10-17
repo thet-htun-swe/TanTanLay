@@ -9,6 +9,8 @@ import {
   View,
 } from "react-native";
 import { getErrorMessage, searchCustomers } from "../../services/api";
+import { Colors } from "../../constants/Colors";
+import { useColorScheme } from "../../hooks/useColorScheme";
 import { Customer } from "../../types";
 import { ThemedText } from "../ThemedText";
 import { ThemedView } from "../ThemedView";
@@ -87,6 +89,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
   const [filteredCustomers, setFilteredCustomers] = useState<
     (Customer & { id: number })[]
   >([]);
+  const theme = Colors[useColorScheme() ?? "light"];
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -185,7 +188,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     item: Customer & { id: number };
   }) => (
     <TouchableOpacity
-      style={styles.customerItem}
+      style={[styles.customerItem, { borderBottomColor: theme.border }]}
       onPress={() => handleSelectCustomer(item)}
     >
       <View style={styles.customerInfo}>
@@ -209,7 +212,7 @@ export const CustomerSelectionModal: React.FC<CustomerSelectionModalProps> = ({
     >
       <ThemedView style={styles.modalContainer}>
         <View style={styles.modalScrollContainer}>
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
             <ThemedText style={styles.modalTitle}>Select Customer</ThemedText>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <ThemedText style={styles.closeButtonText}>✕</ThemedText>
@@ -339,7 +342,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
   modalTitle: {
     fontSize: 20,
@@ -376,8 +378,7 @@ const styles = StyleSheet.create({
   },
   customerItem: {
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   customerInfo: {
     flex: 1,

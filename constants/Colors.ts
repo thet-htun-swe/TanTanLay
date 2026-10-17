@@ -1,48 +1,59 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * App colours, light and dark.
+ *
+ * Primary = purple from the app icon (the lavender shirt), deepened so it can
+ * be used for buttons and text. Secondary = mint from the icon (the dress),
+ * used for positive things: discounts, "up" changes, selections.
+ *
+ * Made for long use: soft off-white / deep purple-grey backgrounds (no pure
+ * white or black), soft ink text, calm colours. Every text colour below meets
+ * WCAG AA (>= 4.5:1) on cards and backgrounds in its mode.
  */
-
-const tintColorLight = '#B76450';
-const tintColorDark = '#F5B39C';
 
 export const Colors = {
   light: {
-    text: '#4D586E',
-    background: '#FFFDFC',
-    tint: tintColorLight,
-    tintOpacity: '#B7645080',
-    icon: '#7D8798',
-    tabIconDefault: '#7D8798',
-    tabIconSelected: tintColorLight,
-    border: '#E9DCD7',
+    text: '#2E2A3A',
+    background: '#F7F5FB',
+    tint: '#6E4FB3',
+    tintOpacity: '#6E4FB380',
+    icon: '#6B6580',
+    tabIconDefault: '#8A849C',
+    tabIconSelected: '#6E4FB3',
+    border: '#E3DCEE',
     cardBackground: '#FFFFFF',
-    surface: '#F9F1EE',
-    muted: '#7D8798',
-    success: '#5A977F',
-    warning: '#C58A42',
-    danger: '#C85D68',
+    surface: '#F0EBF7',
+    muted: '#6B6580',
+    secondary: '#237A63',
+    onSecondary: '#FFFFFF',
+    // Soft mint wash for highlight areas (e.g. Home header)
+    secondarySurface: '#E3F3EC',
+    success: '#237A63',
+    warning: '#9A5A12',
+    danger: '#C0435A',
     onTint: '#FFFFFF',
     // Chart bars (checked with the dataviz palette validator on the card surface)
-    chart: '#B76450',
+    chart: '#6E4FB3',
   },
   dark: {
-    text: '#F5F0F3',
-    background: '#191B23',
-    tint: tintColorDark,
-    tintOpacity: '#F5B39C80',
-    icon: '#B9B3C1',
-    tabIconDefault: '#B9B3C1',
-    tabIconSelected: tintColorDark,
-    border: '#393543',
-    cardBackground: '#252630',
-    surface: '#302C37',
-    muted: '#B9B3C1',
-    success: '#8EC6A8',
-    warning: '#E5BA78',
-    danger: '#F09AA3',
-    onTint: '#302129',
-    // Deeper than the tint: the pale tint is too light for bars on dark cards
-    chart: '#D4725A',
+    text: '#ECE8F3',
+    background: '#16141D',
+    tint: '#B9A1EE',
+    tintOpacity: '#B9A1EE80',
+    icon: '#A9A2B9',
+    tabIconDefault: '#8C859D',
+    tabIconSelected: '#B9A1EE',
+    border: '#3A3548',
+    cardBackground: '#211E2A',
+    surface: '#2B2736',
+    muted: '#A9A2B9',
+    secondary: '#7FD3B6',
+    onSecondary: '#0F2A21',
+    secondarySurface: '#1D2E29',
+    success: '#7FD3B6',
+    warning: '#E9B872',
+    danger: '#F0919F',
+    onTint: '#221838',
+    // Deeper than the tint: the light tint is too pale for bars on dark cards
+    chart: '#9579D8',
   },
 };

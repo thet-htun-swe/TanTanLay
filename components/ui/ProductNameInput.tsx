@@ -199,13 +199,13 @@ export function ProductNameInput({
             {
               color: theme.text,
               borderColor: validation.isExactMatch
-                ? "#ff6b6b"
+                ? theme.danger
                 : validationMessage
-                ? "#f59e0b"
+                ? theme.warning
                 : error
-                ? "#ff6b6b"
+                ? theme.danger
                 : theme.border,
-              backgroundColor: theme.background,
+              backgroundColor: theme.cardBackground,
             },
           ]}
           placeholderTextColor={theme.tabIconDefault}
@@ -216,7 +216,7 @@ export function ProductNameInput({
 
         {validation.suggestions.length > 0 && !validation.isExactMatch && (
           <View style={styles.matchesContainer}>
-            <Text style={[styles.matchesText, { color: "#f59e0b" }]}>
+            <Text style={[styles.matchesText, { color: theme.warning }]}>
               {validation.suggestions.map((item) => item.name).join(" / ")}
             </Text>
           </View>
@@ -227,14 +227,14 @@ export function ProductNameInput({
         <Text
           style={[
             styles.validationMessage,
-            { color: validation.isExactMatch ? "#ff6b6b" : "#f59e0b" },
+            { color: validation.isExactMatch ? theme.danger : theme.warning },
           ]}
         >
           {validationMessage}
         </Text>
       )}
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: theme.danger }]}>{error}</Text>}
     </View>
   );
 }
@@ -272,7 +272,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   error: {
-    color: "#ff6b6b",
     fontSize: 14,
   },
 });

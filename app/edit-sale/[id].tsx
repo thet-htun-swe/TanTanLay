@@ -16,6 +16,8 @@ import { CustomerSelector } from "@/components/sales/CustomerSelector";
 import { SaleItemsList } from "@/components/sales/SaleItemsList";
 import { SaleSummary } from "@/components/sales/SaleSummary";
 
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { useAppStore } from "@/store";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
 import { setItemDiscount, setItemQuantity } from "@/utils/saleMath";
@@ -24,6 +26,7 @@ import { getErrorMessage, getSaleById } from "@/services/api";
 
 export default function EditSaleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const theme = Colors[useColorScheme() ?? "light"];
   const { products, fetchProducts, editSale } = useAppStore();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<
@@ -230,7 +233,7 @@ export default function EditSaleScreen() {
               />
             </View>
 
-            <View style={styles.datePickerContainer}>
+            <View style={[styles.datePickerContainer, { backgroundColor: theme.surface }]}>
               <DateTimePicker
                 label="Order Date"
                 value={orderDate}
@@ -292,7 +295,6 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
     borderRadius: 8,
     padding: 16,
   },

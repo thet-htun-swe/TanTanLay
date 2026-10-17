@@ -267,7 +267,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
 
           {showCreateOption && (
             <TouchableOpacity
-              style={styles.createOption}
+              style={[styles.createOption, { borderTopColor: Colors[colorScheme ?? "light"].border }]}
               onPress={handleCreateOption}
             >
               <Ionicons
@@ -358,7 +358,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e0e0e0",
   },
   createOptionText: {
     fontSize: 14,

@@ -48,8 +48,8 @@ export default function StaffAccountsScreen() {
         subtitle={item.email}
         onPress={() => router.push(`/settings/users/${item.id}`)}
         leading={
-          <View style={[styles.avatar, { backgroundColor: theme.surface }, item.disabled && styles.faded]}>
-            <ThemedText style={[styles.avatarText, { color: theme.tint }]}>
+          <View style={[styles.avatar, { backgroundColor: theme.secondarySurface }, item.disabled && styles.faded]}>
+            <ThemedText style={[styles.avatarText, { color: theme.secondary }]}>
               {name.trim().charAt(0).toUpperCase() || "?"}
             </ThemedText>
           </View>
