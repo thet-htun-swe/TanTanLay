@@ -1,7 +1,7 @@
 import { Product, SaleItem } from "@/types";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../ThemedText";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -17,6 +17,82 @@ interface SaleItemsListProps {
   products: (Product & { id: number })[];
 }
 
+const MAX_QUANTITY = 9999;
+const money = (value: number) => value.toFixed(2);
+
+interface QuantityStepperProps {
+  quantity: number;
+  onChange: (quantity: number) => void;
+}
+
+// [ − ] [ qty ] [ + ]  The number can also be typed for large counts.
+// − stops at 1 so a product is never removed by accident (use the bin).
+const QuantityStepper = ({ quantity, onChange }: QuantityStepperProps) => {
+  const theme = Colors[useColorScheme() ?? "light"];
+  // Text while typing; null shows the saved quantity
+  const [draft, setDraft] = useState<string | null>(null);
+
+  const commitDraft = () => {
+    if (draft === null) return;
+    const typed = parseInt(draft, 10);
+    if (Number.isFinite(typed) && typed > 0) {
+      onChange(Math.min(typed, MAX_QUANTITY));
+    }
+    setDraft(null);
+  };
+
+  const step = (change: number) => {
+    const next = quantity + change;
+    if (next >= 1 && next <= MAX_QUANTITY) onChange(next);
+  };
+
+  const canDecrease = quantity > 1;
+
+  return (
+    <View style={styles.stepper}>
+      <TouchableOpacity
+        onPress={() => step(-1)}
+        disabled={!canDecrease}
+        style={[
+          styles.stepButton,
+          { borderColor: theme.tint, opacity: canDecrease ? 1 : 0.35 },
+        ]}
+        hitSlop={4}
+        accessibilityLabel="Decrease quantity"
+      >
+        <MaterialCommunityIcons name="minus" size={20} color={theme.tint} />
+      </TouchableOpacity>
+
+      <TextInput
+        value={draft ?? String(quantity)}
+        onFocus={() => setDraft(String(quantity))}
+        onChangeText={(text) => setDraft(text.replace(/[^0-9]/g, ""))}
+        onEndEditing={commitDraft}
+        onSubmitEditing={commitDraft}
+        onBlur={commitDraft}
+        keyboardType="number-pad"
+        selectTextOnFocus
+        maxLength={4}
+        returnKeyType="done"
+        style={[
+          styles.quantityInput,
+          { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface },
+        ]}
+        accessibilityLabel="Quantity"
+      />
+
+      <TouchableOpacity
+        onPress={() => step(1)}
+        style={[styles.stepButton, { backgroundColor: theme.tint, borderColor: theme.tint }]}
+        hitSlop={4}
+        accessibilityLabel="Increase quantity"
+      >
+        <MaterialCommunityIcons name="plus" size={20} color={theme.onTint} />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export const SaleItemsList: React.FC<SaleItemsListProps> = ({
   items,
   onUpdateQuantity,
@@ -26,105 +102,76 @@ export const SaleItemsList: React.FC<SaleItemsListProps> = ({
 }) => {
   const theme = Colors[useColorScheme() ?? "light"];
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const totalPieces = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <Card style={styles.card}>
-      {/* Header with title and select button */}
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Sale Items</ThemedText>
+        <View style={styles.headerText}>
+          <ThemedText style={styles.title}>Sale Items</ThemedText>
+          {items.length > 0 && (
+            <ThemedText style={[styles.subtitle, { color: theme.muted }]}>
+              {items.length} {items.length === 1 ? "product" : "products"} · {totalPieces}{" "}
+              {totalPieces === 1 ? "pc" : "pcs"}
+            </ThemedText>
+          )}
+        </View>
         <Button
-          title="+ select product"
+          title="+ Add product"
           onPress={() => setIsModalVisible(true)}
           variant="primary"
-          style={styles.selectButton}
+          style={styles.addButton}
         />
       </View>
 
-      {/* Items table */}
-      <View style={styles.table}>
-        {/* Table Header */}
-        <View style={[styles.tableHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
-          <ThemedText style={[styles.headerText, styles.productColumn, { color: theme.muted }]}>
-            Product
-          </ThemedText>
-          <ThemedText style={[styles.headerText, styles.priceColumn, { color: theme.muted }]}>
-            Price
-          </ThemedText>
-          <ThemedText style={[styles.headerText, styles.quantityColumn, { color: theme.muted }]}>
-            Qty
-          </ThemedText>
-          <ThemedText style={[styles.headerText, styles.totalColumn, { color: theme.muted }]}>
-            Total
-          </ThemedText>
-          <View style={styles.actionColumn} />
-        </View>
-
-        {/* Table Body */}
-        {items.length > 0 && (
-          <ScrollView style={styles.tableBody} nestedScrollEnabled>
-            {items.map((item) => (
-              <View
-                key={item.productId?.toString() ?? `item-${item.productName}`}
-                style={[styles.tableRow, { borderBottomColor: theme.border }]}
-              >
-                <View style={styles.productColumn}>
-                  <ThemedText style={styles.productName} numberOfLines={2}>
-                    {item.productName}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.priceColumn}>
-                  <ThemedText style={styles.cellText}>
-                    ${item.unitPrice.toFixed(2)}
-                  </ThemedText>
-                </View>
-
-                <View style={[styles.quantityColumn, styles.quantityCell]}>
-                  <TouchableOpacity
-                    style={[styles.quantityButton, { backgroundColor: theme.tint }]}
-                    onPress={() =>
-                      onUpdateQuantity(item.productId, item.quantity - 1)
-                    }
-                  >
-                    <ThemedText style={[styles.quantityButtonText, { color: theme.onTint }]}>-</ThemedText>
-                  </TouchableOpacity>
-                  <ThemedText style={styles.quantityText}>
-                    {item.quantity}
-                  </ThemedText>
-                  <TouchableOpacity
-                    style={[styles.quantityButton, { backgroundColor: theme.tint }]}
-                    onPress={() =>
-                      onUpdateQuantity(item.productId, item.quantity + 1)
-                    }
-                  >
-                    <ThemedText style={[styles.quantityButtonText, { color: theme.onTint }]}>+</ThemedText>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.totalColumn}>
-                  <ThemedText style={[styles.totalText, { color: theme.tint }]}>
-                    ${item.lineTotal.toFixed(2)}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.actionColumn}>
-                  <TouchableOpacity
-                    onPress={() => onRemoveItem(item.productId)}
-                  >
-                    <MaterialCommunityIcons
-                      name="delete"
-                      size={16}
-                      color={theme.danger}
-                    />
-                  </TouchableOpacity>
-                </View>
+      {items.length === 0 ? (
+        <ThemedText style={[styles.empty, { color: theme.muted }]}>
+          No products yet. Tap &quot;+ Add product&quot; to start.
+        </ThemedText>
+      ) : (
+        items.map((item, index) => (
+          <View
+            key={item.productId?.toString() ?? `item-${item.productName}`}
+            style={[
+              styles.item,
+              index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
+            ]}
+          >
+            <View style={styles.itemTop}>
+              <ThemedText style={[styles.itemNumber, { color: theme.muted }]}>
+                {index + 1}.
+              </ThemedText>
+              <View style={styles.itemInfo}>
+                <ThemedText style={styles.itemName} numberOfLines={2}>
+                  {item.productName}
+                </ThemedText>
+                <ThemedText style={[styles.unitPrice, { color: theme.muted }]}>
+                  {money(item.unitPrice)} each
+                </ThemedText>
               </View>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+              <TouchableOpacity
+                onPress={() => onRemoveItem(item.productId)}
+                style={styles.removeButton}
+                hitSlop={8}
+                accessibilityLabel={`Remove ${item.productName}`}
+              >
+                <MaterialCommunityIcons name="trash-can-outline" size={22} color={theme.danger} />
+              </TouchableOpacity>
+            </View>
 
-      {/* Product Selector Modal */}
+            <View style={styles.itemBottom}>
+              <QuantityStepper
+                quantity={item.quantity}
+                onChange={(quantity) => onUpdateQuantity(item.productId, quantity)}
+              />
+              <ThemedText style={[styles.lineTotal, { color: theme.tint }]} numberOfLines={1}>
+                {money(item.lineTotal)}
+              </ThemedText>
+            </View>
+          </View>
+        ))
+      )}
+
       <ProductSelectorModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
@@ -142,112 +189,90 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 8,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
     fontSize: 18,
     fontWeight: "600",
   },
-  selectButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  subtitle: {
+    fontSize: 13,
+    marginTop: 2,
   },
-  table: {
-    borderRadius: 6,
-    overflow: "hidden",
-    width: "100%",
+  addButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
-  tableHeader: {
-    flexDirection: "row",
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-  },
-  tableBody: {
-    maxHeight: 300,
-  },
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    alignItems: "center",
-    minHeight: 36,
-  },
-  headerText: {
-    fontWeight: "600",
+  empty: {
     fontSize: 14,
-    textAlign: "left",
-  },
-  cellText: {
-    fontSize: 14,
-    textAlign: "left",
-  },
-  productColumn: {
-    width: "40%",
-    paddingHorizontal: 2,
-  },
-  priceColumn: {
-    width: "15%",
-    paddingHorizontal: 2,
-  },
-  quantityColumn: {
-    width: "20%",
-    paddingHorizontal: 2,
-  },
-  totalColumn: {
-    width: "15%",
-    paddingHorizontal: 2,
-  },
-  actionColumn: {
-    width: "10%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 14,
-  },
-  totalText: {
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "left",
-  },
-  quantityCell: {
-    alignItems: "center",
-    justifyContent: "flex-start",
-    flexDirection: "row",
-  },
-  quantityControl: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quantityButtonText: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  quantityText: {
-    marginHorizontal: 4,
-    fontSize: 14,
-    fontWeight: "500",
-    minWidth: 16,
     textAlign: "center",
+    paddingVertical: 20,
+  },
+  item: {
+    paddingVertical: 12,
+  },
+  itemTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  itemNumber: {
+    fontSize: 15,
+    minWidth: 22,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 15,
+    fontWeight: "600",
   },
   removeButton: {
-    padding: 4,
-    borderRadius: 4,
+    paddingLeft: 8,
+  },
+  itemBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginLeft: 28, // line up under the name, past the item number
+    gap: 8,
+  },
+  unitPrice: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  stepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  stepButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  quantityInput: {
+    width: 52,
+    height: 36,
+    borderWidth: 1,
+    borderRadius: 10,
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "600",
+    paddingVertical: 0,
+  },
+  lineTotal: {
+    flex: 1,
+    textAlign: "right",
+    fontSize: 15,
+    fontWeight: "700",
   },
 });
