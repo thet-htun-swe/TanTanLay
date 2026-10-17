@@ -4,19 +4,46 @@ import {
   deleteSale,
   getProducts,
   getErrorMessage,
+  getSaleById,
   getSales,
   NO_CONNECTION_MESSAGE,
+  ProductRow,
   saveProduct,
   saveSale,
   searchProducts,
+  toProduct,
   updateProduct,
   updateSale,
 } from "@/services/api";
 import { Product, Profile, Sale } from "@/types";
-import { isAuthRetryableFetchError, Session } from "@supabase/supabase-js";
+import {
+  isAuthRetryableFetchError,
+  RealtimeChannel,
+  RealtimePostgresChangesPayload,
+  Session,
+} from "@supabase/supabase-js";
 import { create } from "zustand";
 
 let authListenerStarted = false;
+
+// Live updates from other phones (Supabase Realtime)
+let realtimeChannel: RealtimeChannel | null = null;
+let hasSubscribedOnce = false;
+let productsVersionTimer: ReturnType<typeof setTimeout> | null = null;
+let customersVersionTimer: ReturnType<typeof setTimeout> | null = null;
+
+type ProductList = (Product & { id: number })[];
+type SaleList = (Sale & { id: number })[];
+
+const byName = (a: { name: string }, b: { name: string }) =>
+  a.name.localeCompare(b.name);
+const byDateDesc = (a: Sale & { id: number }, b: Sale & { id: number }) =>
+  b.date.localeCompare(a.date) || b.id - a.id;
+
+const upsertById = <T extends { id: number }>(list: T[], item: T) =>
+  list.some((x) => x.id === item.id)
+    ? list.map((x) => (x.id === item.id ? item : x))
+    : [...list, item];
 
 
 // Turn Supabase login errors into short messages for the user
@@ -71,6 +98,13 @@ interface AppState {
   removeSale: (saleId: number) => Promise<void>;
   refreshData: () => Promise<void>;
 
+  // Live updates. The counters go up when other phones change products or
+  // customers, so screens with their own lists know to reload.
+  productsVersion: number;
+  customersVersion: number;
+  startRealtime: () => void;
+  stopRealtime: () => void;
+
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -86,7 +120,15 @@ export const useAppStore = create<AppState>((set, get) => ({
         const previousUserId = get().session?.user.id;
         set({ session });
         if (!session) {
-          set({ profile: null });
+          // Logged out (or the login ran out): stop live updates, forget data
+          get().stopRealtime();
+          set({
+            profile: null,
+            products: [],
+            sales: [],
+            error: null,
+            isInitialized: false,
+          });
         } else if (session.user.id !== previousUserId) {
           // Don't call Supabase inside this callback (it can lock); run it next tick
           setTimeout(() => get().loadProfile(), 0);
@@ -139,6 +181,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   signOut: async () => {
+    get().stopRealtime();
     // "local" signs out this phone even without internet
     await supabase.auth.signOut({ scope: "local" });
     // Forget the shop data so the next person loads it fresh
@@ -163,6 +206,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (get().isInitialized) return;
 
     set({ loading: true, error: null });
+    get().startRealtime();
     try {
       const [products, sales] = await Promise.all([getProducts(), getSales()]);
       set({ products, sales, loading: false, isInitialized: true });
@@ -279,6 +323,109 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (error) {
       console.warn("Saved, but failed to refresh data:", error);
       set({ loading: false });
+    }
+  },
+
+  productsVersion: 0,
+  customersVersion: 0,
+
+  startRealtime: () => {
+    if (realtimeChannel) return;
+    hasSubscribedOnce = false;
+
+    // Many stock rows change in one sale; tell screens once, a moment later
+    const bumpProductsVersion = () => {
+      if (productsVersionTimer) clearTimeout(productsVersionTimer);
+      productsVersionTimer = setTimeout(() => {
+        productsVersionTimer = null;
+        set((state) => ({ productsVersion: state.productsVersion + 1 }));
+      }, 400);
+    };
+    const bumpCustomersVersion = () => {
+      if (customersVersionTimer) clearTimeout(customersVersionTimer);
+      customersVersionTimer = setTimeout(() => {
+        customersVersionTimer = null;
+        set((state) => ({ customersVersion: state.customersVersion + 1 }));
+      }, 400);
+    };
+
+    const onProductChange = (
+      payload: RealtimePostgresChangesPayload<ProductRow>,
+    ) => {
+      if (payload.eventType === "DELETE") {
+        const id = payload.old.id;
+        set((state) => ({ products: state.products.filter((p) => p.id !== id) }));
+      } else {
+        const product = toProduct(payload.new);
+        set((state) => ({
+          products: upsertById<ProductList[number]>(state.products, product).sort(byName),
+        }));
+      }
+      bumpProductsVersion();
+    };
+
+    const onSaleChange = async (
+      payload: RealtimePostgresChangesPayload<{ id: number }>,
+    ) => {
+      if (payload.eventType === "DELETE") {
+        const id = payload.old.id;
+        set((state) => ({ sales: state.sales.filter((s) => s.id !== id) }));
+        return;
+      }
+      // The change message has no items, so load the whole sale
+      try {
+        const sale = await getSaleById(payload.new.id);
+        if (!sale || realtimeChannel === null) return;
+        set((state) => ({
+          sales: upsertById<SaleList[number]>(state.sales, sale).sort(byDateDesc),
+        }));
+      } catch (error) {
+        console.warn("Live update: failed to load sale:", error);
+      }
+    };
+
+    realtimeChannel = supabase
+      .channel("shop-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        onProductChange,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sales" },
+        onSaleChange,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customers" },
+        bumpCustomersVersion,
+      )
+      .subscribe((status, error) => {
+        if (status === "SUBSCRIBED") {
+          // Reconnected after a break: load again to catch missed changes
+          if (hasSubscribedOnce) {
+            get().refreshData();
+            bumpProductsVersion();
+            bumpCustomersVersion();
+          }
+          hasSubscribedOnce = true;
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          // supabase-js keeps trying to reconnect by itself
+          console.warn("Live updates interrupted:", status, error?.message ?? "");
+        }
+      });
+  },
+
+  stopRealtime: () => {
+    if (productsVersionTimer) clearTimeout(productsVersionTimer);
+    if (customersVersionTimer) clearTimeout(customersVersionTimer);
+    productsVersionTimer = null;
+    customersVersionTimer = null;
+    if (realtimeChannel) {
+      const channel = realtimeChannel;
+      realtimeChannel = null;
+      supabase.removeChannel(channel);
     }
   },
 

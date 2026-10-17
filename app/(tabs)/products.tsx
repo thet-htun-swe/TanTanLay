@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router/react-navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -26,6 +26,7 @@ export default function ProductsScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
   const { removeProduct } = useAppStore();
   const isAdmin = useIsAdmin();
+  const productsVersion = useAppStore((state) => state.productsVersion);
   const [products, setProducts] = useState<(Product & { id: number })[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -33,10 +34,11 @@ export default function ProductsScreen() {
   const [hasMore, setHasMore] = useState(true);
   const loadRequest = useRef(0);
 
-  const loadProducts = useCallback(async (search: string) => {
+  // silent: live update from another phone (no spinner, no error pop-up)
+  const loadProducts = useCallback(async (search: string, silent = false) => {
     const request = ++loadRequest.current;
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       setIsLoadingMore(false);
       const productsData = await searchProducts(search);
       if (request !== loadRequest.current) return;
@@ -46,7 +48,9 @@ export default function ProductsScreen() {
     } catch (error) {
       if (request === loadRequest.current) {
         console.error("Failed to load products:", error);
-        Alert.alert("Error", getErrorMessage(error, "Failed to load products"));
+        if (!silent) {
+          Alert.alert("Error", getErrorMessage(error, "Failed to load products"));
+        }
       }
     } finally {
       if (request === loadRequest.current) setIsLoading(false);
@@ -80,6 +84,15 @@ export default function ProductsScreen() {
       loadProducts("");
     }, [loadProducts]),
   );
+
+  // Another phone changed products: reload the list (keeping the search)
+  const searchTermRef = useRef(searchTerm);
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+  useEffect(() => {
+    if (productsVersion > 0) loadProducts(searchTermRef.current, true);
+  }, [productsVersion, loadProducts]);
 
   const handleSearch = (text: string) => {
     setSearchTerm(text);

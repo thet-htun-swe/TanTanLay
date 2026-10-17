@@ -96,7 +96,7 @@ const quotedLikePattern = (text: string) =>
 // Row types and mapping (snake_case in the database, camelCase in the app)
 // ---------------------------------------------------------------------------
 
-type ProductRow = { id: number; name: string; price: number; stock_qty: number };
+export type ProductRow = { id: number; name: string; price: number; stock_qty: number };
 type CustomerRow = {
   id: number;
   name: string;
@@ -131,7 +131,8 @@ const CUSTOMER_COLUMNS = "id, name, contact, address";
 const SALE_COLUMNS =
   "id, invoice_number, customer_name, customer_contact, customer_address, subtotal, total, date, order_date, sale_items(id, product_id, custom_key, product_name, quantity, unit_price, line_total)";
 
-const toProduct = (row: ProductRow): Product & { id: number } => ({
+// Also used for live updates (realtime rows have the same columns)
+export const toProduct = (row: ProductRow): Product & { id: number } => ({
   id: row.id,
   name: row.name,
   price: Number(row.price),

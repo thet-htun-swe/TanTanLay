@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFocusEffect } from "expo-router/react-navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/Input";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { getErrorMessage, searchCustomers } from "@/services/api";
+import { useAppStore } from "@/store";
 import { Customer } from "@/types";
 import { useRouter } from "expo-router";
 
@@ -35,10 +36,11 @@ export default function CustomersScreen() {
   >(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
-  const loadCustomers = useCallback(async (search: string) => {
+  // silent: live update from another phone (no spinner, no error pop-up)
+  const loadCustomers = useCallback(async (search: string, silent = false) => {
     const request = ++loadRequest.current;
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       setIsLoadingMore(false);
       const customersData = await searchCustomers(search);
       if (request !== loadRequest.current) return;
@@ -48,7 +50,9 @@ export default function CustomersScreen() {
     } catch (error) {
       if (request === loadRequest.current) {
         console.error("Failed to load customers:", error);
-        Alert.alert("Error", getErrorMessage(error, "Failed to load customers"));
+        if (!silent) {
+          Alert.alert("Error", getErrorMessage(error, "Failed to load customers"));
+        }
       }
     } finally {
       if (request === loadRequest.current) setIsLoading(false);
@@ -81,6 +85,16 @@ export default function CustomersScreen() {
       loadCustomers("");
     }, [loadCustomers]),
   );
+
+  // Another phone changed customers: reload the list (keeping the search)
+  const customersVersion = useAppStore((state) => state.customersVersion);
+  const searchTermRef = useRef(searchTerm);
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+  useEffect(() => {
+    if (customersVersion > 0) loadCustomers(searchTermRef.current, true);
+  }, [customersVersion, loadCustomers]);
 
   const handleCreateCustomer = () => {
     router.push("/customer/create");
