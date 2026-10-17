@@ -18,7 +18,9 @@ import { useEffect } from "react";
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
-  const { initializeApp, isInitialized, error } = useAppStore();
+  const { initializeApp, isInitialized, error, initAuth, authReady, session } =
+    useAppStore();
+  const isSignedIn = !!session;
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -43,12 +45,18 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      initAuth();
+    }
+  }, [loaded, initAuth]);
+
+  useEffect(() => {
+    if (loaded && isSignedIn) {
       initializeApp();
     }
-  }, [loaded, initializeApp]);
+  }, [loaded, isSignedIn, initializeApp]);
 
-  if (!loaded || !isInitialized) {
-    // Show loading while fonts and database are initializing
+  if (!loaded || !authReady || (isSignedIn && !isInitialized)) {
+    // Show loading while fonts, saved login and database are loading
     return null;
   }
 
@@ -72,20 +80,30 @@ export default function RootLayout() {
       },
     }}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="sale/[id]"
-          options={{ title: "Sale Details", headerBackTitle: "Back" }}
-        />
-        <Stack.Screen
-          name="product/[id]/index"
-          options={{ title: "Edit Product", headerBackTitle: "Back" }}
-        />
-        <Stack.Screen
-          name="product/create/index"
-          options={{ title: "Create Product", headerBackTitle: "Back" }}
-        />
-        <Stack.Screen name="printer-settings" options={{ headerShown: false }} />
+        {/* Signed out: only the login screen can be opened */}
+        <Stack.Protected guard={!isSignedIn}>
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={isSignedIn}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="sale/[id]"
+            options={{ title: "Sale Details", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="product/[id]/index"
+            options={{ title: "Edit Product", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="product/create/index"
+            options={{ title: "Create Product", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen name="printer-settings" options={{ headerShown: false }} />
+          {/* Listed only so they are protected too (no option changes) */}
+          <Stack.Screen name="edit-sale/[id]" />
+          <Stack.Screen name="customer/create/index" />
+          <Stack.Screen name="customer/[id]/edit" />
+        </Stack.Protected>
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

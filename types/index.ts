@@ -33,6 +33,15 @@ export interface Sale {
   total: number;
 }
 
+// Signed-in user's role (from the Supabase `profiles` table)
+export type Role = "admin" | "staff";
+
+export interface Profile {
+  id: string;
+  fullName: string | null;
+  role: Role;
+}
+
 export interface WifiPrinterSettings {
   host: string;
   port: number;

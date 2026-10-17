@@ -11,10 +11,41 @@ import {
   updateProduct,
   updateSale,
 } from "@/services/database";
-import { Product, Sale } from "@/types";
+import { supabase } from "@/lib/supabase";
+import { Product, Profile, Sale } from "@/types";
+import { isAuthRetryableFetchError, Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 
+let authListenerStarted = false;
+
+// Turn Supabase login errors into short messages for the user
+const toSignInMessage = (error: unknown): string => {
+  if (isAuthRetryableFetchError(error)) {
+    return "No internet connection. Please check your connection and try again.";
+  }
+  const message = error instanceof Error ? error.message : "";
+  if (/network|fetch/i.test(message)) {
+    return "No internet connection. Please check your connection and try again.";
+  }
+  if (/invalid login credentials/i.test(message)) {
+    return "Wrong email or password.";
+  }
+  if (/email not confirmed/i.test(message)) {
+    return "This email is not confirmed yet. Ask the admin to confirm it.";
+  }
+  return message || "Could not sign in. Please try again.";
+};
+
 interface AppState {
+  // Login
+  session: Session | null;
+  profile: Profile | null;
+  authReady: boolean;
+  initAuth: () => Promise<void>;
+  loadProfile: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+
   products: (Product & { id: number })[];
   sales: (Sale & { id: number })[];
   loading: boolean;
@@ -43,6 +74,76 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
+  session: null,
+  profile: null,
+  authReady: false,
+
+  // Restore a saved login and follow login/logout changes
+  initAuth: async () => {
+    if (!authListenerStarted) {
+      authListenerStarted = true;
+      supabase.auth.onAuthStateChange((_event, session) => {
+        const previousUserId = get().session?.user.id;
+        set({ session });
+        if (!session) {
+          set({ profile: null });
+        } else if (session.user.id !== previousUserId) {
+          // Don't call Supabase inside this callback (it can lock); run it next tick
+          setTimeout(() => get().loadProfile(), 0);
+        }
+      });
+    }
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      set({ session: data.session });
+      if (data.session) {
+        await get().loadProfile();
+      }
+    } catch (error) {
+      console.warn("Failed to restore login:", error);
+    } finally {
+      set({ authReady: true });
+    }
+  },
+
+  loadProfile: async () => {
+    const userId = get().session?.user.id;
+    if (!userId) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, role")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.warn("Failed to load profile:", error?.message ?? "not found");
+      return;
+    }
+    set({
+      profile: { id: data.id, fullName: data.full_name, role: data.role },
+    });
+  },
+
+  signIn: async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) throw error;
+    } catch (error) {
+      throw new Error(toSignInMessage(error));
+    }
+  },
+
+  signOut: async () => {
+    // "local" signs out this phone even without internet
+    await supabase.auth.signOut({ scope: "local" });
+    set({ session: null, profile: null });
+  },
+
   products: [],
   sales: [],
   loading: false,
