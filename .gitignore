@@ -38,3 +38,9 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Supabase / app secrets (never commit)
+.env
+.env*
+!.env.example
+supabase.md

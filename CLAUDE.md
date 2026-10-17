@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current Work: Supabase Migration (read first)
+
+The app is being moved from local SQLite to Supabase (login with admin/staff roles, server-side stock checks, realtime, online-only). **Read `docs/supabase-plan.md` before making changes** - it holds the confirmed decisions, database design, file-by-file changes and the phase order. Follow it phase by phase and stop after each phase for the owner to check. Sections below describe the current SQLite version until the migration is done. Note: `package.json` is now Expo ~57 / React Native ~0.86 (the versions below are outdated).
+
 ## Development Commands
 
 - **Start development server**: `npm start` or `npx expo start`
