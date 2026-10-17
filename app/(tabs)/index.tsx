@@ -6,27 +6,26 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ListRow, listRowStyles, ListSeparator } from "@/components/ui/ListRow";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { SalesDashboard } from "@/components/home/SalesDashboard";
 import { useAppStore } from "@/store";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { formatAmount } from "@/utils/salesStats";
 
+const RECENT_COUNT = 5;
+
+// Home: sales dashboard (daily / monthly) and the latest sales
 export default function HomeScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
-  const { products, sales, fetchProducts, fetchSales, error } = useAppStore();
+  const { sales, fetchProducts, fetchSales, error } = useAppStore();
 
   useEffect(() => {
     fetchProducts();
     fetchSales();
   }, [fetchProducts, fetchSales]);
-
-  const navigateTo = (
-    route: "/" | "/products" | "/sales" | "/new-sale" | `/sale/${string}`
-  ) => {
-    router.push(route);
-  };
 
   return (
     <ParallaxScrollView
@@ -52,88 +51,32 @@ export default function HomeScreen() {
         }}
       />
 
-      <Card style={styles.statsCard}>
-        <ThemedText style={styles.sectionTitle}>Dashboard</ThemedText>
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            style={[styles.statItem, { backgroundColor: theme.surface }]}
-            onPress={() => navigateTo("/products")}
-          >
-            <ThemedText style={styles.statValue}>{products.length}</ThemedText>
-            <ThemedText style={styles.statLabel}>Products</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.statItem, { backgroundColor: theme.surface }]}
-            onPress={() => navigateTo("/sales")}
-          >
-            <ThemedText style={styles.statValue}>{sales.length}</ThemedText>
-            <ThemedText style={styles.statLabel}>Invoices</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.statItem, { backgroundColor: theme.surface }]}
-            onPress={() => navigateTo("/sales")}
-          >
-            <ThemedText style={styles.statValue}>
-              {sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Revenue</ThemedText>
-          </TouchableOpacity>
-        </View>
-      </Card>
-
-      <Card style={styles.actionsCard}>
-        <ThemedText style={styles.sectionTitle}>Quick Actions</ThemedText>
-        <View style={styles.actionButtons}>
-          <Button
-            title="Products"
-            onPress={() => navigateTo("/products")}
-            style={styles.actionButton}
-          />
-          <Button
-            title="New Sale"
-            onPress={() => navigateTo("/new-sale")}
-            style={styles.actionButton}
-          />
-          <Button
-            title="View History"
-            onPress={() => navigateTo("/sales")}
-            style={styles.actionButton}
-          />
-        </View>
-      </Card>
+      <SalesDashboard sales={sales} />
 
       {sales.length > 0 && (
         <Card style={styles.recentCard}>
-          <ThemedText style={styles.sectionTitle}>Recent Invoices</ThemedText>
-          {sales.slice(0, 3).map((sale) => (
-            <TouchableOpacity
-              key={sale.id}
-              style={[styles.recentItem, { borderBottomColor: theme.border }]}
-              onPress={() => navigateTo(`/sale/${sale.id}`)}
-            >
-              <View>
-                <ThemedText style={styles.recentTitle}>
-                  {sale.customer.name}
-                </ThemedText>
-                <ThemedText style={styles.recentDate}>
-                  {new Date(sale.date).toLocaleDateString()}
-                </ThemedText>
-              </View>
-              <ThemedText style={styles.recentAmount}>
-                {sale.total.toFixed(2)}
-              </ThemedText>
+          <View style={styles.recentHeader}>
+            <ThemedText style={styles.sectionTitle}>Recent sales</ThemedText>
+            <TouchableOpacity onPress={() => router.push("/sales")} hitSlop={10}>
+              <ThemedText style={[styles.viewAll, { color: theme.tint }]}>View all</ThemedText>
             </TouchableOpacity>
+          </View>
+          {sales.slice(0, RECENT_COUNT).map((sale, index) => (
+            <View key={sale.id}>
+              {index > 0 && <ListSeparator />}
+              <ListRow
+                title={sale.customer.name || "Walk-in customer"}
+                subtitle={`#${sale.invoiceNumber ?? sale.id} · ${new Date(sale.orderDate).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                })}`}
+                onPress={() => router.push(`/sale/${sale.id}`)}
+                trailing={
+                  <ThemedText style={listRowStyles.amount}>{formatAmount(sale.total)}</ThemedText>
+                }
+              />
+            </View>
           ))}
-          {sales.length > 3 && (
-            <Button
-              title="View All"
-              variant="secondary"
-              onPress={() => navigateTo("/sales")}
-              style={styles.viewAllButton}
-            />
-          )}
         </Card>
       )}
     </ParallaxScrollView>
@@ -150,77 +93,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+  recentCard: {
+    marginBottom: 100,
   },
-  statsCard: {
-    marginTop: 16,
-    marginBottom: 16,
+  recentHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 16,
   },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  statItem: {
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 14,
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  statLabel: {
+  viewAll: {
     fontSize: 14,
-  },
-  actionsCard: {
-    marginBottom: 16,
-  },
-  actionButtons: {
-    gap: 8,
-  },
-  actionButton: {
-    marginVertical: 8,
-    height: 60,
-    fontSize: 18,
-  },
-  recentCard: {
-    marginBottom: 100,
-  },
-  recentItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  recentTitle: {
-    fontSize: 16,
     fontWeight: "600",
-  },
-  recentDate: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 4,
-  },
-  recentAmount: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  viewAllButton: {
-    marginTop: 12,
-    alignSelf: "center",
   },
 });

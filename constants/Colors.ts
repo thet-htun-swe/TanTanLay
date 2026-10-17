@@ -23,6 +23,8 @@ export const Colors = {
     warning: '#C58A42',
     danger: '#C85D68',
     onTint: '#FFFFFF',
+    // Chart bars (checked with the dataviz palette validator on the card surface)
+    chart: '#B76450',
   },
   dark: {
     text: '#F5F0F3',
@@ -40,5 +42,7 @@ export const Colors = {
     warning: '#E5BA78',
     danger: '#F09AA3',
     onTint: '#302129',
+    // Deeper than the tint: the pale tint is too light for bars on dark cards
+    chart: '#D4725A',
   },
 };
