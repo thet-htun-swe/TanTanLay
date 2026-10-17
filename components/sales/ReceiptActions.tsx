@@ -1,12 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { ThemedText } from "../ThemedText";
+import { StyleSheet, View } from "react-native";
+import { Button } from "../ui/Button";
 
 interface ReceiptActionsProps {
   onShareImage: () => void;
@@ -15,6 +9,8 @@ interface ReceiptActionsProps {
   onDelete?: () => void;
 }
 
+// Sale Details actions: share the customer receipt as an image; admin can
+// also edit or delete (buttons are hidden when the handler is not given)
 export const ReceiptActions: React.FC<ReceiptActionsProps> = ({
   onShareImage,
   isSharing,
@@ -23,32 +19,19 @@ export const ReceiptActions: React.FC<ReceiptActionsProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.buttonsRow}>
-        {onEdit && (
-          <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
-            <Ionicons name="create-outline" size={24} color="#0066cc" />
-          </TouchableOpacity>
-        )}
-        {onDelete && (
-          <TouchableOpacity
-            onPress={onDelete}
-            style={[styles.actionButton, styles.deleteButton]}
-          >
-            <Ionicons name="trash-outline" size={24} color="#dc3545" />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={onShareImage}
-          disabled={isSharing}
-          style={[styles.actionButton, isSharing && { opacity: 0.5 }]}
-        >
-          <Ionicons name="share-outline" size={24} color="#0066cc" />
-        </TouchableOpacity>
-      </View>
-      {isSharing && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#0066cc" />
-          <ThemedText style={styles.loadingText}>Preparing image...</ThemedText>
+      <Button
+        title={isSharing ? "Preparing image..." : "Share receipt"}
+        onPress={onShareImage}
+        disabled={isSharing}
+      />
+      {(onEdit || onDelete) && (
+        <View style={styles.row}>
+          {onEdit && (
+            <Button title="Edit" variant="secondary" onPress={onEdit} style={styles.half} />
+          )}
+          {onDelete && (
+            <Button title="Delete" variant="danger" onPress={onDelete} style={styles.half} />
+          )}
         </View>
       )}
     </View>
@@ -57,43 +40,15 @@ export const ReceiptActions: React.FC<ReceiptActionsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 24,
-    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 32,
     gap: 12,
   },
-  buttonsRow: {
+  row: {
     flexDirection: "row",
-    gap: 16,
+    gap: 12,
   },
-  actionButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  deleteButton: {
-    backgroundColor: "#ffe6e6",
-  },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+  half: {
+    flex: 1,
   },
 });

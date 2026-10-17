@@ -31,6 +31,8 @@ export interface Sale {
   items: SaleItem[];
   subtotal: number;
   total: number;
+  // Who made the sale (shown in the app and Excel export, not on the receipt)
+  createdByName?: string;
 }
 
 // Signed-in user's role (from the Supabase `profiles` table)

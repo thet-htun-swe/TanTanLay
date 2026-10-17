@@ -122,14 +122,16 @@ type SaleRow = {
   total: number;
   date: string;
   order_date: string;
+  created_by_name?: string | null; // added by migration 002
   sale_items?: SaleItemRow[];
 };
 
 const PRODUCT_COLUMNS = "id, name, price, stock_qty";
 const CUSTOMER_COLUMNS = "id, name, contact, address";
-// One string literal (not joined) so supabase-js can read its type
+// One string literal (not joined) so supabase-js can read its type.
+// "*" (all sale columns) also works before migration 002 adds created_by_name.
 const SALE_COLUMNS =
-  "id, invoice_number, customer_name, customer_contact, customer_address, subtotal, total, date, order_date, sale_items(id, product_id, custom_key, product_name, quantity, unit_price, line_total)";
+  "*, sale_items(id, product_id, custom_key, product_name, quantity, unit_price, line_total)";
 
 // Also used for live updates (realtime rows have the same columns)
 export const toProduct = (row: ProductRow): Product & { id: number } => ({
@@ -171,6 +173,7 @@ const toSale = (row: SaleRow): Sale & { id: number } => ({
     .map(toSaleItem),
   subtotal: Number(row.subtotal),
   total: Number(row.total),
+  createdByName: row.created_by_name ?? undefined,
 });
 
 // Phone's local calendar day (YYYY-MM-DD); the invoice number uses this day

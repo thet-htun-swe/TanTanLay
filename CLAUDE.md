@@ -41,7 +41,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 - **profiles**: one row per login (created by a trigger on `auth.users`), `role` defaults to `staff`
 - **products**: `id`, `name`, `price numeric(12,2)`, `stock_qty int >= 0`, timestamps, `updated_by`
 - **customers**: `id`, `name`, `contact`, `address`, timestamps
-- **sales**: `id`, `client_id uuid unique`, `invoice_number unique`, `customer_id` (set null on customer delete), customer snapshot, `subtotal`, `total`, `date`, `order_date`, `created_by`
+- **sales**: `id`, `client_id uuid unique`, `invoice_number unique`, `customer_id` (set null on customer delete), customer snapshot, `subtotal`, `total`, `date`, `order_date`, `created_by`, `created_by_name` (seller's profile name copied at sale time by `create_sale`, migration `002`; staff cannot read other profiles, so the name lives on the sale)
 - **sale_items**: `sale_id` (cascade), `product_id` (null for custom items or deleted products), `custom_key` (`custom-<uuid>`), product name snapshot, `quantity`, `unit_price`, `line_total`
 - **invoice_counters**: per-day counter for invoice numbers
 - **Row Level Security** on every table. Helper `is_admin()`.
@@ -77,7 +77,8 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 
 ### Key Features & Implementation
 - **New Sale Flow**: Customer info → Product selection (with search/create) → Quantity adjustment → Sale creation via `create_sale`
-- **Receipts**: one source of rows, `receiptLines()` in `utils/escPos.ts` (shop name `SHOP_NAME` = "KHA"), used by the printer, the on-screen receipt (`components/sales/ReceiptView.tsx`, shown on Sale Details and the print preview) and the text preview. There is no PDF invoice.
+- **Receipts**: one source of rows, `receiptLines()` in `utils/escPos.ts` (shop name `SHOP_NAME` = "KHA"), used by the printer, the on-screen receipt (`components/sales/ReceiptView.tsx`, used for the print preview and the shared image) and the text preview. There is no PDF invoice.
+- **Sale Details** (`app/sale/[id].tsx`, `components/sales/SaleDetailsView.tsx`): shop view with **Created by** (not on the customer receipt). The receipt for sharing is rendered off-screen. Excel export also has a **Created By** column.
 - **Share receipt as image**: `services/receiptImage.ts` captures `ReceiptView` with `react-native-view-shot` and opens the share sheet (`expo-sharing`)
 - **Receipt Printing**: Wi-Fi (`services/thermalPrinter.ts`) and Bluetooth (`services/bluetoothPrinter.ts`) ESC/POS printers; printer chosen per phone in `app/settings/printer.tsx` (Settings > Printer & receipt, also opened from the printer icon on Sales History)
 - **Myanmar text on paper**: the printer font is ASCII only, so non-ASCII lines are drawn as pictures (GS v 0) by a hidden WebView (`components/ReceiptTextRenderer.tsx`, `services/textRaster.ts`) using the phone's fonts. Check with `scripts/verify-esc-pos.ts`.

@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "expo-router/react-navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Alert, View } from "react-native";
 
-import { ReceiptActions, ReceiptView } from "@/components/sales";
+import { ReceiptActions, ReceiptView, SaleDetailsView } from "@/components/sales";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
@@ -18,37 +18,29 @@ export default function SaleDetailsScreen() {
   const [sale, setSale] = useState<(Sale & { id: number }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const { products, removeSale } = useAppStore();
+  const { removeSale } = useAppStore();
   const isAdmin = useIsAdmin();
   const receiptRef = useRef<View>(null);
   const [isSharing, setIsSharing] = useState(false);
 
-  const loadSale = async () => {
-    if (id) {
-      setLoading(true);
-      try {
-        const saleData = await getSaleById(parseInt(id, 10));
-        setSale(saleData);
-        setLoadError(null);
-      } catch (error) {
-        setLoadError(getErrorMessage(error, "Failed to load sale"));
-      } finally {
-        setLoading(false);
-      }
+  const loadSale = useCallback(async () => {
+    if (!id) return;
+    try {
+      const saleData = await getSaleById(parseInt(id, 10));
+      setSale(saleData);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError(getErrorMessage(error, "Failed to load sale"));
+    } finally {
+      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadSale();
   }, [id]);
 
-  // Refresh data when screen comes into focus (e.g., returning from edit)
+  // Load when the screen opens and again when coming back (e.g. from Edit)
   useFocusEffect(
-    React.useCallback(() => {
-      if (id) {
-        loadSale();
-      }
-    }, [id])
+    useCallback(() => {
+      loadSale();
+    }, [loadSale]),
   );
 
   const handleShareImage = async () => {
@@ -123,8 +115,14 @@ export default function SaleDetailsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      {/* Customer receipt, kept off-screen: only used to make the Share image
+          (it has no "Created by", which is for the shop only) */}
+      <View style={styles.offscreen} pointerEvents="none">
         <ReceiptView sale={sale} ref={receiptRef} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <SaleDetailsView sale={sale} />
 
         <ReceiptActions
           onShareImage={handleShareImage}
@@ -145,5 +143,11 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginTop: 16,
+  },
+  offscreen: {
+    position: "absolute",
+    left: -10000,
+    top: 0,
+    width: 360,
   },
 });
