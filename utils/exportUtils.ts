@@ -1,4 +1,5 @@
 import { Sale } from "@/types";
+import { SHOP_NAME } from "@/utils/escPos";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -232,7 +233,7 @@ export class ExportUtils {
 
         htmlContent += `
           <div class="shipping-label">
-            <div class="label-header">Clothing Sales</div>
+            <div class="label-header">${SHOP_NAME}</div>
             <div class="customer-info">
               <div class="customer-name">${sale.customer.name}</div>
               <div class="customer-detail">${

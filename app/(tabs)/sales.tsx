@@ -272,6 +272,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: 8,
+    marginTop: 12, // space under the search box
     marginBottom: 8,
   },
   selectionBar: {
