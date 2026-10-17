@@ -13,7 +13,20 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
+// Web pages are pre-rendered in Node, which may have no WebSocket. Live updates
+// never run there, so give it a stand-in. Phones and browsers use the real one.
+class NoWebSocket {
+  constructor() {
+    throw new Error("WebSocket is not available here");
+  }
+}
+const realtimeOptions =
+  typeof WebSocket === "undefined"
+    ? { transport: NoWebSocket as unknown as typeof WebSocket }
+    : undefined;
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
+  realtime: realtimeOptions,
   auth: {
     // AsyncStorage needs `window` on web; during static rendering there is none
     storage:

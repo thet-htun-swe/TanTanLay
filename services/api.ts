@@ -2,11 +2,11 @@ import { supabase } from "@/lib/supabase";
 import { Customer, Product, Sale, SaleItem } from "@/types";
 import { generateUUID } from "@/utils/uuid";
 
-// Same function names and shapes as services/database.ts, backed by Supabase.
+// Data functions for products, customers and sales, backed by Supabase.
 // Sales are written only through the database functions create_sale /
 // update_sale / delete_sale (stock is checked and changed on the server).
 
-const PAGE_SIZE = 50; // same page size as the old SQLite search
+const PAGE_SIZE = 50; // rows per page in search lists
 const FETCH_ALL_BATCH = 1000; // Supabase returns at most 1000 rows per request
 
 export const NO_CONNECTION_MESSAGE =

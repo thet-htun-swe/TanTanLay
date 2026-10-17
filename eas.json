@@ -5,6 +5,7 @@
         "buildType": "apk"
       },
       "channel": "preview",
+      "environment": "preview",
       "autoIncrement": true
     },
     "production": {
@@ -12,6 +13,7 @@
         "buildType": "apk"
       },
       "channel": "production",
+      "environment": "production",
       "autoIncrement": true
     }
   },
