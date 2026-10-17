@@ -61,7 +61,7 @@ export function Button({
 
   return (
     <TouchableOpacity
-      style={[styles.button, getButtonStyle(), style]}
+      style={[styles.button, getButtonStyle(), disabled && variant === 'secondary' && styles.disabled, style]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
@@ -78,6 +78,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Outlined buttons have no fill to dim, so fade the whole button
+  disabled: {
+    opacity: 0.5,
   },
   text: {
     fontSize: 16,

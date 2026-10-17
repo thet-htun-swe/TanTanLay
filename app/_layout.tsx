@@ -86,7 +86,14 @@ export default function RootLayout() {
             name="sale/[id]"
             options={{ title: "Sale Details", headerBackTitle: "Back" }}
           />
-          <Stack.Screen name="printer-settings" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="settings/index"
+            options={{ title: "Settings", headerBackTitle: "Back" }}
+          />
+          <Stack.Screen
+            name="settings/printer"
+            options={{ title: "Printer & receipt", headerBackTitle: "Back" }}
+          />
           {/* Listed only so they are protected too (no option changes) */}
           <Stack.Screen name="customer/create/index" />
           <Stack.Screen name="customer/[id]/edit" />

@@ -1,9 +1,7 @@
-import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { ActionButtons } from "@/components/common/ActionButtons";
-import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/ui/Card";
@@ -20,13 +18,12 @@ import {
   savePaperWidth,
   savePrinterSettings,
 } from "@/services/localSettings";
-import { useAppStore } from "@/store";
 import { printWifiTestReceipt } from "@/services/thermalPrinter";
 import { PrinterSettings } from "@/types";
 import { DEFAULT_PAPER_WIDTH, PaperWidth } from "@/utils/escPos";
 
+// Printer and receipt setup for this phone (Settings > Printer & receipt)
 export default function PrinterSettingsScreen() {
-  const { profile, session, signOut } = useAppStore();
   const [savedPrinter, setSavedPrinter] = useState<PrinterSettings | null>(null);
   const [wifiHost, setWifiHost] = useState("");
   const [wifiPort, setWifiPort] = useState("9100");
@@ -131,26 +128,6 @@ export default function PrinterSettingsScreen() {
     }
   };
 
-  const confirmSignOut = () => {
-    Alert.alert("Log out", "Do you want to log out of this phone?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch (error) {
-            Alert.alert("Log out", error instanceof Error ? error.message : "Could not log out");
-          }
-        },
-      },
-    ]);
-  };
-
-  const signedInName = profile?.fullName || session?.user.email || "Unknown user";
-  const roleLabel = profile?.role === "admin" ? "Admin" : "Staff";
-
   const currentPrinter = savedPrinter
     ? savedPrinter.connectionType === "bluetooth"
       ? `${savedPrinter.name} (${savedPrinter.address})`
@@ -160,30 +137,15 @@ export default function PrinterSettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScreenHeader
-        title="Printer connections"
-        subtitle="Select one printer for sales-history receipts"
-        rightComponent={
-          <TouchableOpacity onPress={() => router.back()}>
-            <ThemedText style={styles.back}>Back</ThemedText>
-          </TouchableOpacity>
-        }
-      />
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Card style={styles.currentCard}>
-          <ThemedText style={styles.currentLabel}>Signed in as</ThemedText>
-          <ThemedText style={styles.currentValue}>{signedInName}</ThemedText>
-          <ThemedText style={styles.hint}>{roleLabel}</ThemedText>
-          <ActionButtons
-            buttons={[{ title: "Log out", onPress: confirmSignOut, variant: "danger" }]}
-            direction="column"
-          />
-        </Card>
-
         <Card style={styles.currentCard}>
           <ThemedText style={styles.currentLabel}>Current printer</ThemedText>
           <ThemedText style={styles.currentValue}>{currentPrinter}</ThemedText>
+          <ThemedText style={styles.currentHint}>Used for receipts printed from Sales history</ThemedText>
+          <ActionButtons
+            buttons={[{ title: isTesting ? "Printing..." : "Test print", onPress: testPrint, variant: "secondary", disabled: !savedPrinter || isTesting }]}
+            direction="column"
+          />
         </Card>
 
         <ThemedText style={styles.sectionTitle}>Receipt width</ThemedText>
@@ -267,11 +229,6 @@ export default function PrinterSettingsScreen() {
           buttons={[{ title: "Save Wi-Fi printer", onPress: saveWifiPrinter, variant: "secondary" }]}
           direction="column"
         />
-
-        <ActionButtons
-          buttons={[{ title: isTesting ? "Printing..." : "Test selected printer", onPress: testPrint, disabled: !savedPrinter || isTesting }]}
-          direction="column"
-        />
       </ScrollView>
     </ThemedView>
   );
@@ -283,15 +240,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   content: {
+    paddingTop: 16,
     paddingBottom: 32,
-  },
-  back: {
-    color: "#0a7ea4",
-    fontWeight: "600",
   },
   currentCard: {
     marginTop: 0,
     marginBottom: 20,
+  },
+  currentHint: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginTop: 4,
+    marginBottom: 12,
   },
   currentLabel: {
     fontSize: 13,

@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -33,7 +34,14 @@ export default function HomeScreen() {
       headerImage={<View />}
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Clothing Sales</ThemedText>
+        <ThemedText type="title" style={styles.title}>Clothing Sales</ThemedText>
+        <TouchableOpacity
+          onPress={() => router.push("/settings")}
+          hitSlop={10}
+          accessibilityLabel="Settings"
+        >
+          <Ionicons name="settings-outline" size={26} color={theme.text} />
+        </TouchableOpacity>
       </ThemedView>
 
       <ErrorBanner
@@ -133,6 +141,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  title: {
+    flex: 1,
+  },
   titleContainer: {
     marginTop: 32,
     flexDirection: "row",

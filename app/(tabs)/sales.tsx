@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Dimensions, StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { ActionButtons } from "@/components/common/ActionButtons";
 import { SalesHistoryFilter } from "@/components/common/SalesHistoryFilter";
@@ -104,7 +105,7 @@ export default function SalesScreen() {
     if (!settings) {
       Alert.alert("Printer setup", "Choose a Wi-Fi or Bluetooth printer first.", [
         { text: "Cancel", style: "cancel" },
-        { text: "Open settings", onPress: () => router.push("/printer-settings") },
+        { text: "Set up printer", onPress: () => router.push("/settings/printer") },
       ]);
       return;
     }
@@ -156,12 +157,6 @@ export default function SalesScreen() {
       variant: "secondary" as const,
       disabled: selectedSaleIds.length === 0,
     },
-    {
-      title: "Printer",
-      onPress: () => router.push("/printer-settings"),
-      variant: "secondary" as const,
-      disabled: isPrinting,
-    },
   ];
 
   const printButtons = [
@@ -176,7 +171,18 @@ export default function SalesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScreenHeader title="Sales History" />
+      <ScreenHeader
+        title="Sales History"
+        rightComponent={
+          <TouchableOpacity
+            onPress={() => router.push("/settings/printer")}
+            hitSlop={10}
+            accessibilityLabel="Printer setup"
+          >
+            <Ionicons name="print-outline" size={26} color={theme.text} />
+          </TouchableOpacity>
+        }
+      />
 
       <ErrorBanner message={error} onRetry={fetchSales} />
 
