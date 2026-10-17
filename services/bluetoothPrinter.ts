@@ -2,6 +2,7 @@ import RNBluetoothClassic from "react-native-bluetooth-classic";
 import { NativeModules, PermissionsAndroid, Platform } from "react-native";
 
 import { BluetoothPrinterSettings, Sale } from "@/types";
+import { getPaperWidth } from "@/services/localSettings";
 import { rasterizeLine } from "@/services/textRaster";
 import { buildSaleReceipt, buildTestReceipt } from "@/utils/escPos";
 
@@ -98,9 +99,10 @@ export const printBluetoothSales = async (
   sales: (Sale & { id: number })[],
   printer: BluetoothPrinterSettings,
 ) => {
+  const paperWidth = await getPaperWidth();
   for (const sale of sales) {
     try {
-      await send(await buildSaleReceipt(sale, rasterizeLine), printer);
+      await send(await buildSaleReceipt(sale, rasterizeLine, paperWidth), printer);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Unknown printer error";
       throw new Error(`Invoice #${sale.invoiceNumber ?? sale.id}: ${reason}`);
@@ -108,5 +110,5 @@ export const printBluetoothSales = async (
   }
 };
 
-export const printBluetoothTestReceipt = (printer: BluetoothPrinterSettings) =>
-  send(buildTestReceipt(), printer);
+export const printBluetoothTestReceipt = async (printer: BluetoothPrinterSettings) =>
+  send(buildTestReceipt(await getPaperWidth()), printer);

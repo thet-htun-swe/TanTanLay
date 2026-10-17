@@ -3,9 +3,17 @@ import { Sale } from "@/types";
 const ESC = 0x1b;
 const GS = 0x1d;
 const LF = 0x0a;
-const RECEIPT_WIDTH = 32;
 
 export const SHOP_NAME = "KHA";
+
+// Paper sizes. Printer font A is 12 dots wide at 203 dpi:
+// 58 mm paper prints 384 dots (32 characters), 80 mm prints 576 dots (48).
+export type PaperWidth = 58 | 80;
+export const DEFAULT_PAPER_WIDTH: PaperWidth = 58;
+const PAPER = {
+  58: { characters: 32, dots: 384 },
+  80: { characters: 48, dots: 576 },
+} as const;
 
 // A picture of one text line: 1 bit per dot, rows of width/8 bytes, 1 = black
 export interface RasterImage {
@@ -17,7 +25,7 @@ export interface RasterImage {
 // Draws text the printer font cannot show (e.g. Myanmar) as a picture
 export type LineRasterizer = (
   text: string,
-  options: { bold?: boolean; center?: boolean },
+  options: { bold?: boolean; center?: boolean; width: number },
 ) => Promise<RasterImage>;
 
 // One receipt row. Used by the printer, the text preview and the on-screen
@@ -27,9 +35,10 @@ export type ReceiptLine =
   | { type: "pair"; left: string; right: string; bold?: boolean }
   | { type: "divider" };
 
-// toLocaleString() puts special spaces in dates (e.g. before "PM")
-const normalizeSpaces = (value: string) =>
-  value.replace(/[   ]/g, " ");
+// toLocaleString() puts special spaces in dates (e.g. before "PM"):
+// no-break space, figure space, narrow no-break space
+const SPECIAL_SPACES = new RegExp(`[${String.fromCharCode(0xa0, 0x2007, 0x202f)}]`, "g");
+const normalizeSpaces = (value: string) => value.replace(SPECIAL_SPACES, " ");
 
 // The printer's built-in font only has plain English letters, digits and signs
 const isPrinterText = (value: string) => /^[\x20-\x7e]*$/.test(value);
@@ -42,8 +51,8 @@ const ascii = (value: string) =>
 const line = (value = "") => [...ascii(value), LF];
 const money = (value: number) => value.toFixed(2);
 
-const pairText = (left: string, right: string) => {
-  const space = RECEIPT_WIDTH - left.length - right.length;
+const pairText = (left: string, right: string, characters: number) => {
+  const space = characters - left.length - right.length;
   return space > 0 ? `${left}${" ".repeat(space)}${right}` : `${left} ${right}`;
 };
 
@@ -77,10 +86,12 @@ export const receiptLines = (sale: Sale): ReceiptLine[] => {
   return lines;
 };
 
-// A row as plain text on the 32-character paper (printer and text preview)
-const lineText = (receiptLine: ReceiptLine) => {
-  if (receiptLine.type === "divider") return "-".repeat(RECEIPT_WIDTH);
-  if (receiptLine.type === "pair") return pairText(receiptLine.left, receiptLine.right);
+// A row as plain text for the paper width (printer and text preview)
+const lineText = (receiptLine: ReceiptLine, characters: number) => {
+  if (receiptLine.type === "divider") return "-".repeat(characters);
+  if (receiptLine.type === "pair") {
+    return pairText(receiptLine.left, receiptLine.right, characters);
+  }
   return receiptLine.text;
 };
 
@@ -103,16 +114,26 @@ const rasterImageBytes = (image: RasterImage) => {
   return bytes;
 };
 
-export const getReceiptPreviewText = (sale: Sale) =>
-  receiptLines(sale).map(lineText).join("\n");
+export const getReceiptPreviewText = (
+  sale: Sale,
+  paperWidth: PaperWidth = DEFAULT_PAPER_WIDTH,
+) =>
+  receiptLines(sale)
+    .map((receiptLine) => lineText(receiptLine, PAPER[paperWidth].characters))
+    .join("\n");
 
 // Lines the printer font can show are sent as text; others (e.g. Myanmar
 // names) are drawn as pictures with `rasterize`.
-export const buildSaleReceipt = async (sale: Sale, rasterize: LineRasterizer) => {
+export const buildSaleReceipt = async (
+  sale: Sale,
+  rasterize: LineRasterizer,
+  paperWidth: PaperWidth = DEFAULT_PAPER_WIDTH,
+) => {
+  const paper = PAPER[paperWidth];
   const receipt: number[] = [ESC, 0x40];
 
   for (const receiptLine of receiptLines(sale)) {
-    const text = lineText(receiptLine);
+    const text = lineText(receiptLine, paper.characters);
     const bold = receiptLine.type !== "divider" && !!receiptLine.bold;
     const center = receiptLine.type === "text" && !!receiptLine.center;
     const large = receiptLine.type === "text" && !!receiptLine.large;
@@ -126,7 +147,7 @@ export const buildSaleReceipt = async (sale: Sale, rasterize: LineRasterizer) =>
         ...line(text),
       );
     } else {
-      const image = await rasterize(text, { bold, center });
+      const image = await rasterize(text, { bold, center, width: paper.dots });
       // The picture is already full width (centering is drawn into it)
       receipt.push(ESC, 0x61, 0, ...rasterImageBytes(image));
     }
@@ -144,7 +165,8 @@ export const buildSaleReceipt = async (sale: Sale, rasterize: LineRasterizer) =>
   return new Uint8Array(receipt);
 };
 
-export const buildTestReceipt = () =>
+// The full-width dashed line shows whether the paper size is set right
+export const buildTestReceipt = (paperWidth: PaperWidth = DEFAULT_PAPER_WIDTH) =>
   new Uint8Array([
     ESC, 0x40,
     ESC, 0x61, 1,
@@ -154,6 +176,10 @@ export const buildTestReceipt = () =>
     GS, 0x21, 0x00,
     ESC, 0x45, 0,
     ...line("Printer test successful"),
+    ...line(`Paper: ${paperWidth} mm`),
+    ESC, 0x61, 0,
+    ...line("-".repeat(PAPER[paperWidth].characters)),
+    ESC, 0x61, 1,
     ...line(),
     ...line(),
     GS, 0x56, 0,

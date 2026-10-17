@@ -56,6 +56,24 @@ const main = async () => {
     throw new Error("Receipt still contains '?' characters");
   }
 
+  // 80 mm paper: 48-character rows and 576-dot (72-byte) pictures
+  const preview80 = getReceiptPreviewText(sale, 80);
+  if (!preview80.includes("-".repeat(48)) || preview80.includes("-".repeat(49))) {
+    throw new Error("80 mm preview should use 48-character dividers");
+  }
+  const totalRow = preview80.split("\n").find((row) => row.startsWith("TOTAL"));
+  if (totalRow?.length !== 48) {
+    throw new Error("80 mm TOTAL row should fill 48 characters");
+  }
+  const wideRasterizer: LineRasterizer = async (_text, options) => {
+    if (options.width !== 576) throw new Error("80 mm pictures should be 576 dots wide");
+    return { width: 576, height: 2, data: new Uint8Array(72 * 2).fill(0xff) };
+  };
+  const receipt80 = await buildSaleReceipt(myanmarSale, wideRasterizer, 80);
+  if (!includesSequence(receipt80, [0x1d, 0x76, 0x30, 0, 72, 0, 2, 0])) {
+    throw new Error("80 mm receipt is missing a 72-byte-wide picture");
+  }
+
   console.log("ESC/POS receipt check passed");
 };
 

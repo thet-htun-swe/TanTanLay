@@ -4,8 +4,6 @@ import { LineRasterizer, RasterImage } from "@/utils/escPos";
 // components/ReceiptTextRenderer.tsx). The WebView draws with the phone's own
 // fonts, so Myanmar text is shaped exactly like on screen.
 
-// 58 mm printers print 384 dots per line (48 mm at 203 dpi)
-export const RECEIPT_DOTS = 384;
 const RENDER_TIMEOUT_MS = 10000;
 
 type Pending = {
@@ -112,7 +110,7 @@ export const rasterizeLine: LineRasterizer = async (text, options) => {
     const args = JSON.stringify({
       id,
       text,
-      width: RECEIPT_DOTS,
+      width: options.width,
       bold: !!options.bold,
       center: !!options.center,
     });

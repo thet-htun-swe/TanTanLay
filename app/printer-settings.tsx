@@ -14,10 +14,16 @@ import {
   printBluetoothTestReceipt,
   type BluetoothDeviceInfo,
 } from "@/services/bluetoothPrinter";
-import { getPrinterSettings, savePrinterSettings } from "@/services/localSettings";
+import {
+  getPaperWidth,
+  getPrinterSettings,
+  savePaperWidth,
+  savePrinterSettings,
+} from "@/services/localSettings";
 import { useAppStore } from "@/store";
 import { printWifiTestReceipt } from "@/services/thermalPrinter";
 import { PrinterSettings } from "@/types";
+import { DEFAULT_PAPER_WIDTH, PaperWidth } from "@/utils/escPos";
 
 export default function PrinterSettingsScreen() {
   const { profile, session, signOut } = useAppStore();
@@ -27,6 +33,7 @@ export default function PrinterSettingsScreen() {
   const [devices, setDevices] = useState<BluetoothDeviceInfo[]>([]);
   const [isLoadingDevices, setIsLoadingDevices] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [paperWidth, setPaperWidth] = useState<PaperWidth>(DEFAULT_PAPER_WIDTH);
 
   useEffect(() => {
     getPrinterSettings()
@@ -38,7 +45,19 @@ export default function PrinterSettingsScreen() {
         }
       })
       .catch((error) => console.warn("Failed to load printer settings:", error));
+    getPaperWidth()
+      .then(setPaperWidth)
+      .catch((error) => console.warn("Failed to load paper size:", error));
   }, []);
+
+  const choosePaperWidth = async (width: PaperWidth) => {
+    try {
+      await savePaperWidth(width);
+      setPaperWidth(width);
+    } catch (error) {
+      Alert.alert("Paper size", error instanceof Error ? error.message : "Could not save paper size");
+    }
+  };
 
   const saveWifiPrinter = async () => {
     const settings: PrinterSettings = {
@@ -166,6 +185,21 @@ export default function PrinterSettingsScreen() {
           <ThemedText style={styles.currentLabel}>Current printer</ThemedText>
           <ThemedText style={styles.currentValue}>{currentPrinter}</ThemedText>
         </Card>
+
+        <ThemedText style={styles.sectionTitle}>Paper size</ThemedText>
+        <ThemedText style={styles.hint}>
+          Check the label under your printer (e.g. &quot;Paper Width: 79.5 mm&quot; means 80 mm). Use
+          &quot;Test selected printer&quot; below: its dashed line should reach across the paper.
+        </ThemedText>
+        <ActionButtons
+          buttons={([58, 80] as const).map((width) => ({
+            title: paperWidth === width ? `${width} mm  ✓` : `${width} mm`,
+            onPress: () => choosePaperWidth(width),
+            variant: paperWidth === width ? ("primary" as const) : ("secondary" as const),
+          }))}
+          direction="row"
+          spacing={8}
+        />
 
         <ThemedText style={styles.sectionTitle}>Bluetooth printer</ThemedText>
         <ThemedText style={styles.hint}>
