@@ -12,9 +12,13 @@ import {
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import {
+  ListRow,
+  listRowStyles,
+  ListSeparator,
+  RowIconButton,
+} from "@/components/ui/ListRow";
 import { getErrorMessage, searchProducts } from "@/services/api";
 import { useAppStore, useIsAdmin } from "@/store";
 import { Product } from "@/types";
@@ -126,36 +130,49 @@ export default function ProductsScreen() {
     );
   };
 
-  const renderProductItem = ({ item }: { item: Product & { id: number } }) => (
-    <Card style={styles.productCard}>
-      <View style={styles.productHeader}>
-        <ThemedText style={styles.productName}>{item.name}</ThemedText>
-        <ThemedText style={styles.productPrice}>
-          {item.price.toFixed(2)}
-        </ThemedText>
-      </View>
-      <View style={styles.productDetails}>
-        <ThemedText>Stock: {item.stockQty}</ThemedText>
-      </View>
-      {/* Only admin can change products */}
-      {isAdmin && (
-        <View style={styles.productActions}>
-          <Button
-            title="Edit"
-            variant="secondary"
-            onPress={() => router.push(`/product/${item.id}`)}
-            style={styles.actionButton}
-          />
-          <Button
-            title="Delete"
-            variant="danger"
-            onPress={() => confirmDeleteProduct(item.id)}
-            style={styles.actionButton}
-          />
-        </View>
-      )}
-    </Card>
-  );
+  const LOW_STOCK = 5;
+
+  const renderProductItem = ({ item }: { item: Product & { id: number } }) => {
+    const stockColor =
+      item.stockQty <= 0 ? theme.danger : item.stockQty <= LOW_STOCK ? theme.warning : theme.muted;
+    const stockText =
+      item.stockQty <= 0
+        ? "Out of stock"
+        : item.stockQty <= LOW_STOCK
+          ? `Low stock · ${item.stockQty} left`
+          : `Stock ${item.stockQty}`;
+
+    return (
+      <ListRow
+        title={item.name}
+        subtitle={<ThemedText style={[styles.stock, { color: stockColor }]}>{stockText}</ThemedText>}
+        // Admin can tap the row to edit
+        onPress={isAdmin ? () => router.push(`/product/${item.id}`) : undefined}
+        trailing={
+          <View style={styles.trailing}>
+            <ThemedText style={listRowStyles.amount}>{item.price.toFixed(2)}</ThemedText>
+            {/* Only admin can change products */}
+            {isAdmin && (
+              <>
+                <RowIconButton
+                  onPress={() => router.push(`/product/${item.id}`)}
+                  accessibilityLabel={`Edit ${item.name}`}
+                >
+                  <Ionicons name="create-outline" size={20} color={theme.tint} />
+                </RowIconButton>
+                <RowIconButton
+                  onPress={() => confirmDeleteProduct(item.id)}
+                  accessibilityLabel={`Delete ${item.name}`}
+                >
+                  <Ionicons name="trash-outline" size={20} color={theme.danger} />
+                </RowIconButton>
+              </>
+            )}
+          </View>
+        }
+      />
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -179,6 +196,7 @@ export default function ProductsScreen() {
           renderItem={renderProductItem}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.productList}
+          ItemSeparatorComponent={ListSeparator}
           onEndReached={loadMoreProducts}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
@@ -225,6 +243,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   productList: {
+    paddingTop: 8,
     paddingBottom: 100,
   },
   loadMore: {
@@ -235,62 +254,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  productCard: {
-    marginBottom: 12,
-  },
-  productHeader: {
+  trailing: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    gap: 2,
   },
-  productName: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  productDetails: {
-    marginBottom: 12,
-  },
-  productActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  actionButton: {
-    marginLeft: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  formCard: {
-    marginBottom: 16,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  formActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 8,
-  },
-  formButton: {
-    marginLeft: 8,
+  stock: {
+    fontSize: 13,
+    marginTop: 2,
   },
   emptyText: {
     textAlign: "center",
     marginTop: 40,
     fontSize: 16,
-  },
-  // New styles for bottom sheet and FAB
-  bottomSheetContent: {
-    padding: 20,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
   },
   fab: {
     position: "absolute",

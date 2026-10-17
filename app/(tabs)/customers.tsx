@@ -13,8 +13,8 @@ import {
 import { CustomerDetailsBottomSheet } from "@/components/CustomerDetailsBottomSheet";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { ListRow, ListSeparator } from "@/components/ui/ListRow";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { getErrorMessage, searchCustomers } from "@/services/api";
@@ -123,25 +123,22 @@ export default function CustomersScreen() {
     loadCustomers(searchTerm);
   };
 
-  const CustomerCard = ({
-    customer,
-  }: {
-    customer: Customer & { id: number };
-  }) => (
-    <TouchableOpacity onPress={() => handleViewCustomer(customer)}>
-      <Card style={styles.customerCard}>
-        <View style={styles.customerInfo}>
-          <ThemedText type="defaultSemiBold" style={styles.customerName}>
-            {customer.name}
+  const theme = Colors[colorScheme ?? "light"];
+
+  const renderCustomer = ({ item: customer }: { item: Customer & { id: number } }) => (
+    <ListRow
+      title={customer.name}
+      subtitle={[customer.contact, customer.address].filter(Boolean).join(" · ")}
+      onPress={() => handleViewCustomer(customer)}
+      leading={
+        <View style={[styles.avatar, { backgroundColor: theme.surface }]}>
+          <ThemedText style={[styles.avatarText, { color: theme.tint }]}>
+            {customer.name.trim().charAt(0).toUpperCase() || "?"}
           </ThemedText>
-          {customer.contact && (
-            <ThemedText style={styles.customerDetail}>
-              📞 {customer.contact}
-            </ThemedText>
-          )}
         </View>
-      </Card>
-    </TouchableOpacity>
+      }
+      trailing={<MaterialCommunityIcons name="chevron-right" size={22} color={theme.icon} />}
+    />
   );
 
   return (
@@ -179,9 +176,10 @@ export default function CustomersScreen() {
       ) : (
         <FlatList
           data={customers}
-          renderItem={({ item }) => <CustomerCard customer={item} />}
+          renderItem={renderCustomer}
           keyExtractor={(customer) => customer.id.toString()}
           contentContainerStyle={styles.scrollView}
+          ItemSeparatorComponent={ListSeparator}
           onEndReached={loadMoreCustomers}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
@@ -246,43 +244,22 @@ const styles = StyleSheet.create({
     shadowRadius: 4.65,
   },
   scrollView: {
+    paddingTop: 8,
     paddingBottom: 100,
   },
   loadMore: {
     marginVertical: 16,
   },
-  customerCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
-    marginBottom: 12,
-    padding: 16,
-  },
-  customerInfo: {
-    flex: 1,
-  },
-  customerName: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  customerDetail: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 2,
-  },
-  customerActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     justifyContent: "center",
-    alignItems: "center",
   },
-  deleteButton: {
-    backgroundColor: "#666",
+  avatarText: {
+    fontSize: 16,
+    fontWeight: "700",
   },
   centerContainer: {
     flex: 1,

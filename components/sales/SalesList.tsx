@@ -2,6 +2,7 @@ import React from 'react';
 import { FlatList, StyleSheet } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { SaleCard } from './SaleCard';
+import { ListSeparator } from '../ui/ListRow';
 import { Sale } from '@/types';
 
 interface SalesListProps {
@@ -34,6 +35,7 @@ export const SalesList: React.FC<SalesListProps> = ({
       renderItem={renderSaleItem}
       keyExtractor={(item) => item.id?.toString() ?? `sale-${Math.random()}`}
       contentContainerStyle={styles.list}
+      ItemSeparatorComponent={ListSeparator}
       ListEmptyComponent={
         <ThemedText style={styles.emptyText}>
           {emptyMessage}
@@ -46,6 +48,7 @@ export const SalesList: React.FC<SalesListProps> = ({
 
 const styles = StyleSheet.create({
   list: {
+    paddingTop: 4,
     paddingBottom: 100,
   },
   emptyText: {

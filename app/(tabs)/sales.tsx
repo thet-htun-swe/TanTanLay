@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 
-import { ActionButtons } from "@/components/common/ActionButtons";
 import { SalesHistoryFilter } from "@/components/common/SalesHistoryFilter";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { SearchBar } from "@/components/common/SearchBar";
@@ -12,6 +11,7 @@ import { SalesList } from "@/components/sales/SalesList";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Chip } from "@/components/ui/Chip";
 import { useSalesFilter } from "@/hooks/useSalesFilter";
 import { printBluetoothSales } from "@/services/bluetoothPrinter";
 import { getPrinterSettings } from "@/services/localSettings";
@@ -126,46 +126,8 @@ export default function SalesScreen() {
     }
   };
 
-  const exportButtons = [
-    // Excel export is admin only
-    ...(isAdmin
-      ? [
-          {
-            title: "Export",
-            onPress: handleExportExcel,
-            variant: "secondary" as const,
-          },
-        ]
-      : []),
-    {
-      title: "Print Labels",
-      onPress: handleExportLabels,
-      variant: "secondary" as const,
-    },
-  ];
-
-  const selectionButtons = [
-    {
-      title: "Select all",
-      onPress: toggleFilteredSelection,
-      variant: "secondary" as const,
-      disabled: filteredSales.length === 0,
-    },
-    {
-      title: `Preview (${selectedSaleIds.length})`,
-      onPress: () => setIsPreviewSheetOpen(true),
-      variant: "secondary" as const,
-      disabled: selectedSaleIds.length === 0,
-    },
-  ];
-
-  const printButtons = [
-    {
-      title: isPrinting ? "Printing..." : `Print selected (${selectedSaleIds.length})`,
-      onPress: handlePrintSelected,
-      disabled: selectedSaleIds.length === 0 || isPrinting,
-    },
-  ];
+  const allFilteredSelected =
+    filteredSales.length > 0 && filteredSales.every((sale) => selectedSaleIds.includes(sale.id));
 
   const selectedSales = sales.filter((sale) => selectedSaleIds.includes(sale.id));
 
@@ -173,6 +135,7 @@ export default function SalesScreen() {
     <ThemedView style={styles.container}>
       <ScreenHeader
         title="Sales History"
+        subtitle={`${filteredSales.length} ${filteredSales.length === 1 ? "sale" : "sales"}`}
         rightComponent={
           <TouchableOpacity
             onPress={() => router.push("/settings/printer")}
@@ -195,10 +158,18 @@ export default function SalesScreen() {
         filterActive={hasActiveFilters}
       />
 
-      <ActionButtons buttons={exportButtons} direction="row" spacing={8} />
-
-      <ActionButtons buttons={selectionButtons} direction="row" spacing={8} />
-      <ActionButtons buttons={printButtons} direction="row" spacing={8} />
+      {/* One compact toolbar; print actions appear in the bar below when receipts are selected */}
+      <View style={styles.toolbar}>
+        <Chip
+          label={allFilteredSelected ? "Unselect all" : "Select all"}
+          icon={allFilteredSelected ? "close-circle-outline" : "checkmark-done-outline"}
+          onPress={toggleFilteredSelection}
+          disabled={filteredSales.length === 0}
+        />
+        <Chip label="Labels" icon="pricetags-outline" onPress={handleExportLabels} />
+        {/* Excel export is admin only */}
+        {isAdmin && <Chip label="Export" icon="download-outline" onPress={handleExportExcel} />}
+      </View>
 
       <SalesList
         sales={filteredSales}
@@ -206,6 +177,32 @@ export default function SalesScreen() {
         selectedSaleIds={selectedSaleIds}
         onToggleSale={toggleSaleSelection}
       />
+
+      {selectedSaleIds.length > 0 && (
+        <View
+          style={[
+            styles.selectionBar,
+            { backgroundColor: theme.cardBackground, borderColor: theme.border },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() => setSelectedSaleIds([])}
+            hitSlop={10}
+            accessibilityLabel="Clear selection"
+          >
+            <Ionicons name="close" size={22} color={theme.text} />
+          </TouchableOpacity>
+          <ThemedText style={styles.selectionText}>{selectedSaleIds.length} selected</ThemedText>
+          <Chip label="Preview" icon="eye-outline" onPress={() => setIsPreviewSheetOpen(true)} />
+          <Chip
+            label={isPrinting ? "Printing..." : "Print"}
+            icon="print-outline"
+            onPress={handlePrintSelected}
+            disabled={isPrinting}
+            primary
+          />
+        </View>
+      )}
 
       <BottomSheet
         isVisible={isFilterSheetOpen}
@@ -269,6 +266,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  toolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  selectionBar: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  selectionText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
   },
   sheetTitle: {
     fontSize: 20,
