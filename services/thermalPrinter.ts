@@ -1,6 +1,7 @@
 import TcpSocket from "react-native-tcp-socket";
 
 import { Sale, WifiPrinterSettings } from "@/types";
+import { rasterizeLine } from "@/services/textRaster";
 import { buildSaleReceipt, buildTestReceipt } from "@/utils/escPos";
 
 const send = (data: Uint8Array, printer: WifiPrinterSettings) =>
@@ -36,7 +37,7 @@ export const printWifiSales = async (
 ) => {
   for (const sale of sales) {
     try {
-      await send(buildSaleReceipt(sale), printer);
+      await send(await buildSaleReceipt(sale, rasterizeLine), printer);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Unknown printer error";
       throw new Error(`Invoice #${sale.invoiceNumber ?? sale.id}: ${reason}`);

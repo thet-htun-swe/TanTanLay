@@ -10,6 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
+import { ReceiptTextRenderer } from "@/components/ReceiptTextRenderer";
 import { useAppStore, useIsAdmin } from "@/store";
 
 import * as Updates from "expo-updates";
@@ -104,6 +105,7 @@ export default function RootLayout() {
         </Stack.Protected>
         <Stack.Screen name="+not-found" />
       </Stack>
+      {isSignedIn && <ReceiptTextRenderer />}
       <StatusBar style="auto" />
     </ThemeProvider>
   );
