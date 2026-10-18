@@ -160,6 +160,20 @@ export default function SettingsScreen() {
               {supabaseHost}
             </ThemedText>
           </View>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => router.push("/connection-check")}
+            accessibilityRole="button"
+          >
+            <Ionicons name="pulse-outline" size={24} color={theme.tint} />
+            <View style={styles.rowText}>
+              <ThemedText style={styles.rowTitle}>Check connection</ThemedText>
+              <ThemedText style={styles.muted} numberOfLines={1}>
+                Test which servers this network can reach
+              </ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.icon} />
+          </TouchableOpacity>
         </Card>
       </ScrollView>
     </ThemedView>

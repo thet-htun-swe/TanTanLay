@@ -18,6 +18,9 @@ if (!supabaseUrl || !supabaseKey) {
 // Shown on the login and Settings screens, to check proxy vs direct on a phone
 export const supabaseHost = new URL(supabaseUrl).host;
 
+// For the "Check connection" screen (the key is the public publishable key)
+export const supabaseConfig = { url: supabaseUrl.replace(/\/+$/, ""), key: supabaseKey };
+
 // Web pages are pre-rendered in Node, which may have no WebSocket. Live updates
 // never run there, so give it a stand-in. Phones and browsers use the real one.
 class NoWebSocket {

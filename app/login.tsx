@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -6,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -115,6 +117,15 @@ export default function LoginScreen() {
           <Text style={[styles.hint, { color: theme.muted }]}>
             No account? Ask the shop admin to create one for you.
           </Text>
+          <TouchableOpacity
+            onPress={() => router.push("/connection-check")}
+            hitSlop={8}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.checkLink, { color: theme.tint }]}>
+              Trouble signing in? Check connection
+            </Text>
+          </TouchableOpacity>
           <Text style={[styles.server, { color: theme.muted }]}>Server: {supabaseHost}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -156,6 +167,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginTop: 20,
+  },
+  checkLink: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: 16,
   },
   server: {
     fontSize: 12,

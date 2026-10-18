@@ -128,6 +128,11 @@ export default function RootLayout() {
             />
           </Stack.Protected>
         </Stack.Protected>
+        {/* Open signed in or out (helps when sign-in does not work) */}
+        <Stack.Screen
+          name="connection-check"
+          options={{ title: "Check connection", headerBackTitle: "Back" }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
       {isSignedIn && <ReceiptTextRenderer />}
