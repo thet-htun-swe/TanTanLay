@@ -48,6 +48,9 @@ const upsertById = <T extends { id: number }>(list: T[], item: T) =>
 
 // Turn Supabase login errors into short messages for the user
 const toSignInMessage = (error: unknown): string => {
+  if (error instanceof Error && /timed out/i.test(error.message)) {
+    return "The server did not answer in time. Check the internet connection and try again.";
+  }
   if (isAuthRetryableFetchError(error)) {
     return NO_CONNECTION_MESSAGE;
   }

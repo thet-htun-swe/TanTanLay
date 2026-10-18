@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { supabaseHost } from "@/lib/supabase";
 import { useAppStore } from "@/store";
 
 export default function LoginScreen() {
@@ -114,6 +115,7 @@ export default function LoginScreen() {
           <Text style={[styles.hint, { color: theme.muted }]}>
             No account? Ask the shop admin to create one for you.
           </Text>
+          <Text style={[styles.server, { color: theme.muted }]}>Server: {supabaseHost}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -154,5 +156,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginTop: 20,
+  },
+  server: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 8,
+    opacity: 0.8,
   },
 });

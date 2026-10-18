@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { supabaseHost } from "@/lib/supabase";
 import { getPaperWidth, getPrinterSettings } from "@/services/localSettings";
 import { useAppStore } from "@/store";
 
@@ -150,6 +151,15 @@ export default function SettingsScreen() {
             </View>
             <ThemedText style={styles.muted}>{Constants.expoConfig?.version ?? "-"}</ThemedText>
           </View>
+          <View style={styles.row}>
+            <Ionicons name="cloud-outline" size={24} color={theme.tint} />
+            <View style={styles.rowText}>
+              <ThemedText style={styles.rowTitle}>Server</ThemedText>
+            </View>
+            <ThemedText style={[styles.muted, styles.serverValue]} numberOfLines={1}>
+              {supabaseHost}
+            </ThemedText>
+          </View>
         </Card>
       </ScrollView>
     </ThemedView>
@@ -228,6 +238,10 @@ const styles = StyleSheet.create({
   muted: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  serverValue: {
+    flexShrink: 1,
+    fontSize: 13,
   },
   footnote: {
     fontSize: 13,
