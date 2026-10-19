@@ -8,6 +8,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 
 - **Never** put the database password or the `service_role` / secret key in the app or the repo. The app only needs the two `EXPO_PUBLIC_*` values in `.env` (git-ignored; see `.env.example`).
 - `EXPO_PUBLIC_SUPABASE_URL` points to a **Cloudflare Worker reverse proxy** (`*.workers.dev`) because `*.supabase.co` is sometimes blocked in the shop's country. The Worker forwards REST, Auth and Realtime (WebSocket). To go direct, change only this URL.
+- If the proxy is blocked on a network, alternative proxies are ready in `supabase/proxies/` (Deno Deploy, Google Cloud Run with Caddy) with guides in `docs/` (`deno-deploy-proxy.md`, `cloud-run-proxy.md`, `cloudfront-proxy.md`). Test a new address in the app with Check connection > "Test another address" before switching the URL.
 - Database changes go in new files under `supabase/migrations/` (`001_init.sql` is the starting schema). The owner runs them in the Supabase SQL Editor.
 
 ## Development Commands

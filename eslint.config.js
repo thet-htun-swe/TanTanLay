@@ -5,7 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    // supabase/functions runs on Supabase (Deno), not in the app
-    ignores: ['dist/*', 'supabase/functions/*'],
+    // supabase/functions and supabase/proxies run on servers (Deno), not in the app
+    ignores: ['dist/*', 'supabase/functions/*', 'supabase/proxies/*'],
   },
 ]);

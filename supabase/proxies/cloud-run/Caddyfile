@@ -1,0 +1,34 @@
+# TanTanLay / KHA Clothing - Supabase proxy for Google Cloud Run (Caddy)
+#
+# Forwards every request (REST, Auth, Edge Functions) and Realtime WebSockets
+# to Supabase. Cloud Run gives the HTTPS address (https://<name>-<id>.run.app)
+# and tells the container which port to listen on ($PORT).
+# Setup: docs/cloud-run-proxy.md
+
+{
+	# No admin API and no certificates: Cloud Run handles HTTPS in front
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:{$PORT:8080} {
+	# Quick check that the proxy can reach Supabase (like the Worker's /ping)
+	handle /ping {
+		rewrite * /auth/v1/health
+		reverse_proxy https://{$SUPABASE_HOST:zulteqlxedmtabdnivxi.supabase.co} {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+	handle {
+		# WebSockets (live updates) are passed through automatically
+		reverse_proxy https://{$SUPABASE_HOST:zulteqlxedmtabdnivxi.supabase.co} {
+			# Supabase must see its own host name
+			header_up Host {upstream_hostport}
+			# Keep live-update connections open (Cloud Run timeout is set at deploy)
+			stream_timeout 1h
+			stream_close_delay 5s
+		}
+	}
+}
