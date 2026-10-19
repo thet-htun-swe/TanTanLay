@@ -5,11 +5,13 @@
 // "Reachable" = the address answered anything (even an error page); only
 // "timed out" / "failed" mean blocked or broken.
 //
-// To test a new proxy (e.g. a free Cloud Run or Deno Deploy test), add it to
-// the "Candidate proxies" group below and make a new build.
+// To try a new proxy address without a new build, use the screen's "Test
+// another address" box. To include it in every check, add it to the
+// "Candidate proxies" group below (needs a new build).
 
 export type ConnectionTestKind =
   | "http-get" // any HTTP answer = reachable
+  | "supabase-health" // must get Supabase's own answer (HTTP 200) through the address
   | "auth-post" // POST like a real sign-in (no real account used)
   | "websocket"; // live updates (Supabase Realtime)
 
@@ -28,6 +30,28 @@ export interface ConnectionTestGroup {
 
 // Direct Supabase project address (not secret; the app normally goes through the proxy)
 const SUPABASE_DIRECT_URL = "https://zulteqlxedmtabdnivxi.supabase.co";
+
+// "Test another address": checks that a proxy address really passes everything
+// through to Supabase (not just that it answers)
+export const customServerTests = (baseUrl: string): ConnectionTest[] => [
+  { id: "custom-health", name: "Reaches Supabase", kind: "supabase-health", url: baseUrl },
+  { id: "custom-auth", name: "Sign-in request", kind: "auth-post", url: baseUrl },
+  { id: "custom-ws", name: "Live updates", kind: "websocket", url: baseUrl },
+];
+
+// "abc.cloudfront.net" -> "https://abc.cloudfront.net"; null if not a valid address
+export const normalizeServerUrl = (input: string): string | null => {
+  const trimmed = input.trim().replace(/\/+$/, "");
+  if (!trimmed) return null;
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    if (!url.hostname.includes(".")) return null;
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, "")}`;
+  } catch {
+    return null;
+  }
+};
 
 export const connectionTestGroups = (serverUrl: string): ConnectionTestGroup[] => [
   {

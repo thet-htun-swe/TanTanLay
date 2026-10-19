@@ -27,11 +27,24 @@ const failure = (error: unknown, started: number): CheckResult => {
   };
 };
 
-const httpCheck = async (url: string, init: RequestInit): Promise<CheckResult> => {
+// expected: HTTP statuses that prove the request reached Supabase (omit = any answer)
+const httpCheck = async (
+  url: string,
+  init: RequestInit,
+  expected?: number[],
+): Promise<CheckResult> => {
   const started = Date.now();
   try {
     const response = await fetchWithTimeout(url, init);
-    return { status: "ok", detail: `HTTP ${response.status}`, ms: Date.now() - started };
+    const ms = Date.now() - started;
+    if (expected && !expected.includes(response.status)) {
+      return {
+        status: "failed",
+        detail: `HTTP ${response.status}: the address answers, but not with Supabase's reply (check the proxy setup)`,
+        ms,
+      };
+    }
+    return { status: "ok", detail: `HTTP ${response.status}`, ms };
   } catch (error) {
     return failure(error, started);
   }
@@ -78,11 +91,17 @@ export const runConnectionTest = (test: ConnectionTest, apiKey: string): Promise
     case "auth-post":
       // Same request as signing in, but with an empty body: the server answers
       // "missing email" (HTTP 400) without any account being involved
-      return httpCheck(`${test.url}/auth/v1/token?grant_type=password`, {
-        method: "POST",
-        headers: { apikey: apiKey, "Content-Type": "application/json" },
-        body: "{}",
-      });
+      return httpCheck(
+        `${test.url}/auth/v1/token?grant_type=password`,
+        {
+          method: "POST",
+          headers: { apikey: apiKey, "Content-Type": "application/json" },
+          body: "{}",
+        },
+        [400, 422],
+      );
+    case "supabase-health":
+      return httpCheck(`${test.url}/auth/v1/health`, { method: "GET", headers: { apikey: apiKey } }, [200]);
     case "websocket":
       return websocketCheck(test.url, apiKey);
     default:

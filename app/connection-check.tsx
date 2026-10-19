@@ -7,7 +7,13 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { connectionTestGroups } from "@/constants/connectionTests";
+import { Input } from "@/components/ui/Input";
+import {
+  ConnectionTest,
+  connectionTestGroups,
+  customServerTests,
+  normalizeServerUrl,
+} from "@/constants/connectionTests";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { supabaseConfig, supabaseHost } from "@/lib/supabase";
@@ -29,9 +35,16 @@ export default function ConnectionCheckScreen() {
   );
   const [results, setResults] = useState<Record<string, TestState>>({});
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
+  // "Test another address"
+  const [customInput, setCustomInput] = useState("");
+  const [customUrl, setCustomUrl] = useState<string | null>(null);
+  const [customError, setCustomError] = useState<string | null>(null);
 
-  const isRunning = Object.values(results).some((state) => state === "running");
   const allTests = groups.flatMap((group) => group.tests);
+  const customTests = customUrl ? customServerTests(customUrl) : [];
+  const anyRunning = (tests: ConnectionTest[]) => tests.some((test) => results[test.id] === "running");
+  const isRunning = anyRunning(allTests);
+  const isCustomRunning = anyRunning(customTests);
   const done = (id: string) => {
     const state = results[id];
     return state && state !== "running" ? state : null;
@@ -42,6 +55,28 @@ export default function ConnectionCheckScreen() {
     setResults(Object.fromEntries(allTests.map((test) => [test.id, "running" as const])));
     await Promise.all(
       allTests.map(async (test) => {
+        const result = await runConnectionTest(test, supabaseConfig.key);
+        setResults((current) => ({ ...current, [test.id]: result }));
+      }),
+    );
+  };
+
+  const runCustom = async () => {
+    const url = normalizeServerUrl(customInput);
+    if (!url) {
+      setCustomError("Enter an address like abc123.cloudfront.net or api.example.com");
+      return;
+    }
+    setCustomError(null);
+    setCustomUrl(url);
+    if (!checkedAt) setCheckedAt(new Date());
+    const tests = customServerTests(url);
+    setResults((current) => ({
+      ...current,
+      ...Object.fromEntries(tests.map((test) => [test.id, "running" as const])),
+    }));
+    await Promise.all(
+      tests.map(async (test) => {
         const result = await runConnectionTest(test, supabaseConfig.key);
         setResults((current) => ({ ...current, [test.id]: result }));
       }),
@@ -79,20 +114,18 @@ export default function ConnectionCheckScreen() {
   })();
 
   const shareResults = async () => {
+    const lineFor = (test: ConnectionTest) => {
+      const result = done(test.id);
+      return result
+        ? `${STATUS_MARK[result.status]} ${test.name}: ${STATUS_TEXT[result.status]} - ${result.detail} (${(result.ms / 1000).toFixed(1)} s)`
+        : `- ${test.name}: not run`;
+    };
     const text = [
       `${Constants.expoConfig?.name ?? "App"} - connection check`,
       `${checkedAt?.toLocaleString() ?? ""} · app ${Constants.expoConfig?.version ?? "-"}`,
       `Server: ${supabaseHost}`,
-      ...groups.flatMap((group) => [
-        "",
-        `[${group.title}]`,
-        ...group.tests.map((test) => {
-          const result = done(test.id);
-          return result
-            ? `${STATUS_MARK[result.status]} ${test.name}: ${STATUS_TEXT[result.status]} - ${result.detail} (${(result.ms / 1000).toFixed(1)} s)`
-            : `- ${test.name}: not finished`;
-        }),
-      ]),
+      ...(customUrl ? ["", `[Tested address: ${customUrl}]`, ...customTests.map(lineFor)] : []),
+      ...groups.flatMap((group) => ["", `[${group.title}]`, ...group.tests.map(lineFor)]),
       ...(summary.length ? ["", ...summary.map((line) => line.text)] : []),
     ].join("\n");
     try {
@@ -110,6 +143,56 @@ export default function ConnectionCheckScreen() {
         : state.status === "timeout"
           ? theme.warning
           : theme.danger;
+
+  const renderRow = (test: ConnectionTest, index: number) => {
+    const state = results[test.id];
+    const result = done(test.id);
+    return (
+      <View
+        key={test.id}
+        style={[
+          styles.testRow,
+          index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
+        ]}
+      >
+        <View style={styles.statusIcon}>
+          {state === "running" ? (
+            <ActivityIndicator size="small" color={theme.tint} />
+          ) : (
+            <Ionicons
+              name={
+                !result
+                  ? "ellipse-outline"
+                  : result.status === "ok"
+                    ? "checkmark-circle"
+                    : result.status === "timeout"
+                      ? "time-outline"
+                      : "close-circle"
+              }
+              size={20}
+              color={statusColor(state)}
+            />
+          )}
+        </View>
+        <View style={styles.testText}>
+          <ThemedText style={styles.testName}>{test.name}</ThemedText>
+          {result && (
+            <Text style={[styles.testDetail, { color: theme.muted }]} numberOfLines={3}>
+              {result.detail} · {(result.ms / 1000).toFixed(1)} s
+            </Text>
+          )}
+        </View>
+        {result && (
+          <Text style={[styles.statusText, { color: statusColor(state) }]}>
+            {STATUS_TEXT[result.status]}
+          </Text>
+        )}
+      </View>
+    );
+  };
+
+  const customFinished = customTests.length > 0 && customTests.every((test) => done(test.id));
+  const customPassed = customFinished && customTests.every((test) => done(test.id)?.status === "ok");
 
   return (
     <ThemedView style={styles.container}>
@@ -141,60 +224,66 @@ export default function ConnectionCheckScreen() {
           </Card>
         )}
 
+        {/* Test a new proxy address (custom domain, CloudFront...) without a new build */}
+        <Card>
+          <ThemedText style={styles.groupTitle}>Test another address</ThemedText>
+          <ThemedText style={[styles.groupHint, { color: theme.muted }]}>
+            Check a new proxy address before the app uses it. It must pass all three tests.
+          </ThemedText>
+          <Input
+            value={customInput}
+            onChangeText={(text) => {
+              setCustomInput(text);
+              setCustomError(null);
+            }}
+            placeholder="e.g. abc123.cloudfront.net"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            returnKeyType="go"
+            onSubmitEditing={runCustom}
+            error={customError ?? undefined}
+            containerStyle={styles.customInput}
+          />
+          <Button
+            title={isCustomRunning ? "Testing..." : "Test this address"}
+            variant="secondary"
+            onPress={runCustom}
+            disabled={isCustomRunning || !customInput.trim()}
+          />
+          {customUrl && (
+            <>
+              <ThemedText style={[styles.testedUrl, { color: theme.muted }]} numberOfLines={1}>
+                {customUrl}
+              </ThemedText>
+              {customTests.map(renderRow)}
+              {customFinished && (
+                <View style={styles.summaryRow}>
+                  <Ionicons
+                    name={customPassed ? "checkmark-circle" : "alert-circle"}
+                    size={18}
+                    color={customPassed ? theme.success : theme.danger}
+                  />
+                  <ThemedText style={styles.summaryText}>
+                    {customPassed
+                      ? "This address works on this network."
+                      : "This address does not fully work on this network."}
+                  </ThemedText>
+                </View>
+              )}
+            </>
+          )}
+        </Card>
+
         {groups.map((group) => (
           <Card key={group.title}>
             <ThemedText style={styles.groupTitle}>{group.title}</ThemedText>
             <ThemedText style={[styles.groupHint, { color: theme.muted }]}>{group.hint}</ThemedText>
-            {group.tests.map((test, index) => {
-              const state = results[test.id];
-              const result = done(test.id);
-              return (
-                <View
-                  key={test.id}
-                  style={[
-                    styles.testRow,
-                    index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
-                  ]}
-                >
-                  <View style={styles.statusIcon}>
-                    {state === "running" ? (
-                      <ActivityIndicator size="small" color={theme.tint} />
-                    ) : (
-                      <Ionicons
-                        name={
-                          !result
-                            ? "ellipse-outline"
-                            : result.status === "ok"
-                              ? "checkmark-circle"
-                              : result.status === "timeout"
-                                ? "time-outline"
-                                : "close-circle"
-                        }
-                        size={20}
-                        color={statusColor(state)}
-                      />
-                    )}
-                  </View>
-                  <View style={styles.testText}>
-                    <ThemedText style={styles.testName}>{test.name}</ThemedText>
-                    {result && (
-                      <Text style={[styles.testDetail, { color: theme.muted }]} numberOfLines={2}>
-                        {result.detail} · {(result.ms / 1000).toFixed(1)} s
-                      </Text>
-                    )}
-                  </View>
-                  {result && (
-                    <Text style={[styles.statusText, { color: statusColor(state) }]}>
-                      {STATUS_TEXT[result.status]}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
+            {group.tests.map(renderRow)}
           </Card>
         ))}
 
-        {checkedAt && !isRunning && (
+        {checkedAt && !isRunning && !isCustomRunning && (
           <Button title="Share results" variant="secondary" onPress={shareResults} style={styles.share} />
         )}
       </ScrollView>
@@ -263,6 +352,13 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  customInput: {
+    marginBottom: 12,
+  },
+  testedUrl: {
+    fontSize: 12,
+    marginTop: 12,
   },
   share: {
     marginTop: 8,
