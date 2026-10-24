@@ -94,6 +94,7 @@ share the APK. The login screen should show the new **Server:** address.
 
 ## Updating or removing
 
-- Change the proxy code: run `npx -y deno@latest deploy --org khashop --app kha-data --prod`
-  in the same folder (no app build needed).
+- Change the proxy code: in `supabase/proxies/deno-deploy` run
+  `npx -y deno@latest deploy --prod` (the folder's `deno.jsonc` says which org/app;
+  for this shop `thet-dev` / `kha-data`). No app build needed.
 - Remove: console.deno.com > `kha-data` > Settings > delete the app.

@@ -1,0 +1,7 @@
+{
+  "deploy": {
+    "org": "thet-dev",
+    "app": "kha-data"
+  }
+}
+
