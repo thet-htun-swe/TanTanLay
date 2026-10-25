@@ -20,6 +20,7 @@ import { SaleSummary } from "@/components/sales/SaleSummary";
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
 import { setItemDiscount, setItemQuantity } from "@/utils/saleMath";
 import { getErrorMessage, isNoConnectionError } from "@/services/api";
+import { useToast } from "@/components/ui/Toast";
 import { useAppStore } from "@/store";
 import { Customer, Sale, SaleItem } from "@/types";
 import { generateUUID } from "@/utils/uuid";
@@ -29,6 +30,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 export default function NewSaleScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
   const { products, fetchProducts, addSale } = useAppStore();
+  const toast = useToast();
   const [selectedProducts, setSelectedProducts] = useState<SaleItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<
     (Customer & { id?: number }) | null
@@ -155,7 +157,7 @@ export default function NewSaleScreen() {
   const handleCreateSale = async () => {
     const validation = validateSale();
     if (!validation.isValid) {
-      Alert.alert("Error", validation.error);
+      toast.error(validation.error ?? "Please check the sale details");
       return;
     }
 
@@ -180,9 +182,8 @@ export default function NewSaleScreen() {
       const saleId = await addSale(newSale, clientIdRef.current);
       clientIdRef.current = generateUUID();
 
-      Alert.alert("Success", "Sale created successfully", [
-        { text: "OK", onPress: () => router.push(`/sale/${saleId}`) },
-      ]);
+      toast.success("Sale created");
+      router.push(`/sale/${saleId}`);
     } catch (error) {
       Alert.alert(
         "Sale not saved",

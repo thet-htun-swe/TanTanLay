@@ -20,6 +20,7 @@ import {
   RowIconButton,
 } from "@/components/ui/ListRow";
 import { getErrorMessage, searchProducts } from "@/services/api";
+import { useToast } from "@/components/ui/Toast";
 import { useAppStore, useIsAdmin } from "@/store";
 import { Product } from "@/types";
 import { router } from "expo-router";
@@ -29,6 +30,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 export default function ProductsScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
   const { removeProduct } = useAppStore();
+  const toast = useToast();
   const isAdmin = useIsAdmin();
   const productsVersion = useAppStore((state) => state.productsVersion);
   const [products, setProducts] = useState<(Product & { id: number })[]>([]);
@@ -107,7 +109,7 @@ export default function ProductsScreen() {
     try {
       await removeProduct(productId);
     } catch (error) {
-      Alert.alert("Error", getErrorMessage(error, "Failed to delete product"));
+      toast.error(getErrorMessage(error, "Failed to delete product"));
     }
     loadProducts(searchTerm);
   };

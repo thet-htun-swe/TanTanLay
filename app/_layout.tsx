@@ -12,6 +12,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ReceiptTextRenderer } from "@/components/ReceiptTextRenderer";
+import { ToastProvider } from "@/components/ui/Toast";
 import { useAppStore, useIsAdmin } from "@/store";
 
 import * as Updates from "expo-updates";
@@ -91,6 +92,7 @@ export default function RootLayout() {
         notification: theme.danger,
       },
     }}>
+      <ToastProvider>
       <Stack>
         {/* Signed out: only the login screen can be opened */}
         <Stack.Protected guard={!isSignedIn}>
@@ -153,6 +155,7 @@ export default function RootLayout() {
       </Stack>
       {isSignedIn && <ReceiptTextRenderer />}
       <StatusBar style="auto" />
+      </ToastProvider>
     </ThemeProvider>
   );
 }

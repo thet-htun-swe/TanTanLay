@@ -1,7 +1,6 @@
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
@@ -12,10 +11,12 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ProductNameInput } from "@/components/ui/ProductNameInput";
+import { useToast } from "@/components/ui/Toast";
 import { useAppStore } from "@/store";
 
 export default function CreateProductScreen() {
   const { addProduct, products } = useAppStore();
+  const toast = useToast();
 
   // Form state
   const [name, setName] = useState("");
@@ -42,25 +43,22 @@ export default function CreateProductScreen() {
 
   const handleCreateProduct = async () => {
     if (!name.trim()) {
-      Alert.alert("Error", "Please enter a product name");
+      toast.error("Please enter a product name");
       return;
     }
 
     if (nameValidation.hasExactMatch) {
-      Alert.alert(
-        "Error",
-        "A product with this name already exists. Please choose a different name."
-      );
+      toast.error("A product with this name already exists. Please choose a different name.");
       return;
     }
 
     if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-      Alert.alert("Error", "Please enter a valid price");
+      toast.error("Please enter a valid price");
       return;
     }
 
     if (!stockQty || isNaN(parseInt(stockQty)) || parseInt(stockQty) < 0) {
-      Alert.alert("Error", "Please enter a valid stock quantity");
+      toast.error("Please enter a valid stock quantity");
       return;
     }
 
@@ -75,18 +73,12 @@ export default function CreateProductScreen() {
 
       await addProduct(newProduct);
 
-      Alert.alert("Success", "Product created successfully!", [
-        {
-          text: "OK",
-          onPress: () => {
-            resetForm();
-            router.back();
-          },
-        },
-      ]);
+      toast.success("Product created successfully");
+      resetForm();
+      router.back();
     } catch (error) {
       console.error("Error creating product:", error);
-      Alert.alert("Error", "Failed to create product. Please try again.");
+      toast.error("Failed to create product. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

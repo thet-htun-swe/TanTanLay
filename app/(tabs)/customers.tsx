@@ -18,6 +18,7 @@ import { ListRow, ListSeparator, RowIconButton } from "@/components/ui/ListRow";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { deleteCustomer, getErrorMessage, searchCustomers } from "@/services/api";
+import { useToast } from "@/components/ui/Toast";
 import { useAppStore, useIsAdmin } from "@/store";
 import { Customer } from "@/types";
 import { useRouter } from "expo-router";
@@ -25,6 +26,7 @@ import { useRouter } from "expo-router";
 export default function CustomersScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const toast = useToast();
   const [customers, setCustomers] = useState<(Customer & { id: number })[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +119,7 @@ export default function CustomersScreen() {
           try {
             await deleteCustomer(customer.id);
           } catch (error) {
-            Alert.alert("Error", getErrorMessage(error, "Failed to delete customer"));
+            toast.error(getErrorMessage(error, "Failed to delete customer"));
           }
           loadCustomers(searchTerm);
         },

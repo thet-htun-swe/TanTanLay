@@ -17,6 +17,7 @@ import { printBluetoothSales } from "@/services/bluetoothPrinter";
 import { getPrinterSettings } from "@/services/localSettings";
 import { printWifiSales } from "@/services/thermalPrinter";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { useToast } from "@/components/ui/Toast";
 import { useAppStore, useIsAdmin } from "@/store";
 import { ExportUtils } from "@/utils/exportUtils";
 import { Colors } from "@/constants/Colors";
@@ -25,6 +26,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 export default function SalesScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
   const { sales, fetchSales, error } = useAppStore();
+  const toast = useToast();
   const isAdmin = useIsAdmin();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [isPreviewSheetOpen, setIsPreviewSheetOpen] = useState(false);
@@ -118,7 +120,7 @@ export default function SalesScreen() {
         await printWifiSales(selectedSales, settings);
       }
       setSelectedSaleIds([]);
-      Alert.alert("Printed", `${selectedSales.length} receipt${selectedSales.length === 1 ? "" : "s"} sent to the printer`);
+      toast.success(`${selectedSales.length} receipt${selectedSales.length === 1 ? "" : "s"} sent to the printer`);
     } catch (error) {
       Alert.alert("Print failed", error instanceof Error ? error.message : "Could not print receipts");
     } finally {

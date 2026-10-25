@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
@@ -13,11 +12,13 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ProductNameInput } from "@/components/ui/ProductNameInput";
+import { useToast } from "@/components/ui/Toast";
 import { useAppStore } from "@/store";
 
 export default function EditProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { products, editProduct } = useAppStore();
+  const toast = useToast();
 
   // Form state
   const [name, setName] = useState("");
@@ -46,39 +47,36 @@ export default function EditProductScreen() {
         setPrice(product.price.toString());
         setStockQty(product.stockQty.toString());
       } else {
-        Alert.alert("Error", "Product not found");
+        toast.error("Product not found");
         router.back();
       }
       setIsLoading(false);
     }
-  }, [id, products]);
+  }, [id, products, toast]);
 
   const handleUpdateProduct = async () => {
     if (!name.trim()) {
-      Alert.alert("Error", "Please enter a product name");
+      toast.error("Please enter a product name");
       return;
     }
 
     if (nameValidation.hasExactMatch) {
-      Alert.alert(
-        "Error",
-        "A product with this name already exists. Please choose a different name."
-      );
+      toast.error("A product with this name already exists. Please choose a different name.");
       return;
     }
 
     if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-      Alert.alert("Error", "Please enter a valid price");
+      toast.error("Please enter a valid price");
       return;
     }
 
     if (!stockQty || isNaN(parseInt(stockQty)) || parseInt(stockQty) < 0) {
-      Alert.alert("Error", "Please enter a valid stock quantity");
+      toast.error("Please enter a valid stock quantity");
       return;
     }
 
     if (!id) {
-      Alert.alert("Error", "Invalid product ID");
+      toast.error("Invalid product ID");
       return;
     }
 
@@ -94,17 +92,11 @@ export default function EditProductScreen() {
 
       await editProduct(updatedProduct);
 
-      Alert.alert("Success", "Product updated successfully!", [
-        {
-          text: "OK",
-          onPress: () => {
-            router.back();
-          },
-        },
-      ]);
+      toast.success("Product updated successfully");
+      router.back();
     } catch (error) {
       console.error("Error updating product:", error);
-      Alert.alert("Error", "Failed to update product. Please try again.");
+      toast.error("Failed to update product. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
