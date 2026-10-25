@@ -60,7 +60,7 @@ export default function RootLayout() {
 
   if (!loaded || !authReady || (isSignedIn && !isInitialized)) {
     // Show loading while fonts, saved login and database are loading
-    return <LoadingScreen />;
+    return <LoadingScreen message={isSignedIn ? "Signing in…" : undefined} />;
   }
 
   return (

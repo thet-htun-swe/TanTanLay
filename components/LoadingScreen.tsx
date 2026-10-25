@@ -1,10 +1,10 @@
-import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 
 /** Same colour as the native splash screen (app.json), so there is no flash between them. */
 export const SPLASH_BACKGROUND = "#4F3590";
 
 /** Shown while fonts, the saved login and shop data load (replaces a blank/black screen). */
-export function LoadingScreen() {
+export function LoadingScreen({ message }: { message?: string }) {
   return (
     <View style={styles.container}>
       <Image
@@ -13,11 +13,10 @@ export function LoadingScreen() {
         resizeMode="contain"
         accessibilityLabel="KHA"
       />
-      <ActivityIndicator
-        style={styles.spinner}
-        size="small"
-        color="#D6C4FF"
-      />
+      <View style={styles.status}>
+        <ActivityIndicator size="small" color="#D6C4FF" />
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+      </View>
     </View>
   );
 }
@@ -30,5 +29,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: { width: 260, height: 130 },
-  spinner: { position: "absolute", bottom: 80 },
+  status: {
+    position: "absolute",
+    bottom: 80,
+    alignItems: "center",
+    gap: 10,
+  },
+  message: { color: "#D6C4FF", fontSize: 15 },
 });
