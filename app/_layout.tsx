@@ -10,6 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { ReceiptTextRenderer } from "@/components/ReceiptTextRenderer";
 import { useAppStore, useIsAdmin } from "@/store";
 
@@ -59,7 +60,7 @@ export default function RootLayout() {
 
   if (!loaded || !authReady || (isSignedIn && !isInitialized)) {
     // Show loading while fonts, saved login and database are loading
-    return null;
+    return <LoadingScreen />;
   }
 
   return (

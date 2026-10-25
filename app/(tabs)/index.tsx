@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
+import { BrandName } from "@/components/BrandName";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -37,9 +38,9 @@ export default function HomeScreen() {
       headerImage={<View />}
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title" style={styles.title} numberOfLines={1}>
-          KHA Clothing
-        </ThemedText>
+        <View style={styles.title}>
+          <BrandName />
+        </View>
         <TouchableOpacity
           onPress={() => router.push("/settings")}
           hitSlop={10}

@@ -1,4 +1,3 @@
-import Constants from "expo-constants";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -12,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from "@/components/ThemedText";
+import { BrandName } from "@/components/BrandName";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -64,9 +63,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <ThemedText type="title">
-              {Constants.expoConfig?.name ?? "Sign in"}
-            </ThemedText>
+            <BrandName />
             <Text style={[styles.subtitle, { color: theme.muted }]}>
               Sign in to continue
             </Text>

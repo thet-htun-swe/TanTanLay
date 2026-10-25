@@ -29,9 +29,13 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 260,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#4F3590",
+          "dark": {
+            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#4F3590"
+          }
         }
       ]
     ],
@@ -45,9 +49,7 @@
       }
     },
     "owner": "thethtun",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/2907496a-d4e4-46c9-90bb-e4fc4989f47c"
     }
