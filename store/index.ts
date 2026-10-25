@@ -72,6 +72,9 @@ interface AppState {
   session: Session | null;
   profile: Profile | null;
   authReady: boolean;
+  // Set when the account or shop data could not be loaded after sign-in
+  startupError: string | null;
+  retryStartup: () => Promise<void>;
   initAuth: () => Promise<void>;
   loadProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -114,6 +117,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   session: null,
   profile: null,
   authReady: false,
+  startupError: null,
 
   // Restore a saved login and follow login/logout changes
   initAuth: async () => {
@@ -130,6 +134,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             products: [],
             sales: [],
             error: null,
+            startupError: null,
             isInitialized: false,
           });
         } else if (session.user.id !== previousUserId) {
@@ -156,19 +161,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     const userId = get().session?.user.id;
     if (!userId) return;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name, role")
-      .eq("id", userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, role")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (error || !data) {
-      console.warn("Failed to load profile:", error?.message ?? "not found");
-      return;
+      if (error) throw error;
+      if (!data) {
+        set({
+          startupError:
+            "Your account was not found. Ask the shop admin to check it.",
+        });
+        return;
+      }
+      set({
+        profile: { id: data.id, fullName: data.full_name, role: data.role },
+        startupError: null,
+      });
+    } catch (error) {
+      console.warn("Failed to load profile:", error);
+      set({
+        startupError: getErrorMessage(error, "Could not load your account."),
+      });
     }
-    set({
-      profile: { id: data.id, fullName: data.full_name, role: data.role },
-    });
   },
 
   signIn: async (email: string, password: string) => {
@@ -194,6 +211,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       products: [],
       sales: [],
       error: null,
+      startupError: null,
       isInitialized: false,
     });
   },
@@ -208,20 +226,31 @@ export const useAppStore = create<AppState>((set, get) => ({
   initializeApp: async () => {
     if (get().isInitialized) return;
 
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, startupError: null });
+    // The role decides what the app shows, so the account must load first
+    if (!get().profile) {
+      await get().loadProfile();
+      if (!get().profile) {
+        set({ loading: false });
+        return;
+      }
+    }
     get().startRealtime();
     try {
       const [products, sales] = await Promise.all([getProducts(), getSales()]);
       set({ products, sales, loading: false, isInitialized: true });
     } catch (error) {
       console.error("Failed to load data:", error);
-      // Still open the app; screens load again when they come into focus
+      // The loading screen shows this with Retry and Log out buttons
       set({
-        error: getErrorMessage(error, "Failed to load data"),
+        startupError: getErrorMessage(error, "Failed to load data"),
         loading: false,
-        isInitialized: true,
       });
     }
+  },
+
+  retryStartup: async () => {
+    await get().initializeApp();
   },
 
   // Product actions

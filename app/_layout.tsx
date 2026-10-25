@@ -20,8 +20,16 @@ import { useEffect } from "react";
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
-  const { initializeApp, isInitialized, initAuth, authReady, session } =
-    useAppStore();
+  const {
+    initializeApp,
+    isInitialized,
+    initAuth,
+    authReady,
+    session,
+    startupError,
+    retryStartup,
+    signOut,
+  } = useAppStore();
   const isSignedIn = !!session;
   const isAdmin = useIsAdmin();
   const [loaded] = useFonts({
@@ -60,7 +68,14 @@ export default function RootLayout() {
 
   if (!loaded || !authReady || (isSignedIn && !isInitialized)) {
     // Show loading while fonts, saved login and database are loading
-    return <LoadingScreen message={isSignedIn ? "Signing in…" : undefined} />;
+    return (
+      <LoadingScreen
+        message={isSignedIn ? "Signing in…" : undefined}
+        error={isSignedIn ? startupError : null}
+        onRetry={retryStartup}
+        onLogout={isSignedIn ? signOut : undefined}
+      />
+    );
   }
 
   return (
