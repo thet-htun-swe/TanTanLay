@@ -6,6 +6,11 @@ import { Sale } from "@/types";
 
 export type Period = "day" | "month";
 
+// Only what the dashboard needs from a sale (a full Sale also fits)
+export type StatsSale = Pick<Sale, "orderDate" | "subtotal" | "total"> & {
+  items: { quantity: number }[];
+};
+
 export interface PeriodStats {
   total: number; // after discounts
   count: number; // number of sales
@@ -38,7 +43,7 @@ const keyOf = (date: Date, period: Period) =>
     : `${date.getFullYear()}-${date.getMonth()}`;
 
 // Totals for every day (or month) that has sales, by key
-const groupSales = (sales: Sale[], period: Period) => {
+const groupSales = (sales: StatsSale[], period: Period) => {
   const groups = new Map<string, PeriodStats>();
   for (const sale of sales) {
     const key = keyOf(new Date(sale.orderDate), period);
@@ -52,7 +57,7 @@ const groupSales = (sales: Sale[], period: Period) => {
   return groups;
 };
 
-export const statsFor = (sales: Sale[], period: Period, start: Date): PeriodStats => {
+export const statsFor = (sales: StatsSale[], period: Period, start: Date): PeriodStats => {
   const stats = groupSales(sales, period).get(keyOf(start, period));
   return stats
     ? { ...stats, total: round2(stats.total), discount: round2(stats.discount) }
@@ -60,7 +65,7 @@ export const statsFor = (sales: Sale[], period: Period, start: Date): PeriodStat
 };
 
 // The `count` periods ending with `end` (oldest first), for the chart
-export const seriesEnding = (sales: Sale[], period: Period, end: Date, count: number): SeriesPoint[] => {
+export const seriesEnding = (sales: StatsSale[], period: Period, end: Date, count: number): SeriesPoint[] => {
   const groups = groupSales(sales, period);
   return Array.from({ length: count }, (_, i) => {
     const start = shift(end, period, i - (count - 1));

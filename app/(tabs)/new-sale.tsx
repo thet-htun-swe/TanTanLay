@@ -1,4 +1,5 @@
 import { DateTimePicker } from "@/components/common/DateTimePicker";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router/react-navigation";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -8,9 +9,11 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from "react-native";
 
+import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { ScreenHeader } from "@/components/common/ScreenHeader";
 import { CustomerSelector } from "@/components/sales/CustomerSelector";
@@ -19,7 +22,7 @@ import { SaleSummary } from "@/components/sales/SaleSummary";
 
 import { useSaleCalculations } from "@/hooks/useSaleCalculations";
 import { setItemDiscount, setItemQuantity } from "@/utils/saleMath";
-import { getErrorMessage, isNoConnectionError } from "@/services/api";
+import { getErrorMessage, isNoConnectionError, SavedSale } from "@/services/api";
 import { useToast } from "@/components/ui/Toast";
 import { useAppStore } from "@/store";
 import { Customer, Sale, SaleItem } from "@/types";
@@ -38,6 +41,9 @@ export default function NewSaleScreen() {
   const [orderDate, setOrderDate] = useState<Date>(new Date());
 
   const [isCreating, setIsCreating] = useState(false);
+  // The sale just saved (shown above the empty form until the next one starts)
+  const [lastSaved, setLastSaved] = useState<SavedSale | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
   // One id per sale form: tapping Create again after a failure reuses it,
   // so the server never saves the same sale twice
   const clientIdRef = useRef(generateUUID());
@@ -62,6 +68,7 @@ export default function NewSaleScreen() {
   );
 
   const addProductToSale = (newItem: SaleItem) => {
+    setLastSaved(null);
     setSelectedProducts((prev) => {
       const existingIndex = prev.findIndex(
         (item) => item.productId === newItem.productId
@@ -179,11 +186,15 @@ export default function NewSaleScreen() {
         total,
       };
 
-      const saleId = await addSale(newSale, clientIdRef.current);
-      clientIdRef.current = generateUUID();
+      const saved = await addSale(newSale, clientIdRef.current);
 
-      toast.success("Sale created");
-      router.push(`/sale/${saleId}`);
+      // Ready for the next customer at once; the receipt is one tap away
+      clientIdRef.current = generateUUID();
+      setSelectedProducts([]);
+      setSelectedCustomer(null);
+      setOrderDate(new Date());
+      setLastSaved(saved);
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
     } catch (error) {
       Alert.alert(
         "Sale not saved",
@@ -206,11 +217,42 @@ Tap Create Sale again when you are back online. It will not be saved twice.`
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <ScrollView
+          ref={scrollRef}
           style={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <ScreenHeader title="New Sale" />
+
+          {lastSaved && (
+            <View
+              style={[
+                styles.savedBar,
+                { backgroundColor: theme.cardBackground, borderColor: theme.success },
+              ]}
+            >
+              <Ionicons name="checkmark-circle" size={22} color={theme.success} />
+              <ThemedText style={styles.savedText} numberOfLines={1}>
+                Sale #{lastSaved.invoiceNumber} saved
+              </ThemedText>
+              <TouchableOpacity
+                onPress={() => router.push(`/sale/${lastSaved.id}`)}
+                hitSlop={10}
+                accessibilityRole="button"
+              >
+                <ThemedText style={[styles.savedLink, { color: theme.tint }]}>
+                  View receipt
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setLastSaved(null)}
+                hitSlop={10}
+                accessibilityLabel="Close"
+              >
+                <Ionicons name="close" size={20} color={theme.muted} />
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.customerDateRow}>
             <View style={styles.customerSelectorContainer}>
@@ -285,6 +327,25 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     padding: 16,
+  },
+  savedBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  savedText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  savedLink: {
+    fontSize: 15,
+    fontWeight: "600",
   },
 
 });

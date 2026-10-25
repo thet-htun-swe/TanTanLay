@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Sale } from "@/types";
 import {
   changePercent,
   formatAmount,
@@ -14,6 +13,7 @@ import {
   seriesEnding,
   shift,
   startOf,
+  StatsSale,
   statsFor,
 } from "@/utils/salesStats";
 import { ThemedText } from "../ThemedText";
@@ -25,7 +25,14 @@ const MAX_BAR_WIDTH = 24;
 
 // Home dashboard: total sales for a day or a month, with the recent trend.
 // Tap a column (or use ‹ ›) to look at another day / month.
-export function SalesDashboard({ sales }: { sales: Sale[] }) {
+// `onNeedSince` asks for older sales when the chart goes further back.
+export function SalesDashboard({
+  sales,
+  onNeedSince,
+}: {
+  sales: StatsSale[];
+  onNeedSince?: (since: Date) => void;
+}) {
   const theme = Colors[useColorScheme() ?? "light"];
   const [period, setPeriod] = useState<Period>("day");
   const [selected, setSelected] = useState(() => startOf(new Date(), "day"));
@@ -44,6 +51,13 @@ export function SalesDashboard({ sales }: { sales: Sale[] }) {
     () => seriesEnding(sales, period, windowEnd, BARS[period]),
     [sales, period, windowEnd],
   );
+  // Oldest day / month on screen: first column, or the period compared with
+  useEffect(() => {
+    const firstColumn = shift(windowEnd, period, -(BARS[period] - 1));
+    const compared = shift(selected, period, -1);
+    onNeedSince?.(firstColumn < compared ? firstColumn : compared);
+  }, [onNeedSince, period, selected, windowEnd]);
+
   const maxTotal = Math.max(...series.map((point) => point.total), 0);
   const change = changePercent(stats.total, previous.total);
 

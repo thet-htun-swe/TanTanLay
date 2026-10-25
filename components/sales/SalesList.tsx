@@ -11,6 +11,8 @@ interface SalesListProps {
   selectedSaleIds: number[];
   onToggleSale: (saleId: number) => void;
   emptyMessage?: string;
+  // Shown under the last sale (e.g. "Load more")
+  footer?: React.ReactElement | null;
 }
 
 export const SalesList: React.FC<SalesListProps> = ({
@@ -19,6 +21,7 @@ export const SalesList: React.FC<SalesListProps> = ({
   selectedSaleIds,
   onToggleSale,
   emptyMessage = "No sales found. Create your first sale!",
+  footer,
 }) => {
   const renderSaleItem = ({ item }: { item: Sale & { id: number } }) => (
     <SaleCard
@@ -41,6 +44,7 @@ export const SalesList: React.FC<SalesListProps> = ({
           {emptyMessage}
         </ThemedText>
       }
+      ListFooterComponent={footer}
       showsVerticalScrollIndicator={false}
     />
   );

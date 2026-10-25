@@ -316,6 +316,16 @@ export const deleteProduct = async (id: number): Promise<void> => {
   if (!rows?.length) throw new Error("Product not found, or you don't have permission.");
 };
 
+// Current stock/price of a few products (e.g. the ones in a sale just saved)
+export const getProductsByIds = async (ids: number[]): Promise<(Product & { id: number })[]> => {
+  if (!ids.length) return [];
+  const rows = await run(
+    supabase.from("products").select(PRODUCT_COLUMNS).in("id", ids),
+    "Failed to load products",
+  );
+  return ((rows ?? []) as ProductRow[]).map(toProduct);
+};
+
 export const getLowStockProducts = async (
   threshold: number = 5,
 ): Promise<(Product & { id: number })[]> => {
@@ -422,13 +432,18 @@ export const deleteCustomer = async (id: number): Promise<void> => {
 // Sales
 // ---------------------------------------------------------------------------
 
+export interface SavedSale {
+  id: number;
+  invoiceNumber: string;
+}
+
 // Saves a sale on the server (stock is checked there). Pass the same clientId
 // when retrying the same sale; the server then saves it only once.
-// Returns the new sale's id.
+// Returns the new sale's id and invoice number.
 export const saveSale = async (
   sale: Omit<Sale, "id">,
   clientId: string = generateUUID(),
-): Promise<number> => {
+): Promise<SavedSale> => {
   const payload = {
     ...toSalePayload(sale),
     client_id: clientId,
@@ -447,7 +462,7 @@ export const saveSale = async (
       );
       const created = (rows as { id: number; invoice_number: string }[] | null)?.[0];
       if (!created) throw new Error("Failed to save sale");
-      return created.id;
+      return { id: created.id, invoiceNumber: created.invoice_number };
     } catch (error) {
       if (!isNoConnectionError(error) || attempt >= 3) throw error;
       await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
@@ -468,6 +483,75 @@ export const getSales = async (): Promise<(Sale & { id: number })[]> => {
   );
   return rows.map(toSale);
 };
+
+// One page of sales, newest first. Pass the last sale of the previous page as
+// `after` to continue exactly where it ended (new sales arriving in between do
+// not shift the pages).
+export const SALES_PAGE_SIZE = 100;
+
+export const getSalesPage = async (
+  after?: Pick<Sale, "date"> & { id: number },
+  limit: number = SALES_PAGE_SIZE,
+): Promise<{ sales: (Sale & { id: number })[]; hasMore: boolean }> => {
+  let query = supabase.from("sales").select(SALE_COLUMNS);
+  if (after) {
+    // Older than `after`: earlier date, or same date with a smaller id
+    // (quoted: the timestamp contains ":" and "+")
+    const date = `"${after.date}"`;
+    query = query.or(`date.lt.${date},and(date.eq.${date},id.lt.${after.id})`);
+  }
+  const rows = await run(
+    query
+      .order("date", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit + 1),
+    "Failed to load sales",
+  );
+  const list = (rows ?? []) as SaleRow[];
+  return { sales: list.slice(0, limit).map(toSale), hasMore: list.length > limit };
+};
+
+// Light rows for the Home dashboard: order date, totals and item quantities
+// only (no names), for every sale ordered on or after `since`
+export interface SaleSummary {
+  id: number;
+  orderDate: string;
+  subtotal: number;
+  total: number;
+  items: { quantity: number }[];
+}
+
+export const getSalesSummary = async (since: Date, until?: Date): Promise<SaleSummary[]> => {
+  const rows = await fetchAll<{
+    id: number;
+    order_date: string;
+    subtotal: number;
+    total: number;
+    sale_items: { quantity: number }[] | null;
+  }>((from, to) => {
+    let query = supabase
+      .from("sales")
+      .select("id, order_date, subtotal, total, sale_items(quantity)")
+      .gte("order_date", since.toISOString());
+    if (until) query = query.lt("order_date", until.toISOString());
+    return query.order("order_date", { ascending: false }).order("id").range(from, to);
+  }, "Failed to load sales summary");
+  return rows.map((row) => ({
+    id: row.id,
+    orderDate: row.order_date,
+    subtotal: Number(row.subtotal),
+    total: Number(row.total),
+    items: (row.sale_items ?? []).map((item) => ({ quantity: item.quantity })),
+  }));
+};
+
+export const toSaleSummary = (sale: Sale & { id: number }): SaleSummary => ({
+  id: sale.id,
+  orderDate: sale.orderDate,
+  subtotal: sale.subtotal,
+  total: sale.total,
+  items: sale.items.map((item) => ({ quantity: item.quantity })),
+});
 
 export const getSaleById = async (id: number): Promise<(Sale & { id: number }) | null> => {
   const row = await run(

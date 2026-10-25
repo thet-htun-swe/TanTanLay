@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { BrandName } from "@/components/BrandName";
@@ -21,12 +20,9 @@ const RECENT_COUNT = 5;
 // Home: sales dashboard (daily / monthly) and the latest sales
 export default function HomeScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
-  const { sales, fetchProducts, fetchSales, error } = useAppStore();
-
-  useEffect(() => {
-    fetchProducts();
-    fetchSales();
-  }, [fetchProducts, fetchSales]);
+  // Loaded at start-up and kept current by live updates (no reload here)
+  const { sales, salesSummary, ensureSummarySince, fetchProducts, fetchSales, error } =
+    useAppStore();
 
   return (
     <ParallaxScrollView
@@ -58,7 +54,7 @@ export default function HomeScreen() {
         }}
       />
 
-      <SalesDashboard sales={sales} />
+      <SalesDashboard sales={salesSummary} onNeedSince={ensureSummarySince} />
 
       {sales.length > 0 && (
         <Card style={styles.recentCard}>

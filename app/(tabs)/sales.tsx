@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -11,12 +11,14 @@ import { SalesList } from "@/components/sales/SalesList";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { useSalesFilter } from "@/hooks/useSalesFilter";
 import { printBluetoothSales } from "@/services/bluetoothPrinter";
 import { getPrinterSettings } from "@/services/localSettings";
 import { printWifiSales } from "@/services/thermalPrinter";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { getErrorMessage } from "@/services/api";
 import { useToast } from "@/components/ui/Toast";
 import { useAppStore, useIsAdmin } from "@/store";
 import { ExportUtils } from "@/utils/exportUtils";
@@ -25,7 +27,8 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function SalesScreen() {
   const theme = Colors[useColorScheme() ?? "light"];
-  const { sales, fetchSales, error } = useAppStore();
+  const { sales, fetchSales, error, hasMoreSales, loadingMoreSales, loadMoreSales } =
+    useAppStore();
   const toast = useToast();
   const isAdmin = useIsAdmin();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -53,9 +56,15 @@ export default function SalesScreen() {
     clearAllFilters,
   } = useSalesFilter(sales);
 
-  useEffect(() => {
-    fetchSales();
-  }, [fetchSales]);
+  // Sales load when the app starts and stay current with live updates;
+  // older ones load a page at a time
+  const handleLoadMore = async () => {
+    try {
+      await loadMoreSales();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Could not load more sales"));
+    }
+  };
 
   const handleExportExcel = async () => {
     try {
@@ -178,6 +187,23 @@ export default function SalesScreen() {
         onSalePress={viewSaleDetails}
         selectedSaleIds={selectedSaleIds}
         onToggleSale={toggleSaleSelection}
+        footer={
+          hasMoreSales ? (
+            <View style={styles.loadMore}>
+              {hasActiveFilters && (
+                <ThemedText style={styles.loadMoreHint}>
+                  Search and filters look only at the {sales.length} newest sales. Load more to include older ones.
+                </ThemedText>
+              )}
+              <Button
+                title={loadingMoreSales ? "Loading..." : "Load older sales"}
+                variant="secondary"
+                onPress={handleLoadMore}
+                disabled={loadingMoreSales}
+              />
+            </View>
+          ) : null
+        }
       />
 
       {selectedSaleIds.length > 0 && (
@@ -299,6 +325,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "600",
+  },
+  loadMore: {
+    paddingTop: 16,
+    gap: 10,
+  },
+  loadMoreHint: {
+    fontSize: 14,
+    opacity: 0.7,
+    textAlign: "center",
   },
   sheetTitle: {
     fontSize: 20,

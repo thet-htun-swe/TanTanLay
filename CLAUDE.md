@@ -8,7 +8,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 
 - **Never** put the database password or the `service_role` / secret key in the app or the repo. The app only needs the two `EXPO_PUBLIC_*` values in `.env` (git-ignored; see `.env.example`).
 - `EXPO_PUBLIC_SUPABASE_URL` points to a **reverse proxy** because `*.supabase.co` is blocked in the shop's country. Since Oct 2026 it is the **Deno Deploy** proxy `https://kha-data.thet-dev.deno.net` (`supabase/proxies/deno-deploy/main.ts`, guide `docs/deno-deploy-proxy.md`); it passed all checks on Myanmar networks. The earlier **Cloudflare Worker** (`kha-proxy.kha-clothing.workers.dev`) is silently blocked there (`*.workers.dev`) but still exists as a spare. Proxies forward REST, Auth, Edge Functions and Realtime (WebSocket). The URL comes from EAS environment variables at build time (production and preview) and from `.env` locally; to change servers, change only this URL and rebuild.
-- If the proxy is blocked on a network, alternative proxies are ready in `supabase/proxies/` (Deno Deploy, Google Cloud Run with Caddy) with guides in `docs/` (`deno-deploy-proxy.md`, `cloud-run-proxy.md`, `cloudfront-proxy.md`). Test a new address in the app with Check connection > "Test another address" before switching the URL.
+- If the proxy is blocked on a network, alternative proxies are ready in `supabase/proxies/` (Deno Deploy, Google Cloud Run with Caddy) with guides in `docs/` (`deno-deploy-proxy.md`, `cloud-run-proxy.md`, `cloudfront-proxy.md`). Test a new address in the app with Check connection > "Test another address" before switching the URL. A Singapore VPS proxy (faster: the database is in Singapore, Deno runs in the US/EU) is written up for later in `docs/singapore-proxy.md`.
 - Database changes go in new files under `supabase/migrations/` (`001_init.sql` is the starting schema). The owner runs them in the Supabase SQL Editor.
 
 ## Development Commands
@@ -50,6 +50,7 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 ### Key Business Logic
 - **Sales are written only through server functions** (`supabase.rpc`): `create_sale`, `update_sale` (admin), `delete_sale` (admin). They lock the products, check stock, change stock and write the sale in one transaction, and raise clear errors such as `Not enough stock for <name>`.
 - **Retries are safe**: each sale carries a phone-made `client_id`; `create_sale` returns the existing sale for a repeated `client_id`. The New Sale screen keeps one id per sale form, and `saveSale` retries network failures with the same id.
+- **Fast saving**: creating/editing/deleting a sale or product waits for **one** request only. Then the store changes its lists locally (`addSale` takes sold pieces off stock at once) and `syncSale` reloads just that sale and its products in the background. Never add a full reload (`refreshData`) after a save. After a sale, the New Sale form clears and shows "Sale #… saved · View receipt" (no automatic navigation).
 - **Invoice numbers**: `YYMMDD` + 3-digit counter per order day, made on the server from the phone's local day (`order_day`).
 - **Custom products**: `custom-<uuid>` items never change stock.
 - **Customers**: `create_sale` finds or creates a customer by name + contact.
@@ -66,6 +67,8 @@ All shop data (products, customers, sales) lives in **Supabase**. The app is **o
 - Product changes patch `products`; sale changes reload that sale (`getSaleById`) and patch `sales`.
 - Screens with their own paged lists (Products, Customers tabs) watch `productsVersion` / `customersVersion` and reload quietly.
 - After a reconnect, everything is reloaded once to catch missed changes.
+- **Sales are paged**: the store holds the newest `SALES_PAGE_SIZE` (100) sales (`getSalesPage`, keyset on `date, id`); Sales History has "Load older sales" (`loadMoreSales`). Search/filters only see loaded sales (a hint says so).
+- **Dashboard summary**: Home uses `salesSummary` (order date, totals, item quantities; `getSalesSummary`) for this month and the 6 before; older months load when the chart goes back (`ensureSummarySince`). Home/Sales screens do not reload on open; data loads at start-up (`initializeApp`) and stays current through Realtime.
 
 ### Errors and Offline
 - `services/api.ts` turns network failures into `NoConnectionError` ("No internet connection…"); use `getErrorMessage(error, fallback)` and `isNoConnectionError(error)` in screens.
